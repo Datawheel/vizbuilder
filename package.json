@@ -1,0 +1,62 @@
+{
+  "name": "@datawheel/vizbuilder",
+  "version": "0.1.0",
+  "description": "A React component that visualizes multiple kinds of charts according to the data from a olap-client query.",
+  "main": "dist/vizbuilder.cjs.js",
+  "module": "dist/vizbuilder.esm.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "rollup --config rollup.config.js --environment NODE_ENV:production,BABEL_ENV:production",
+    "prepublishOnly": "npm run build",
+    "watch": "rollup --config rollup.config.js --environment NODE_ENV:development,BABEL_ENV:development --watch"
+  },
+  "keywords": [
+    "charts",
+    "d3",
+    "d3plus",
+    "datawheel",
+    "mondrian-rest",
+    "olap-client",
+    "tesseract-olap"
+  ],
+  "author": "Francisco Abarzúa <francisco@datawheel.us>",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/runtime-corejs3": "^7.12.0",
+    "@datawheel/olap-client": "^2.0.0-alpha.3",
+    "classnames": "^2.0.0",
+    "d3-array": "^2.8.0",
+    "d3plus-common": "^0.7.0",
+    "d3plus-format": "^0.1.0",
+    "d3plus-react": "^0.6.0",
+    "form-urlencoded": "^4.2.0",
+    "lodash": "^4.0.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "@datawheel/eslint-config": "^1.0.0",
+    "@rollup/plugin-babel": "^5.0.0",
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@rollup/plugin-replace": "^2.0.0",
+    "babel-eslint": "^10.0.0",
+    "eslint": "^7.0.0",
+    "eslint-plugin-react": "^7.0.0",
+    "rollup": "^2.0.0",
+    "rollup-plugin-cleanup": "^3.0.0",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "eslintConfig": {
+    "extends": "@datawheel",
+    "ignorePatterns": [
+      "**/dist/*",
+      "**/node_modules/*"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+.github/
+.vscode/
+node_modules/
+src/
+tests/
+
+.babelrc
+.editorconfig
+.eslintrc
+.gitignore
+.travis.yml
+*.md
+jsconfig.json
+pnpm-lock.yaml
+rollup.config.js
