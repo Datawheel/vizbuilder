@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/vizbuilder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A React component that visualizes multiple kinds of charts according to the data from a olap-client query.",
   "main": "dist/vizbuilder.cjs.js",
   "module": "dist/vizbuilder.esm.js",
