@@ -28,55 +28,61 @@ const chartComponents = {
 
 /**
  * @typedef ChartCardProps
- * @property {VizBldr.Struct.Chart} chart
- * @property {string} currentChart
- * @property {number} currentPeriod
- * @property {boolean} isSingleChart
- * @property {boolean} isUniqueChart
- * @property {(period: Date) => void} onPeriodChange
- * @property {() => void} onToggle
- * @property {boolean} showConfidenceInt
- * @property {any} userConfig
+ * @property {VizBldr.Struct.Chart} chart The information needed to build a specific chart configuration.
+ * @property {string} currentChart The key of the currently selected chart
+ * @property {number} currentPeriod The currently selected time period
+ * @property {boolean} isSingleChart The view has other charts, but the user is enlarging this one
+ * @property {boolean} isUniqueChart The view only has this chart
+ * @property {VizBldr.VizbuilderProps["measureConfig"]} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
+ * @property {(period: Date) => void} onPeriodChange A handler for when the user selects a different time period on the timeline of a chart.
+ * @property {() => void} onToggle A handler for when the user selects a specific chart.
+ * @property {VizBldr.VizbuilderProps["showConfidenceInt"]} showConfidenceInt Toggles confidence intervals/margins of error when available.
+ * @property {VizBldr.VizbuilderProps["userConfig"]} userConfig A global d3plus config that gets applied on all charts. Has priority over the individually generated configs per chart, but can be overridden by internal working configurations.
  */
 
 /** @type {React.FC<ChartCardProps>} */
-export const ChartCard = ({
-  chart,
-  currentChart,
-  currentPeriod,
-  isSingleChart,
-  isUniqueChart,
-  onPeriodChange,
-  onToggle,
-  showConfidenceInt,
-  userConfig
-}) => {
+export const ChartCard = props => {
+  const {
+    chart,
+    currentChart,
+    isSingleChart,
+    isUniqueChart
+  } = props;
+
   const {locale, translate} = useTranslation();
 
   const ChartComponent = chartComponents[chart.chartType];
 
   const config = useMemo(() => createChartConfig(chart, {
     currentChart,
-    currentPeriod,
+    currentPeriod: props.currentPeriod,
     isSingleChart,
     isUniqueChart,
     locale,
-    showConfidenceInt,
+    measureConfig: props.measureConfig || {},
+    onPeriodChange: props.onPeriodChange,
+    showConfidenceInt: Boolean(props.showConfidenceInt),
     translate,
-    onPeriodChange,
-    userConfig
+    userConfig: props.userConfig || {}
   }), [isSingleChart, isUniqueChart, locale]);
 
   const focused = currentChart === chart.key;
   const buttonIcon = focused ? "cross" : "zoom-in";
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
 
+  const shouldShowToggle = !isSingleChart && !isUniqueChart;
+
   return (
     <ErrorBoundary>
       <div className="vb-chart-card">
-        {!isUniqueChart && <aside className="vb-chart-toolbar">
-          <Button minimal icon={buttonIcon} text={buttonText} onClick={onToggle} />
-        </aside>}
+        <aside className="vb-chart-toolbar">
+          {shouldShowToggle && <Button
+            icon={buttonIcon}
+            minimal
+            onClick={props.onToggle}
+            text={buttonText}
+          />}
+        </aside>
         <ChartComponent className="vb-chart-viz" config={config} />
       </div>
     </ErrorBoundary>

@@ -8,15 +8,13 @@ import {sortByCustomKey} from "./sort";
  * @property {number} currentPeriod
  * @property {boolean} isSingleChart
  * @property {boolean} isUniqueChart
- * @property {boolean} showConfidenceInt
- * @property {(period: Date) => void} [onPeriodChange]
  * @property {string} locale
+ * @property {Record<string, VizBldr.D3plusConfig>} measureConfig
+ * @property {(period: Date) => void} onPeriodChange
+ * @property {boolean} showConfidenceInt
  * @property {(template: string, data?: Record<string, string>) => string} translate
- * @property {any} [measureConfig]
- * @property {any} [userConfig]
+ * @property {VizBldr.D3plusConfig} userConfig
  */
-
-// TODO: setup measureConfig
 
 /**
  * @param {VizBldr.Struct.Chart} chart
@@ -83,7 +81,6 @@ export function createChartConfig(chart, uiParams) {
     };
   }
 
-  config.data = chart.dg.dataset;
   config.tooltipConfig = tooltipGenerator(chart, uiParams);
   config.zoom = chartType === "geomap" && isSingleChart;
 
@@ -94,6 +91,9 @@ export function createChartConfig(chart, uiParams) {
   //     isTimeline: isTimeline || config.timeline
   //   });
   // }
+
+  assign(config, uiParams.measureConfig[measureName] || {});
+  config.data = chart.dg.dataset;
 
   return config;
 }

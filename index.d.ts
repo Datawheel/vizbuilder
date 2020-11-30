@@ -14,11 +14,15 @@ declare namespace VizBldr {
     datacap?: number;
     defaultLocale?: string;
     getTopojson?: Record<string, any> | ((level: OlapClnt.Level) => any);
+    measureConfig?: Record<string, D3plusConfig>;
     onPeriodChange?: (period: Date) => void;
     queries: Struct.QueryResult | Struct.QueryResult[];
     showConfidenceInt?: boolean;
     translations?: Record<string, any>;
+    userConfig?: D3plusConfig;
   }
+
+  type D3plusConfig = {[key: string]: any};
 
   type ChartType =
     | "barchart"

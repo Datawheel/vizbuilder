@@ -41,10 +41,11 @@ export const Vizbuilder = props => {
           isSingleChart={isSingleChart}
           isUniqueChart={isUniqueChart}
           key={chart.key}
+          measureConfig={props.measureConfig}
           onPeriodChange={period => setCurrentPeriod(period.getFullYear())}
           onToggle={() => setCurrentChart(currentChart ? "" : chart.key)}
-          showConfidenceInt={Boolean(props.showConfidenceInt)}
-          userConfig={{}}
+          showConfidenceInt={props.showConfidenceInt}
+          userConfig={props.userConfig}
         />
       );
   }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
