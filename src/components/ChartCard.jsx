@@ -14,7 +14,7 @@ import {Button} from "./Button";
 import {ErrorBoundary} from "./ErrorBoundary";
 
 /** @type {Record<VizBldr.ChartType, React.ElementType>} */
-const chartComponents = {
+export const chartComponents = {
   barchart: BarChart,
   barchartyear: BarChart,
   donut: Donut,
@@ -33,7 +33,7 @@ const chartComponents = {
  * @property {number} currentPeriod The currently selected time period
  * @property {boolean} isSingleChart The view has other charts, but the user is enlarging this one
  * @property {boolean} isUniqueChart The view only has this chart
- * @property {VizBldr.VizbuilderProps["measureConfig"]} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
+ * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
  * @property {(period: Date) => void} onPeriodChange A handler for when the user selects a different time period on the timeline of a chart.
  * @property {() => void} onToggle A handler for when the user selects a specific chart.
  * @property {VizBldr.VizbuilderProps["showConfidenceInt"]} showConfidenceInt Toggles confidence intervals/margins of error when available.
@@ -59,7 +59,7 @@ export const ChartCard = props => {
     isSingleChart,
     isUniqueChart,
     locale,
-    measureConfig: props.measureConfig || {},
+    measureConfig: props.measureConfig,
     onPeriodChange: props.onPeriodChange,
     showConfidenceInt: Boolean(props.showConfidenceInt),
     translate,

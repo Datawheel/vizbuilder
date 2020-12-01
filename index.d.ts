@@ -9,16 +9,16 @@ declare namespace VizBldr {
   const Vizbuilder: React.FC<VizbuilderProps>;
 
   interface VizbuilderProps {
-    allowedChartTypes: ChartType[];
+    allowedChartTypes?: ChartType[];
     className?: string;
     datacap?: number;
     defaultLocale?: string;
-    getTopojson?: Record<string, any> | ((level: OlapClnt.Level) => any);
-    measureConfig?: Record<string, D3plusConfig>;
+    measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClnt.Measure) => D3plusConfig);
     onPeriodChange?: (period: Date) => void;
-    queries: Struct.QueryResult | Struct.QueryResult[];
+    queries: QueryResult | QueryResult[];
     showConfidenceInt?: boolean;
-    translations?: Record<string, any>;
+    topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClnt.Level) => D3plusConfig);
+    translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;
   }
 
@@ -48,6 +48,24 @@ declare namespace VizBldr {
     filters: Struct.FilterItem[];
     growth: Struct.GrowthItem[];
     measures: Struct.MeasureItem[];
+  }
+
+  interface Translation {
+    "action_close": string;
+    "action_enlarge": string;
+    "action_retry": string;
+    "action_fileissue": string;
+    "chart_labels": {
+      "ci": string;
+      "collection": string;
+      "moe": string;
+      "source": string;
+    };
+    "error": {
+      "detail": string;
+      "message": string;
+      "title": string;
+    };
   }
 
   namespace Struct {
@@ -105,8 +123,7 @@ declare namespace VizBldr {
       params: QueryParams;
       stdDrilldowns: OlapClnt.Level[];
       timeDrilldown: OlapClnt.Level | undefined;
-      topojsonConfig: {} | undefined;
-      topojsonSource: (level: OlapClnt.Level) => string;
+      topojsonConfig: D3plusConfig | undefined;
     }
 
     interface Chart {

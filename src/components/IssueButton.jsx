@@ -31,6 +31,6 @@ export const IssueButton = ({error, message}) => {
       role="button"
       tabIndex={0}
       target="_blank"
-    >{t("Vizbuilder.action_fileissue")}</a>
+    >{t("action_fileissue")}</a>
   );
 };

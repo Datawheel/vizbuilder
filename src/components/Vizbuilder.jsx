@@ -3,9 +3,9 @@ import React, {useEffect, useMemo, useState} from "react";
 import {asArray} from "../toolbox/array";
 import {chartReducer} from "../toolbox/charts";
 import {buildDatagroup} from "../toolbox/datagroup";
-import {normalizeTopojsonSource, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
+import {normalizeMeasureConfig, normalizeTopojsonConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
 import {TranslationProvider} from "../toolbox/translation";
-import {ChartCard} from "./ChartCard";
+import {ChartCard, chartComponents} from "./ChartCard";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */
 export const Vizbuilder = props => {
@@ -14,10 +14,10 @@ export const Vizbuilder = props => {
 
   /** @type {VizBldr.Struct.Chart[]} */
   const charts = useMemo(() => {
-    const {allowedChartTypes} = props;
+    const allowedChartTypes = props.allowedChartTypes || Object.keys(chartComponents);
     const datagroupProps = {
       datacap: props.datacap || 20000,
-      topojsonSource: normalizeTopojsonSource(props.getTopojson)
+      getTopojsonConfig: normalizeTopojsonConfig(props.topojsonConfig)
     };
     return asArray(props.queries).reduce((charts, query) => {
       const datagroup = buildDatagroup(query, datagroupProps);
@@ -30,6 +30,7 @@ export const Vizbuilder = props => {
   const content = useMemo(() => {
     const isUniqueChart = charts.length === 1;
     const isSingleChart = currentChart !== "" && charts.length > 1;
+    const measureConfig = normalizeMeasureConfig(props.measureConfig);
 
     return charts
       .filter(chart => currentChart ? chart.key === currentChart : true)
@@ -41,7 +42,7 @@ export const Vizbuilder = props => {
           isSingleChart={isSingleChart}
           isUniqueChart={isUniqueChart}
           key={chart.key}
-          measureConfig={props.measureConfig}
+          measureConfig={measureConfig}
           onPeriodChange={period => setCurrentPeriod(period.getFullYear())}
           onToggle={() => setCurrentChart(currentChart ? "" : chart.key)}
           showConfidenceInt={props.showConfidenceInt}

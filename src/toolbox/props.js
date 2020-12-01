@@ -1,14 +1,27 @@
 import debounce from "lodash/debounce";
 
 /**
- * @param {VizBldr.VizbuilderProps["getTopojson"]} getTopojson
- * @returns {(level: import("@datawheel/olap-client").Level) => string}
+ * 
+ * @param {VizBldr.VizbuilderProps["measureConfig"]} measureConfig 
+ * @returns {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig}
  */
-export function normalizeTopojsonSource(getTopojson) {
-  if (typeof getTopojson === "function") {
-    return getTopojson;
+export function normalizeMeasureConfig(measureConfig) {
+  if (typeof measureConfig === "function") {
+    return measureConfig;
   }
-  const config = getTopojson != null ? getTopojson : {};
+  const config = measureConfig != null ? measureConfig : {};
+  return measure => config[measure.name];
+}
+
+/**
+ * @param {VizBldr.VizbuilderProps["topojsonConfig"]} topojsonConfig
+ * @returns {(level: import("@datawheel/olap-client").Level) => VizBldr.D3plusConfig}
+ */
+export function normalizeTopojsonConfig(topojsonConfig) {
+  if (typeof topojsonConfig === "function") {
+    return topojsonConfig;
+  }
+  const config = topojsonConfig != null ? topojsonConfig : {};
   return level => config[level.uniqueName] || config[level.fullName] || config[level.name];
 }
 

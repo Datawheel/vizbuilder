@@ -9,10 +9,10 @@ import {sortByCustomKey} from "./sort";
  * @property {boolean} isSingleChart
  * @property {boolean} isUniqueChart
  * @property {string} locale
- * @property {Record<string, VizBldr.D3plusConfig>} measureConfig
+ * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
  * @property {(period: Date) => void} onPeriodChange
  * @property {boolean} showConfidenceInt
- * @property {(template: string, data?: Record<string, string>) => string} translate
+ * @property {import("./translation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
  */
 
@@ -442,34 +442,34 @@ function tooltipGenerator(chart, {translate: t}) {
     .map(lvl => [lvl, d => d[lvl]]);
   tbody.push([measureName, d => formatter(d[measureName])]);
 
-  // TODO: Add this
+  // TODO: restore measure share tooltip
   // if (measure.aggregationType === "SUM") {
   //   const percentFormatter = formatters.Rate;
   //   tbody.push([
-  //     t("Vizbuilder.chart_labels.measure_share", {measureName}),
+  //     t("chart_labels.measure_share", {measureName}),
   //     d => percentFormatter(d[`${measureName} Share`])
   //   ]);
   // }
 
   if (shouldShow.lci && shouldShow.uci) {
     tbody.push([
-      t("Vizbuilder.chart_labels.ci"),
+      t("chart_labels.ci"),
       d => `${formatter(d[lciName] * 1 || 0)} - ${formatter(d[uciName] * 1 || 0)}`
     ]);
   }
   else if (shouldShow.moe) {
     tbody.push([
-      t("Vizbuilder.chart_labels.moe"),
+      t("chart_labels.moe"),
       d => `± ${formatter(d[moeName] * 1 || 0)}`
     ]);
   }
 
   if (shouldShow.src) {
-    tbody.push([t("Vizbuilder.chart_labels.source"), d => `${d[sourceName]}`]);
+    tbody.push([t("chart_labels.source"), d => `${d[sourceName]}`]);
   }
 
   if (shouldShow.clt) {
-    tbody.push([t("Vizbuilder.chart_labels.collection"), d => `${d[collectionName]}`]);
+    tbody.push([t("chart_labels.collection"), d => `${d[collectionName]}`]);
   }
 
   dg.filters.forEach(filter => {

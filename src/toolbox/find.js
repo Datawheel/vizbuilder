@@ -45,14 +45,15 @@ export function findLevelInCube(cube, item) {
  * @returns {VizBldr.Struct.MeasureSet | undefined}
  */
 export function findMeasuresInCube({measuresByName}, item) {
-  if (!measuresByName[item.measure]) {
+  const measure = measuresByName[item.measure];
+  if (!measure) {
     return undefined;
   }
   else if (item.moe && item.moe in measuresByName) {
     return {
       collection: measuresByName[`${item.collection}`],
       formatter: item.formatter || formatAbbreviate,
-      measure: measuresByName[item.measure],
+      measure,
       moe: measuresByName[`${item.moe}`],
       source: measuresByName[`${item.source}`]
     };
@@ -62,7 +63,7 @@ export function findMeasuresInCube({measuresByName}, item) {
       collection: measuresByName[`${item.collection}`],
       formatter: item.formatter || formatAbbreviate,
       lci: measuresByName[`${item.lci}`],
-      measure: measuresByName[item.measure],
+      measure,
       source: measuresByName[`${item.source}`],
       uci: measuresByName[`${item.uci}`]
     };

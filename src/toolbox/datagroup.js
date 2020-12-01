@@ -9,12 +9,12 @@ import {isGeographicLevel, isTimeLevel} from "./validation";
  * @param {VizBldr.QueryResult} qr
  * @param {object} props
  * @param {number} props.datacap
- * @param {(level: import("@datawheel/olap-client").Level) => string} props.topojsonSource
+ * @param {(level: import("@datawheel/olap-client").Level) => VizBldr.D3plusConfig} props.getTopojsonConfig
  * @returns {VizBldr.Struct.Datagroup}
  */
 export function buildDatagroup(qr, props) {
   const {dataset, params} = qr;
-  const {datacap, topojsonSource} = props;
+  const {datacap, getTopojsonConfig} = props;
 
   const cube = new Cube(qr.cube);
 
@@ -39,7 +39,7 @@ export function buildDatagroup(qr, props) {
 
   const geoDrilldown = drilldowns.find(isGeographicLevel);
 
-  const topojsonConfig = geoDrilldown ? topojsonSource(geoDrilldown) : undefined;
+  const topojsonConfig = geoDrilldown ? getTopojsonConfig(geoDrilldown) : undefined;
 
   const stdDrilldowns = drilldowns.filter(lvl => ![geoDrilldown, timeDrilldown].includes(lvl));
 
@@ -73,7 +73,6 @@ export function buildDatagroup(qr, props) {
     params,
     membersCount,
     members,
-    topojsonSource,
     topojsonConfig
   };
 }

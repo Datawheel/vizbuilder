@@ -14,6 +14,7 @@ export function asArray(content, target = []) {
 /**
  * @param {any[]} dataset
  * @param {string[]} properties
+ * @returns {{members: Record<string, any[]>, membersCount: Record<string, number>}}
  */
 export function buildMemberMap(dataset, properties) {
   let p = properties.length;
