@@ -1,5 +1,3 @@
-import {deviation, mean} from "d3-array";
-
 // TODO: restore
 // /**
 //  * @param {any[]} data
@@ -40,6 +38,19 @@ import {deviation, mean} from "d3-array";
 // }
 
 /**
+ * @param {number[]} values
+ * @returns {number}
+ */
+export function mean(values) {
+  let sum = 0;
+  let i = values.length;
+  while (i--) {
+    sum += values[i];
+  }
+  return sum / values.length;
+}
+
+/**
  * Calculate the Relative Standard Deviation
  * This means it should have a numeric value, and a valid operator.
  * @param {any[]} data An array to check
@@ -47,7 +58,27 @@ import {deviation, mean} from "d3-array";
  */
 export function relativeStdDev(data, measureName) {
   const dataPoints = data.map(d => d[measureName]);
-  return deviation(dataPoints) / mean(dataPoints);
+  return dataPoints.length > 0
+    ? Math.sqrt(variance(dataPoints)) / mean(dataPoints)
+    : NaN;
+}
+
+/**
+ * @param {number[]} values
+ * @returns {number}
+ */
+export function variance(values) {
+  let count = 0;
+  let delta;
+  let mean = 0;
+  let sum = 0;
+  let i = values.length;
+  while (i--) {
+    delta = values[i] - mean;
+    mean += delta / ++count;
+    sum += delta * (values[i] - mean);
+  }
+  return count > 1 ? sum / (count - 1) : NaN;
 }
 
 /**
