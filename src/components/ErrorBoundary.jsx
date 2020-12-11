@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {TranslationConsumer} from "../toolbox/translation";
+import {TranslationConsumer} from "../toolbox/useTranslation";
 import {Button} from "./Button";
 import {IssueButton} from "./IssueButton";
 

@@ -12,7 +12,7 @@ import {sortByCustomKey} from "./sort";
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
  * @property {(period: Date) => void} onPeriodChange
  * @property {boolean} showConfidenceInt
- * @property {import("./translation").TranslateFunction} translate
+ * @property {import("./useTranslation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
  */
 

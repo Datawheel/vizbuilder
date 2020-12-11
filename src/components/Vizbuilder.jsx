@@ -4,7 +4,7 @@ import {asArray} from "../toolbox/array";
 import {chartReducer} from "../toolbox/charts";
 import {buildDatagroup} from "../toolbox/datagroup";
 import {normalizeMeasureConfig, normalizeTopojsonConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
-import {TranslationProvider} from "../toolbox/translation";
+import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard, chartComponents} from "./ChartCard";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */

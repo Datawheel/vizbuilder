@@ -1,6 +1,6 @@
 import formUrlEncode from "form-urlencoded";
 import React from "react";
-import {useTranslation} from "../toolbox/translation";
+import {useTranslation} from "../toolbox/useTranslation";
 
 /**
  * @typedef OwnProps

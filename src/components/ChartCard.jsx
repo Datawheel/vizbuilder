@@ -9,7 +9,7 @@ import {
 } from "d3plus-react";
 import React, {useMemo} from "react";
 import {createChartConfig} from "../toolbox/chartConfigs";
-import {useTranslation} from "../toolbox/translation";
+import {useTranslation} from "../toolbox/useTranslation";
 import {Button} from "./Button";
 import {ErrorBoundary} from "./ErrorBoundary";
 
