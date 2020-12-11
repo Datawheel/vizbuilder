@@ -1,29 +1,19 @@
 import cls from "classnames";
-import React, {useEffect, useMemo, useState} from "react";
-import {asArray} from "../toolbox/array";
-import {chartReducer} from "../toolbox/charts";
-import {buildDatagroup} from "../toolbox/datagroup";
-import {normalizeMeasureConfig, normalizeTopojsonConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
+import React, {useEffect, useMemo} from "react";
+import {normalizeMeasureConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
+import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
-import {ChartCard, chartComponents} from "./ChartCard";
+import {ChartCard} from "./ChartCard";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */
 export const Vizbuilder = props => {
-  const [currentChart, setCurrentChart] = useState("");
-  const [currentPeriod, setCurrentPeriod] = useState(() => new Date().getFullYear());
-
-  /** @type {VizBldr.Struct.Chart[]} */
-  const charts = useMemo(() => {
-    const allowedChartTypes = props.allowedChartTypes || Object.keys(chartComponents);
-    const datagroupProps = {
-      datacap: props.datacap || 20000,
-      getTopojsonConfig: normalizeTopojsonConfig(props.topojsonConfig)
-    };
-    return asArray(props.queries).reduce((charts, query) => {
-      const datagroup = buildDatagroup(query, datagroupProps);
-      return allowedChartTypes.reduce(chartReducer(datagroup), charts);
-    }, []);
-  }, [props.queries]);
+  const {
+    charts,
+    currentChart,
+    currentPeriod,
+    setCurrentChart,
+    setCurrentPeriod
+  } = useCharts(props);
 
   const toolbar = <div />;
 
