@@ -7,6 +7,10 @@ export as namespace VizBldr;
 
 declare namespace VizBldr {
   const Vizbuilder: React.FC<VizbuilderProps>;
+  function buildQueryParams(
+    query: OlapClnt.Query,
+    formatters?: ((measure: OlapClnt.Measure | string) => Formatter) | Record<string, Formatter>
+  ): QueryParams;
 
   interface VizbuilderProps {
     allowedChartTypes?: ChartType[];
@@ -21,6 +25,8 @@ declare namespace VizBldr {
     translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;
   }
+
+  type Formatter = (value: number) => string;
 
   type D3plusConfig = {[key: string]: any};
 
@@ -85,10 +91,11 @@ declare namespace VizBldr {
     }
 
     interface FilterItem {
-      comparison: string;
-      formatter?: (value: number) => string;
+      constraint1: [OlapClnt.Comparison, number];
+      constraint1?: [OlapClnt.Comparison, number] | undefined;
+      formatter?: Formatter;
+      joint?: "and" | "or" | undefined;
       measure: string;
-      value: string;
     }
 
     interface GrowthItem {
@@ -100,7 +107,7 @@ declare namespace VizBldr {
 
     interface MeasureItem {
       collection?: string;
-      formatter?: (value: number) => string;
+      formatter?: Formatter;
       lci?: string;
       measure: string;
       moe?: string;
@@ -129,20 +136,24 @@ declare namespace VizBldr {
     interface Chart {
       chartType: ChartType;
       dg: Datagroup;
+      isMap: boolean;
+      isTimeline: boolean;
       isTopTen?: boolean;
       key: string;
-      measureSet: MeasureSet;
       levels: OlapClnt.Level[];
+      measureSet: MeasureSet;
     }
 
     interface FilterSet {
-      comparison: string;
+      constraint1: [OlapClnt.Comparison, number];
 
-      formatter: (value: number) => string;
+      constraint2?: [OlapClnt.Comparison, number] | undefined;
+
+      formatter: Formatter;
+
+      joint?: "and" | "or" | undefined;
 
       measure: OlapClnt.Measure;
-
-      value: string;
     }
 
     interface MeasureSet {
@@ -150,7 +161,7 @@ declare namespace VizBldr {
       measure: OlapClnt.Measure;
 
       /** A formatting function to display values. */
-      formatter: (value: number) => string;
+      formatter: Formatter;
 
       /** Collection measure. */
       collection: OlapClnt.Measure | undefined;

@@ -202,6 +202,10 @@ Some remarks:
 * The `formatter` property, if defined, should be a function that receives a `number` value, and outputs a `string`. This formatting function will be used wherever the values for the `measure` defined along it is shown.
 * For each of the `measures` descriptor items, if a `moe` is defined, `lci` and `uci` won't be considered.
 
+Notice the `QueryParams` object can also contain `Formatter` functions, so it can't be serialized and rehydrated from a JSON string. This is important if you plan to store the object in a Redux store, for example, as it can result in unexpected behavior when using some features.
+
+For ease of development, this package also exports [a helper function `buildQueryParams`](#function-buildqueryparams) as a named export, to quickly convert an `olap-client` `Query` object into a `QueryParams` object. Check the definition below for details on how to use it.
+
 ### `interface Translation`
 
 An object whose keys are message keys, and its values the localized string to show in the interface.
@@ -234,6 +238,45 @@ interface Translation {
 ### `namespace Struct`
 
 The types defined in the `Struct` namespace are for private use and might change between versions. Changes in these are not considered for semver version bumps, only the previously described.
+
+## Additional Tools
+
+### `function buildQueryParams()`
+
+Creates a `QueryParams` object from a `olap-client` `Query` object. The function has the following shape:
+
+```ts
+function buildQueryParams(
+  query: OlapClient.Query,
+  formatters?:
+    | Record<string, (value: number) => string>
+    | (measure: OlapClient.Measure | "growth" | "rca") => (value: number) => string
+): QueryParams;
+```
+
+The `formatters` parameter behaves similarly to the [`measureConfig`](#measureconfig) property from the Vizbuilder component: it can receive either
+* an object, whose keys are measure names from the cube, and `Formatter` functions as values, or
+* a function whose first parameter is an `olap-client` `Calculation` (which means, it can be either a `Measure` object, or one of the strings `"growth"` and `"rca"`), which must return a `Formatter` function for these values.
+
+An example implementation would be:
+
+```js
+import {buildQueryParams} from "@datawheel/vizbuilder";
+
+[...]
+
+const agg = await client.execQuery(query);
+return {
+  cube: cube.toJSON(),
+  dataset: agg.data,
+  params: buildQueryParams(agg.query, {
+    "Total value": dollarFormatter,
+    "Average value": dollarFormatter
+  })
+}
+
+[...]
+```
 
 ## License
 

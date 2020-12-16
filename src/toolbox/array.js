@@ -3,7 +3,7 @@ import groupBy from "lodash/groupBy";
 
 /**
  * @template T
- * @param {T | T[]} content
+ * @param {T | T[] | undefined} content
  * @param {T[]} [target]
  * @returns {T[]}
  */
