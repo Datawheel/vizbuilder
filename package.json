@@ -2,12 +2,18 @@
   "name": "@datawheel/vizbuilder",
   "version": "0.1.3",
   "description": "A React component that visualizes multiple kinds of charts according to the data from a olap-client query.",
-  "main": "index.cjs.js",
-  "module": "index.esm.js",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.esm.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs.js",
+      "import": "./dist/index.esm.js",
+      "default": "./dist/index.esm.js"
+    }
+  },
   "scripts": {
     "build": "rollup --config rollup.config.js --environment NODE_ENV:production,BABEL_ENV:production",
-    "preinstall": "npx only-allow pnpm",
     "prepublishOnly": "npm run build",
     "start": "snowpack dev",
     "watch": "rollup --config rollup.config.js --environment NODE_ENV:development,BABEL_ENV:development --watch"
@@ -21,8 +27,13 @@
     "olap-client",
     "tesseract-olap"
   ],
-  "author": "Francisco Abarzúa <francisco@datawheel.us>",
+  "author": "Francisco Abarzua <francisco@datawheel.us>",
   "license": "MIT",
+  "homepage": "https://github.com/Datawheel/vizbuilder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Datawheel/vizbuilder.git"
+  },
   "dependencies": {
     "@babel/runtime-corejs3": "^7.12.0",
     "@datawheel/olap-client": "^2.0.0-alpha.3",
