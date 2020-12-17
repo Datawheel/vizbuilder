@@ -1,5 +1,6 @@
 .github/
 .vscode/
+example/
 node_modules/
 src/
 tests/
@@ -10,6 +11,8 @@ tests/
 .gitignore
 .travis.yml
 *.md
+*.tgz
 jsconfig.json
 pnpm-lock.yaml
 rollup.config.js
+snowpack.config.js
