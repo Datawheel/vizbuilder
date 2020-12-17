@@ -1,16 +1,18 @@
 import {assign} from "d3plus-common";
+import keyBy from "lodash/keyBy";
 import {relativeStdDev} from "./math";
 import {sortByCustomKey} from "./sort";
+import {getColumnId} from "./strings";
 
 /**
  * @typedef UIParams
  * @property {string} currentChart
- * @property {number} currentPeriod
+ * @property {string} currentPeriod
  * @property {boolean} isSingleChart
  * @property {boolean} isUniqueChart
  * @property {string} locale
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
- * @property {(period: Date) => void} onPeriodChange
+ * @property {(period: string) => void} [onPeriodChange]
  * @property {boolean} showConfidenceInt
  * @property {import("./useTranslation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
@@ -70,15 +72,21 @@ export function createChartConfig(chart, uiParams) {
   }
 
   if (timeDrilldown && config.time) {
-    const timeDrilldownName = timeDrilldown.caption;
-    const {currentPeriod} = uiParams;
+    const timeDrilldownName = getColumnId(timeDrilldown.caption, dg.dataset);
+    const {currentPeriod, onPeriodChange} = uiParams;
+    const timeMembers = Object.keys(keyBy(dg.dataset, timeDrilldownName));
 
     // eslint-disable-next-line eqeqeq
-    config.timeFilter = d => d[timeDrilldownName] == currentPeriod;
+    config.timeFilter = currentPeriod ? d => d[timeDrilldownName] == currentPeriod : undefined;
     config.timeline = isEnlarged;
-    config.timelineConfig = {
-      on: {end: uiParams.onPeriodChange}
-    };
+    config.timelineConfig = {on: {
+      end: !onPeriodChange 
+        ? undefined
+        : date => {
+          const value = timeMembers.find(member => new Date(member).getTime() === date.getTime());
+          value && onPeriodChange(value);
+        }
+    }};
   }
 
   config.tooltipConfig = tooltipGenerator(chart, uiParams);
@@ -93,7 +101,7 @@ export function createChartConfig(chart, uiParams) {
   // }
 
   assign(config, uiParams.measureConfig[measureName] || {});
-  config.data = chart.dg.dataset;
+  config.data = dg.dataset;
 
   return config;
 }
@@ -124,7 +132,7 @@ const makeConfig = {
           title: firstLevelName,
           ticks: []
         },
-        stacked: firstLevel.depth > 1,
+        stacked: measure.aggregatorType === "SUM" && firstLevel.depth > 1,
         shapeConfig: {
           Bar: {
             labelConfig: {
@@ -139,10 +147,12 @@ const makeConfig = {
 
     if (timeLevel) {
       const hierarchy = timeLevel.hierarchy;
-      config.groupBy = hierarchy.levels.slice(0, 1)
+      config.groupBy = hierarchy.levels
+        .slice(0, 1)
+        .filter(lvl => lvl.caption in dg.dataset[0])
         .concat(levels)
         .map(lvl => lvl.caption);
-      config.time = timeLevel.caption;
+      config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
     else if (levels.length > 1) {
       config.groupBy = levels.map(lvl => lvl.caption);
@@ -166,7 +176,9 @@ const makeConfig = {
 
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel ? timeLevel.caption : levels[0].caption;
+    const timeLevelName = timeLevel 
+      ? getColumnId(timeLevel.caption, dg.dataset) 
+      : firstLevelName;
 
     const config = assign(
       {
@@ -212,7 +224,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = timeLevel.caption;
+      config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
 
     return config;
@@ -256,7 +268,7 @@ const makeConfig = {
     }
 
     if (timeLevel) {
-      config.time = timeLevel.caption;
+      config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
 
     return config;
@@ -279,7 +291,7 @@ const makeConfig = {
 
     const levelName = levels[0].caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel ? timeLevel.caption : levelName;
+    const timeLevelName = timeLevel ? getColumnId(timeLevel.caption, dg.dataset) : levelName;
 
     const config = assign(
       {
@@ -370,7 +382,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = timeLevel.caption;
+      config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
 
     return config;

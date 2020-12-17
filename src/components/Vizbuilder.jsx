@@ -23,7 +23,7 @@ export const Vizbuilder = props => {
     const measureConfig = normalizeMeasureConfig(props.measureConfig);
 
     return charts
-      .filter(chart => currentChart ? chart.key === currentChart : true)
+      .filter(chart => chart && (currentChart ? chart.key === currentChart : true))
       .map(chart =>
         <ChartCard
           chart={chart}
@@ -33,7 +33,7 @@ export const Vizbuilder = props => {
           isUniqueChart={isUniqueChart}
           key={chart.key}
           measureConfig={measureConfig}
-          onPeriodChange={period => setCurrentPeriod(period.getFullYear())}
+          onPeriodChange={period => setCurrentPeriod(period)}
           onToggle={() => setCurrentChart(currentChart ? "" : chart.key)}
           showConfidenceInt={props.showConfidenceInt}
           userConfig={props.userConfig}
@@ -43,7 +43,7 @@ export const Vizbuilder = props => {
 
   useEffect(() => {
     requestAnimationFrame(resizeEnsureHandler);
-  }, content);
+  }, [content]);
 
   return (
     <TranslationProvider

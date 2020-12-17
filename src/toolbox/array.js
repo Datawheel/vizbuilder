@@ -63,6 +63,61 @@ export function getPermutations(set, result = []) {
 }
 
 /**
+ * Yields partial permutations taking k elements from the supplied list.
+ * @template T
+ * @param {T[]} list 
+ * @param {number} [k]
+ * @param {T[]} [partial]
+ * @returns {IterableIterator<T[]>}
+ */
+export function permutationIterator(list, k = list.length, partial = []) {
+  let index = 0;
+
+  if (k === 1) {
+    return {
+      next() {
+        const value = partial.concat([list[index++]]);
+        return {value, done: index > list.length};
+      },
+      [Symbol.iterator]() {
+        return this;
+      }
+    };
+  }
+
+  let subiterator = permutationIterator(
+    list.slice(1), 
+    k - 1, 
+    partial.concat([list[index]])
+  );
+
+  /** @type {() => IteratorResult<T[]>} */
+  function next() {
+    if (index === list.length) {
+      return {value: null, done: true};
+    }
+
+    const subiteration = subiterator.next();
+
+    if (subiteration.done) {
+      index++;
+      const nextSubList = list.slice();
+      subiterator = permutationIterator(
+        nextSubList, 
+        k - 1, 
+        partial.concat(nextSubList.splice(index, 1))
+      );
+      return next();
+    }
+
+    return {value: subiteration.value, done: false};
+  }
+  
+  const iterator = {next, [Symbol.iterator]: () => iterator};
+  return iterator;
+}
+
+/**
  * TODO: Convert to generalized time
  * @template {Record<string, string | number>} T
  * @param {T[]} dataset
@@ -71,13 +126,10 @@ export function getPermutations(set, result = []) {
  * @param {string} param1.timeDrilldownName
  * @returns {T[]}
  */
-export function getTopTenByYear(dataset, {firstDrilldownName, timeDrilldownName}) {
+export function getTopTenByPeriod(dataset, {firstDrilldownName, timeDrilldownName}) {
   const datasetByPeriod = groupBy(dataset, timeDrilldownName);
 
-  const topTenPointsOfEachPeriod = flatMap(
-    Object.keys(datasetByPeriod),
-    period => datasetByPeriod[period].slice(0, 10)
-  );
+  const topTenPointsOfEachPeriod = flatMap(datasetByPeriod, points => points.slice(0, 10));
   const topTenDrilldownMembers = groupBy(topTenPointsOfEachPeriod, firstDrilldownName);
 
   if (Object.keys(topTenDrilldownMembers).length < 12) {

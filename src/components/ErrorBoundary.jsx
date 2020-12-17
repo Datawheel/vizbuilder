@@ -5,7 +5,7 @@ import {IssueButton} from "./IssueButton";
 
 export class ErrorBoundary extends Component {
   static getDerivedStateFromError(error) {
-    return {error: error.message};
+    return {message: error.message, name: error.name};
   }
 
   state = {

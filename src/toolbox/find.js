@@ -1,5 +1,4 @@
 import {formatAbbreviate} from "d3plus-format";
-import {sortNumbers} from "./sort";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -14,12 +13,19 @@ export function findFirstNumber(string, elseValue) {
 /**
  * Returns the value of the highest timeLevel value in the dataset,
  * but lower or equal than the current time.
- * @param {number[]} timelist An array with time-related members
+ * @param {string[]} timelist An array with time-related members
  */
 export function findHigherCurrentPeriod(timelist) {
-  // TODO: prepare it to handle months, days, etc
-  const currentTime = new Date().getFullYear();
-  return sortNumbers(timelist, false).find(time => time <= currentTime) || timelist[0];
+  const currentTime = new Date().getTime();
+  const matchIndex = timelist.reduce((selected, item, index, list) => {
+    const itemValue = new Date(item).getTime();
+    if (itemValue <= currentTime) {
+      const selectedValue = new Date(list[selected] || -8640000000000000).getTime();
+      return Math.max(itemValue, selectedValue) === itemValue ? index : selected;
+    }
+    return selected;
+  }, -1);
+  return matchIndex > -1 ? timelist[matchIndex] : timelist[0];
 }
 
 /**
