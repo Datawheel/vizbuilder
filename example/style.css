@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+dialog::backdrop {
+  background: rgba(0,0,0,0.9);
+}
+
+.vb-wrapper {
+  display: grid;
+  grid-template-rows: 1rem auto;
+  height: 100vh;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.vb-wrapper .vb-charts-wrapper {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-rows: repeat(auto-fit, minmax(300px, 1fr));
+}
+.vb-wrapper .vb-chart-card {
+  display: grid;
+  grid-template-rows: 2rem 1fr;
+  min-height: 300px;
+}
+.vb-wrapper .vb-chart-viz svg {
+  display: block !important;
+}
+
+.vb-wrapper.debugger {
+  grid-template-rows: 3rem auto;
+}

@@ -5,6 +5,9 @@ node_modules/
 .DS_Store
 .env*
 
+index.cjs.js
+index.esm.js
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
