@@ -21,6 +21,7 @@ declare namespace VizBldr {
     onPeriodChange?: (period: Date) => void;
     queries: QueryResult | QueryResult[];
     showConfidenceInt?: boolean;
+    toolbar?: React.ReactNode;
     topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClnt.Level) => D3plusConfig);
     translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;

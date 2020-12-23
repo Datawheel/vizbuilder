@@ -15,8 +15,6 @@ export const Vizbuilder = props => {
     setCurrentPeriod
   } = useCharts(props);
 
-  const toolbar = <div />;
-
   const content = useMemo(() => {
     const isUniqueChart = charts.length === 1;
     const isSingleChart = currentChart !== "" && charts.length > 1;
@@ -55,7 +53,7 @@ export const Vizbuilder = props => {
         onScroll={scrollEnsureHandler}
       >
         <div className="vb-toolbar-wrapper">
-          {toolbar}
+          {props.toolbar}
         </div>
         <div className={cls("vb-charts-wrapper", {unique: content.length === 1})}>
           {content}

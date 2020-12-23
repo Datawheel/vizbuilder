@@ -75,6 +75,12 @@ A function that's called when the user picks a different time period in the time
 
 Toggles showing confidence intervals / margins of error when available in the query.
 
+### `toolbar`
+* Type: `React.ReactNode`
+* **Optional**, default value: `undefined`
+
+Allows the user to add a toolbar inside the area of the component. In the DOM tree, it is placed before the charts, but the layout can be modified with CSS.
+
 ### `topojsonConfig`
 * Type: `Record<string, D3plusConfig> | ((level: OlapClient.Level) => D3plusConfig)`
 * **Optional**, default value: `{}`
