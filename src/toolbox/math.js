@@ -41,13 +41,21 @@
  * @param {number[]} values
  * @returns {number}
  */
-export function mean(values) {
+export function sum(values) {
   let sum = 0;
   let i = values.length;
   while (i--) {
     sum += values[i];
   }
-  return sum / values.length;
+  return sum;
+}
+
+/**
+ * @param {number[]} values
+ * @returns {number}
+ */
+export function mean(values) {
+  return sum(values) / values.length;
 }
 
 /**
@@ -79,6 +87,15 @@ export function variance(values) {
     sum += delta * (values[i] - mean);
   }
   return count > 1 ? sum / (count - 1) : NaN;
+}
+
+/**
+ * @param {number} value 
+ * @param {number} min 
+ * @param {number} max 
+ */
+export function isBetween(value, min, max) {
+  return value > min && value < max;
 }
 
 /**

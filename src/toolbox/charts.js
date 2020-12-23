@@ -1,6 +1,7 @@
 import {shortHash} from "./math";
 import flattenDeep from "lodash/flattenDeep";
 import flatMap from "lodash/flatMap";
+import range from "lodash/range";
 import {
   buildMemberMap,
   getPermutations,
@@ -54,8 +55,9 @@ export function chartRemixer(dg, chartType) {
  * @returns {VizBldr.Struct.Chart[]}
  */
 function defaultChart(chartType, dg) {
+  const kValues = range(1, dg.stdDrilldowns.length + 1);
   return flatMap(dg.measureSets, measureSet =>
-    flatMap([1, 2], k =>
+    flatMap(kValues, k =>
       Array.from(permutationIterator(dg.stdDrilldowns, k), levels => ({
         chartType,
         dg,
@@ -96,8 +98,9 @@ const remixerForChartType = {
       }
 
       const chartProps = {chartType, dg, measureSet, members};
+      const kValues = range(1, stdDrilldowns.length + 1);
 
-      return flatMap([...new Set([1, 2, stdDrilldowns.length])], k => 
+      return flatMap(kValues, k => 
         Array.from(permutationIterator(stdDrilldowns, k), levels => {
     
           /** Barcharts with more than 20 members are hard to read. */
@@ -312,8 +315,8 @@ const remixerForChartType = {
      */
     const allowedMeasures = dg.measureSets.filter(
       ({measure}) =>
-        ["AVG", "AVERAGE", "MEDIAN", "NONE"].indexOf(measure.aggregatorType) > -1 ||
-        ["Percentage", "Rate"].indexOf(`${measure.annotations.units_of_measurement}`) > -1 &&
+        !["AVG", "AVERAGE", "MEDIAN", "NONE"].includes(measure.aggregatorType) ||
+        ["Percentage", "Rate"].includes(`${measure.annotations.units_of_measurement}`) &&
           membersCount[drilldowns[0].caption] > 1
     );
 

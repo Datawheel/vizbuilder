@@ -1,5 +1,10 @@
 import flatMap from "lodash/flatMap";
 import groupBy from "lodash/groupBy";
+import uniqBy from "lodash/uniqBy";
+import mapValues from "lodash/mapValues";
+import {getColumnId} from "./strings";
+import {areKindaNumeric} from "./validation";
+import {sortLabels, sortNumbers} from "./sort";
 
 /**
  * @template T
@@ -17,22 +22,22 @@ export function asArray(content, target = []) {
  * @returns {{members: Record<string, any[]>, membersCount: Record<string, number>}}
  */
 export function buildMemberMap(dataset, properties) {
-  let p = properties.length;
+  const members = Object.fromEntries(
+    flatMap(properties, property => {
+      const propertyId = getColumnId(property, dataset);
+      const uniqueDatasetForProperty = uniqBy(dataset, d => d[property]);
 
-  /** @type {Record<string, any[]>} */
-  const members = {};
+      return Array.from(new Set([property, propertyId]), prop => {
+        const members = uniqueDatasetForProperty.map(d => d[prop]);
+        const sortedMembers = areKindaNumeric(members) 
+          ? sortNumbers(members) 
+          : sortLabels(members);
+        return [prop, sortedMembers];
+      });
+    })
+  );
 
-  /** @type {Record<string, number>} */
-  const membersCount = {};
-
-  while (p--) {
-    const property = `${properties[p]}`;
-    const memberSet = new Set(dataset.map(item => item[property]));
-    members[property] = Array.from(memberSet).sort();
-    membersCount[property] = memberSet.size;
-  }
-
-  return {members, membersCount};
+  return {members, membersCount: mapValues(members, item => item.length)};
 }
 
 /**
