@@ -1,4 +1,3 @@
-import formUrlEncode from "form-urlencoded";
 import React from "react";
 import {useTranslation} from "../toolbox/useTranslation";
 
@@ -13,20 +12,17 @@ export const IssueButton = ({error, message}) => {
   const {translate: t} = useTranslation();
   const location = typeof window === "object" ? window.location : {};
 
-  const issueParams = formUrlEncode({
-    body: [
-      `**URL**: ${location.href}`,
-      `**Error**: ${error}`,
-      message ? `**Error details:** ${message}\n` : "",
-      "**Detail of the issue:**\n"
-    ].join("\n"),
-    title: `[report/vizbuilder] ${error}`
-  });
+  const body = `**URL**: ${location.href}
+**Error**: ${error}
+${message ? `**Error details:** ${message}\n` : ""}
+**Detail of the issue:**
+`
+  const issueParams = `title=${encodeURIComponent(`[report/vizbuilder] ${error}`)}&body=${encodeURIComponent(body)}`;
 
   return (
     <a
       className="bp3-button bp3-intent-primary"
-      href={`https://github.com/Datawheel/canon/issues/new?${issueParams}`}
+      href={`https://github.com/Datawheel/vizbuilder/issues/new?${issueParams}`}
       rel="noopener noreferrer"
       role="button"
       tabIndex={0}
