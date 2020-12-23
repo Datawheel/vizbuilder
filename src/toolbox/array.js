@@ -1,10 +1,9 @@
 import flatMap from "lodash/flatMap";
 import groupBy from "lodash/groupBy";
-import uniqBy from "lodash/uniqBy";
 import mapValues from "lodash/mapValues";
+import sortBy from "lodash/sortBy";
+import uniqBy from "lodash/uniqBy";
 import {getColumnId} from "./strings";
-import {areKindaNumeric} from "./validation";
-import {sortLabels, sortNumbers} from "./sort";
 
 /**
  * @template T
@@ -25,15 +24,13 @@ export function buildMemberMap(dataset, properties) {
   const members = Object.fromEntries(
     flatMap(properties, property => {
       const propertyId = getColumnId(property, dataset);
-      const uniqueDatasetForProperty = uniqBy(dataset, d => d[property]);
-
-      return Array.from(new Set([property, propertyId]), prop => {
-        const members = uniqueDatasetForProperty.map(d => d[prop]);
-        const sortedMembers = areKindaNumeric(members) 
-          ? sortNumbers(members) 
-          : sortLabels(members);
-        return [prop, sortedMembers];
-      });
+      const uniqueDatasetForProperty = sortBy(
+        uniqBy(dataset, d => d[property]), 
+        d => d[propertyId]
+      );
+      return Array.from(new Set([property, propertyId]), prop => 
+        [prop, uniqueDatasetForProperty.map(d => d[prop])]
+      );
     })
   );
 
