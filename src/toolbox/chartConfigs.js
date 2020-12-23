@@ -121,6 +121,7 @@ const makeConfig = {
 
     const config = assign(
       {
+        groupBy: [firstLevelName],
         discrete: "y",
         x: measureName,
         xConfig: {

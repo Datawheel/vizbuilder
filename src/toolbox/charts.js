@@ -13,6 +13,7 @@ import {isGeographicLevel, isTimeLevel} from "./validation";
 /** @type {Record<string, VizBldr.ChartType>} */
 const CT = {
   BARCHART: "barchart",
+  BARCHARTYEAR: "barchartyear",
   DONUT: "donut",
   GEOMAP: "geomap",
   HISTOGRAM: "histogram",
