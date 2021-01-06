@@ -61,6 +61,7 @@
     "babel-eslint": "^10.0.0",
     "eslint": "^7.0.0",
     "eslint-plugin-react": "^7.0.0",
+    "react-inspector": "^5.1.0",
     "rollup": "^2.0.0",
     "rollup-plugin-cleanup": "^3.0.0",
     "rollup-plugin-terser": "^7.0.2",

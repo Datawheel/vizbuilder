@@ -1,5 +1,6 @@
 import cls from "classnames";
 import React, {useEffect, useMemo, useState} from "react";
+import {ObjectInspector} from "react-inspector";
 import {normalizeMeasureConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
 import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
@@ -69,6 +70,7 @@ export const Vizdebugger = props => {
         onScroll={scrollEnsureHandler}
       >
         <div className="vb-toolbar-wrapper">
+          {props.toolbar}
           <button onClick={() => setCurrentChart(charts[Math.max(0, chartIndex - 1)].key)}>Prev</button>
           <span>{currentChart}</span>
           <button onClick={() => setCurrentChart(charts[Math.min(chartIndex + 1, charts.length - 1)].key)}>Next</button>
@@ -83,6 +85,9 @@ export const Vizdebugger = props => {
           {/* <RawObject object={chart} depthExpanded={2} tagName="div" /> */}
         </div>
         <div className="vb-charts-wrapper unique">{content}</div>
+        <div className="vb-props-wrapper">
+          <ObjectInspector data={chart} />
+        </div>
       </div>
     </TranslationProvider>
   );

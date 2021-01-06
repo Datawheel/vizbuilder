@@ -4,10 +4,13 @@ import ReactDOM from "react-dom";
 import {Vizdebugger} from "../src/components/Vizdebugger";
 import {Vizbuilder, buildQueryParams} from "../src";
 
+import "./style.css";
+
 const ds = new TesseractDataSource("/tesseract/");
 const client = new Client(ds);
 
 const Demo = () => {
+  const [isDebugging, setDebugger] = useState(true);
   const [queries, setQueries] = useState([]);
   const [error, setError] = useState("");
 
@@ -15,15 +18,10 @@ const Demo = () => {
     client.getCube("thomasnet")
       .then(cube => {
         const query = cube.query
+          .addCut("Date.Date.Week", ["2019-01-07"])
+          .addDrilldown("Conversion Action.Conversion Action.Conversion Action")
+          .addDrilldown("Date.Date.Day")
           .setFormat("jsonrecords")
-          // .addDrilldown("Supplier Geography.Supplier Geography.Supplier State")
-          // .addDrilldown("Supplier Contact.Supplier Contact.Supplier Contact")
-          .addDrilldown("Conversion Action")
-          .addDrilldown("Month")
-          // .addMeasure("Viewed Supplier Product Content")
-          // .addMeasure("Viewed Supplier Profile")
-          // .addMeasure("Viewed Supplier Website")
-          // .addMeasure("Supplier Contact")
           .addMeasure("Average Duration")
           .addMeasure("Total Duration");
         return client.execQuery(query).then(queryForVizbuilder);
@@ -47,11 +45,17 @@ const Demo = () => {
     );
   }
 
+  const Vizwrapper = isDebugging ? Vizdebugger : Vizbuilder;
+
   return (
     <div className="demo">
-      <Vizbuilder
+      <Vizwrapper
         queries={queries} 
         allowedChartTypes={["barchart", "geomap", "lineplot", "stacked", "treemap"]}
+        toolbar={
+          <button onClick={() => setDebugger(!isDebugging)}>
+            {isDebugging ? "Change to Vizbuilder" : "Change to Vizdebugger"}
+          </button>}
       />
     </div>
   );
@@ -79,12 +83,12 @@ function queryForVizbuilder({data, query}) {
     cube: query.cube.toJSON(),
     dataset: data,
     params: buildQueryParams(query, {
+      // "Viewed Supplier Product Content": value => value ? "Yes" : "No",
+      // "Viewed Supplier Profile": value => value ? "Yes" : "No",
+      // "Viewed Supplier Website": value => value ? "Yes" : "No",
+      // "Supplier Contact": value => value ? "Yes" : "No",
       "Average Duration": secondFormatter,
-      "Total Duration": secondFormatter,
-      "Viewed Supplier Product Content": value => value ? "Yes" : "No",
-      "Viewed Supplier Profile": value => value ? "Yes" : "No",
-      "Viewed Supplier Website": value => value ? "Yes" : "No",
-      "Supplier Contact": value => value ? "Yes" : "No"
+      "Total Duration": secondFormatter
     })
   };
 }

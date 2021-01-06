@@ -8,10 +8,19 @@ dialog::backdrop {
 
 .vb-wrapper {
   display: grid;
-  grid-template-rows: 1rem auto;
+  grid-template-rows: 1.2rem 1fr;
+  gap: 0.5rem;
   height: 100vh;
-  padding: 1rem;
+  padding: 0.8rem;
   box-sizing: border-box;
+}
+.vb-wrapper .vb-toolbar-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.vb-wrapper .vb-toolbar-wrapper > * {
+  margin-right: 1rem;
 }
 .vb-wrapper .vb-charts-wrapper {
   display: grid;
@@ -28,6 +37,13 @@ dialog::backdrop {
   display: block !important;
 }
 
+.vb-props-wrapper {
+  overflow: auto;
+}
+
 .vb-wrapper.debugger {
-  grid-template-rows: 3rem auto;
+  grid-template-columns: 4fr 1fr;
+}
+.vb-wrapper.debugger .vb-toolbar-wrapper {
+  grid-column: span 2;
 }
