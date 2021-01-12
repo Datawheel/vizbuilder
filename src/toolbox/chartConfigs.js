@@ -30,7 +30,6 @@ export function createChartConfig(chart, uiParams) {
 
   const levelNames = levels.map(lvl => lvl.caption);
   const measureName = measure.name;
-  const getMeasureValue = d => d[measureName];
 
   const isEnlarged = uiParams.currentChart === chart.key || isUniqueChart;
 
@@ -58,8 +57,8 @@ export function createChartConfig(chart, uiParams) {
         duration: 0
       },
 
-      sum: getMeasureValue,
-      value: getMeasureValue
+      sum: measureName,
+      value: measureName
     },
     makeConfig[chartType](chart, uiParams)
   );
@@ -68,10 +67,10 @@ export function createChartConfig(chart, uiParams) {
     ["Percentage", "Rate"].indexOf(`${measure.annotations.units_of_measurement}`) === -1 &&
     ["SUM", "UNKNOWN"].indexOf(measure.aggregatorType) > -1
   ) {
-    config.total = getMeasureValue;
+    config.total = measureName;
   }
 
-  if (timeDrilldown && config.time) {
+  if (timeDrilldown && config.time && chartType !== "lineplot") {
     const timeDrilldownName = getColumnId(timeDrilldown.caption, dg.dataset);
     const {currentPeriod, onPeriodChange} = uiParams;
     const timeMembers = Object.keys(keyBy(dg.dataset, timeDrilldownName));
@@ -186,7 +185,7 @@ const makeConfig = {
         discrete: "x",
         x: timeLevelName,
         xConfig: {
-          title: timeLevelName
+          title: timeLevel?.caption
         },
         y: measureName,
         yConfig: {
@@ -300,13 +299,17 @@ const makeConfig = {
         discrete: "x",
         groupBy: levels.map(lvl => lvl.caption),
         x: timeLevelName,
-        xConfig: {title: timeLevelName},
+        xConfig: {
+          title: timeLevel?.caption
+        },
         y: measureName,
         yConfig: {
           scale: "linear",
           title: measureName,
           tickFormat: formatter
-        }
+        },
+        time: timeLevelName,
+        timeline: false
       },
       userConfig
     );
@@ -331,9 +334,6 @@ const makeConfig = {
         ];
       }
     }
-
-    delete config.time;
-    delete config.total;
 
     return config;
   },
