@@ -25,10 +25,10 @@ export function buildMemberMap(dataset, properties) {
     flatMap(properties, property => {
       const propertyId = getColumnId(property, dataset);
       const uniqueDatasetForProperty = sortBy(
-        uniqBy(dataset, d => d[property]), 
+        uniqBy(dataset, d => d[property]),
         d => d[propertyId]
       );
-      return Array.from(new Set([property, propertyId]), prop => 
+      return Array.from(new Set([property, propertyId]), prop =>
         [prop, uniqueDatasetForProperty.map(d => d[prop])]
       );
     })
@@ -67,7 +67,7 @@ export function getPermutations(set, result = []) {
 /**
  * Yields partial permutations taking k elements from the supplied list.
  * @template T
- * @param {T[]} list 
+ * @param {T[]} list
  * @param {number} [k]
  * @param {T[]} [partial]
  * @returns {IterableIterator<T[]>}
@@ -88,8 +88,8 @@ export function permutationIterator(list, k = list.length, partial = []) {
   }
 
   let subiterator = permutationIterator(
-    list.slice(1), 
-    k - 1, 
+    list.slice(1),
+    k - 1,
     partial.concat([list[index]])
   );
 
@@ -105,8 +105,8 @@ export function permutationIterator(list, k = list.length, partial = []) {
       index++;
       const nextSubList = list.slice();
       subiterator = permutationIterator(
-        nextSubList, 
-        k - 1, 
+        nextSubList,
+        k - 1,
         partial.concat(nextSubList.splice(index, 1))
       );
       return next();
@@ -114,25 +114,25 @@ export function permutationIterator(list, k = list.length, partial = []) {
 
     return {value: subiteration.value, done: false};
   }
-  
+
   const iterator = {next, [Symbol.iterator]: () => iterator};
   return iterator;
 }
 
 /**
- * TODO: Convert to generalized time
  * @template {Record<string, string | number>} T
  * @param {T[]} dataset
  * @param {object} param1
- * @param {string} param1.firstDrilldownName
+ * @param {string} param1.mainDrilldownName
+ * @param {string} param1.measureName
  * @param {string} param1.timeDrilldownName
  * @returns {T[]}
  */
-export function getTopTenByPeriod(dataset, {firstDrilldownName, timeDrilldownName}) {
+export function getTopTenByPeriod(dataset, {mainDrilldownName, measureName, timeDrilldownName}) {
   const datasetByPeriod = groupBy(dataset, timeDrilldownName);
 
-  const topTenPointsOfEachPeriod = flatMap(datasetByPeriod, points => points.slice(0, 10));
-  const topTenDrilldownMembers = groupBy(topTenPointsOfEachPeriod, firstDrilldownName);
+  const topTenPointsOfEachPeriod = flatMap(datasetByPeriod, points => sortBy(points, measureName).slice(-10));
+  const topTenDrilldownMembers = groupBy(topTenPointsOfEachPeriod, mainDrilldownName);
 
   if (Object.keys(topTenDrilldownMembers).length < 12) {
     return topTenPointsOfEachPeriod;
@@ -140,6 +140,7 @@ export function getTopTenByPeriod(dataset, {firstDrilldownName, timeDrilldownNam
 
   const periodList = Object.keys(datasetByPeriod).sort();
   const lastPeriod = periodList[periodList.length - 1];
-  const timeElements = groupBy(datasetByPeriod[lastPeriod].slice(0, 10), firstDrilldownName);
-  return dataset.filter(item => item[firstDrilldownName] in timeElements);
+  const lastPeriodDataset = sortBy(datasetByPeriod[lastPeriod], measureName).slice(-10);
+  const timeElements = groupBy(lastPeriodDataset, mainDrilldownName);
+  return dataset.filter(item => timeElements.hasOwnProperty(item[mainDrilldownName]));
 }

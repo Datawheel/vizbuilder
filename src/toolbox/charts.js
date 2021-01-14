@@ -265,22 +265,26 @@ const remixerForChartType = {
      * @see Issue#296 on {@link https://github.com/Datawheel/canon/issues/296 | GitHub}
      */
     if (memberTotal > 60) {
-      const newDataset = getTopTenByPeriod(dg.dataset, {
-        timeDrilldownName: timeDrilldown.caption,
-        firstDrilldownName: stdDrilldowns[0].caption
+      return dg.measureSets.map(measureSet => {
+        const newDataset = getTopTenByPeriod(dg.dataset, {
+          measureName: measureSet.measure.name,
+          timeDrilldownName: timeDrilldown.caption,
+          mainDrilldownName: stdDrilldowns[0].caption
+        });
+
+        const drilldownNames = dg.drilldowns.map(lvl => lvl.caption);
+        const {members, membersCount} = buildMemberMap(newDataset, drilldownNames);
+
+        /** @type {VizBldr.Struct.Chart[]} */
+        return {
+          chartType: CT.LINEPLOT,
+          dg: {...dg, dataset: newDataset, members, membersCount},
+          isTopTen: true,
+          key: keyMaker(newDataset, stdDrilldowns, measureSet, CT.LINEPLOT),
+          levels: stdDrilldowns,
+          measureSet
+        };
       });
-
-      const drilldownNames = dg.drilldowns.map(lvl => lvl.caption);
-      const {members, membersCount} = buildMemberMap(newDataset, drilldownNames);
-
-      return dg.measureSets.map(measureSet => ({
-        chartType: CT.LINEPLOT,
-        dg: {...dg, dataset: newDataset, members, membersCount},
-        isTopTen: true,
-        key: keyMaker(newDataset, stdDrilldowns, measureSet, CT.LINEPLOT),
-        levels: stdDrilldowns,
-        measureSet
-      }));
     }
 
     return defaultChart(CT.LINEPLOT, dg);

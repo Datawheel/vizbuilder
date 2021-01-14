@@ -319,6 +319,10 @@ const makeConfig = {
       config.yConfig.title += " (Log)";
     }
 
+    if (chart.isTopTen) {
+      config.yConfig.title = `Top ${dg.membersCount[levelName]} items, ${config.yConfig.title}`;
+    }
+
     if (showConfidenceInt && dg.members[levelName].length < 13) {
       const {moe, lci, uci} = chart.measureSet;
       if (lci && uci) {
