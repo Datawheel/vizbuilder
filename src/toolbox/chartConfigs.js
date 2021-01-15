@@ -70,7 +70,7 @@ export function createChartConfig(chart, uiParams) {
     config.total = measureName;
   }
 
-  if (timeDrilldown && config.time && chartType !== "lineplot") {
+  if (timeDrilldown && config.time && !["lineplot", "stacked"].includes(chartType)) {
     const timeDrilldownName = getColumnId(timeDrilldown.caption, dg.dataset);
     const {currentPeriod, onPeriodChange} = uiParams;
     const timeMembers = Object.keys(keyBy(dg.dataset, timeDrilldownName));
