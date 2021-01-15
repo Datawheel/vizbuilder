@@ -51,7 +51,7 @@ const Demo = () => {
     <div className="demo">
       <Vizwrapper
         queries={queries} 
-        allowedChartTypes={["barchart", "geomap", "lineplot", "stacked", "treemap"]}
+        allowedChartTypes={["barchart", "barchartyear", "geomap", "lineplot", "stacked", "treemap"]}
         toolbar={
           <button onClick={() => setDebugger(!isDebugging)}>
             {isDebugging ? "Change to Vizbuilder" : "Change to Vizdebugger"}

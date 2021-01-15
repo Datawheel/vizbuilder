@@ -19,15 +19,19 @@ export const Vizdebugger = props => {
   const [isSingleChart, setSingleChart] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const chart = params.get("chart") || currentChart || charts[0].key;
-    setCurrentChart(chart);
+    if (charts.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const chart = params.get("chart") || currentChart || charts[0].key;
+      setCurrentChart(chart);
+    }
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams({chart: `${currentChart}`});
-    const nextLocation = `${window.location.pathname}?${params}`;
-    window.history.replaceState(currentChart, "", nextLocation);
+    if (currentChart) {
+      const params = new URLSearchParams({chart: `${currentChart}`});
+      const nextLocation = `${window.location.pathname}?${params}`;
+      window.history.replaceState(currentChart, "", nextLocation);
+    }
   }, [currentChart]);
   
   const chartIndex = charts.findIndex(chart => chart.key === currentChart);

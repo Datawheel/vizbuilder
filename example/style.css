@@ -31,10 +31,13 @@ dialog::backdrop {
 .vb-wrapper .vb-chart-card {
   display: grid;
   grid-template-rows: 2rem 1fr;
+  min-width: 0;
   min-height: 300px;
 }
 .vb-wrapper .vb-chart-viz svg {
   display: block !important;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .vb-props-wrapper {
@@ -42,7 +45,7 @@ dialog::backdrop {
 }
 
 .vb-wrapper.debugger {
-  grid-template-columns: 4fr 1fr;
+  grid-template-columns: 4fr minmax(400px, 1fr);
 }
 .vb-wrapper.debugger .vb-toolbar-wrapper {
   grid-column: span 2;
