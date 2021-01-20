@@ -12,7 +12,7 @@ import {getColumnId} from "./strings";
  * @property {boolean} isUniqueChart
  * @property {string} locale
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
- * @property {(period: string) => void} [onPeriodChange]
+ * @property {(periodLabel: string, periodId?: string) => void} [onPeriodChange]
  * @property {boolean} showConfidenceInt
  * @property {import("./useTranslation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
@@ -71,21 +71,27 @@ export function createChartConfig(chart, uiParams) {
   }
 
   if (timeDrilldown && config.time && !["lineplot", "stacked"].includes(chartType)) {
-    const timeDrilldownName = getColumnId(timeDrilldown.caption, dg.dataset);
-    const {currentPeriod, onPeriodChange} = uiParams;
-    const timeMembers = Object.keys(keyBy(dg.dataset, timeDrilldownName));
-
-    // eslint-disable-next-line eqeqeq
-    config.timeFilter = currentPeriod ? d => d[timeDrilldownName] == currentPeriod : undefined;
     config.timeline = isEnlarged;
-    config.timelineConfig = {on: {
-      end: !onPeriodChange 
-        ? undefined
-        : date => {
-          const value = timeMembers.find(member => new Date(member).getTime() === date.getTime());
-          value && onPeriodChange(value);
-        }
-    }};
+  }
+
+  if (timeDrilldown && config.timeline) {
+    const {currentPeriod, onPeriodChange} = uiParams;
+    const timeDrilldownId = getColumnId(timeDrilldown.caption, dg.dataset);
+    const epochReference = keyBy(dg.dataset, d => new Date(d[timeDrilldownId]).getTime());
+    
+    // eslint-disable-next-line eqeqeq
+    config.timeFilter = currentPeriod ? d => d[timeDrilldownId] == currentPeriod : undefined;
+    config.timelineConfig = {
+      on: {
+        end: !onPeriodChange 
+          ? undefined
+          : date => {
+            const periodDatum = epochReference[date.getTime()];
+            periodDatum && onPeriodChange(periodDatum[timeDrilldown.name], periodDatum[timeDrilldownId]);
+          }
+      },
+      tickFormat: epoch => epochReference[epoch][timeDrilldown.name]
+    };
   }
 
   config.tooltipConfig = tooltipGenerator(chart, uiParams);
