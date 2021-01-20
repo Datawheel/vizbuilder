@@ -41,7 +41,7 @@ export function buildDatagroup(qr, props) {
 
   const topojsonConfig = geoDrilldown ? getTopojsonConfig(geoDrilldown) : undefined;
 
-  const stdDrilldowns = drilldowns.filter(lvl => ![geoDrilldown, timeDrilldown].includes(lvl));
+  const stdDrilldowns = drilldowns.filter(lvl => !isTimeLevel(lvl));
 
   const drilldownNames = drilldowns.map(lvl => lvl.caption);
   const {members, membersCount} = buildMemberMap(dataset, drilldownNames);

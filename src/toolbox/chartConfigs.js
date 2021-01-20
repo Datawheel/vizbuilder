@@ -311,8 +311,8 @@ const makeConfig = {
         y: measureName,
         yConfig: {
           scale: "linear",
-          title: measureName,
-          tickFormat: formatter
+          tickFormat: formatter,
+          title: measureName
         },
         time: timeLevelName,
         timeline: false

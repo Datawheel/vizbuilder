@@ -90,6 +90,11 @@ const remixerForChartType = {
     return flatMap(dg.measureSets, measureSet => {
       const {measure} = measureSet;
 
+      // TODO: this is a workaround to prevent crashing, must be replaced
+      if (timeDrilldown && dg.stdDrilldowns.length === 0) {
+        return [];
+      }
+
       /**
        * Do not show any stacked charts if aggregation_method is "NONE"
        * @see {@link https://github.com/Datawheel/canon/issues/327}
@@ -126,9 +131,8 @@ const remixerForChartType = {
    * - timeLevel required
    */
   barchartyear(dg) {
-    const {membersCount, timeDrilldown} = dg;
-    const stdDrilldowns = dg.drilldowns.filter(lvl => lvl !== timeDrilldown);
-    const firstLevel = stdDrilldowns[0];
+    const {membersCount, timeDrilldown, stdDrilldowns} = dg;
+    const firstLevel = stdDrilldowns[0] || timeDrilldown;
 
     if (
 
@@ -137,7 +141,7 @@ const remixerForChartType = {
       membersCount[timeDrilldown.caption] < 2 ||
 
       /** Barcharts with more than 20 members are hard to read. */
-      membersCount[firstLevel.caption] > 20 ||
+      // membersCount[firstLevel.caption] > 20 ||
 
       /** Disable if all levels, except for timeLevel, have only 1 member. */
       stdDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
@@ -246,23 +250,19 @@ const remixerForChartType = {
    * - timeLevel required
    */
   lineplot(dg) {
-    const {membersCount, timeDrilldown} = dg;
+    const {membersCount, timeDrilldown, stdDrilldowns} = dg;
 
     /** timeLevel is required on stacked area charts */
     if (!timeDrilldown || membersCount[timeDrilldown.caption] < 2) {
       return [];
     }
 
-    const stdDrilldowns = dg.drilldowns.filter(lvl => lvl !== timeDrilldown);
-
     const timesFn = (total, lvl) => total * membersCount[lvl.caption];
     const memberTotal = stdDrilldowns.reduce(timesFn, 1);
 
-    /*
+    /**
      * If there's more than 60 lines in a lineplot, only show top ten each year.
-     * Due to the implementation, this remove lineplot from this datagroup
-     * and creates a new datagroup, lineplot-only, for the new trimmed dataset.
-     * @see Issue#296 on {@link https://github.com/Datawheel/canon/issues/296 | GitHub}
+     * @see {@link https://github.com/Datawheel/canon/issues/296 | Issue#296 on GitHub}
      */
     if (memberTotal > 60) {
       return dg.measureSets.map(measureSet => {
@@ -287,7 +287,20 @@ const remixerForChartType = {
       });
     }
 
-    return defaultChart(CT.LINEPLOT, dg);
+    return flatMap(dg.measureSets, measureSet =>
+      dg.stdDrilldowns.map(level => {
+        const levels = [level];
+        return {
+          chartType: CT.LINEPLOT,
+          dg,
+          isMap: isGeographicLevel(level),
+          isTimeline: isTimeLevel(level),
+          key: keyMaker(dg.dataset, levels, measureSet, CT.LINEPLOT),
+          levels,
+          measureSet
+        };
+      })
+    );
   },
 
   /**
@@ -332,9 +345,12 @@ const remixerForChartType = {
    * TREEMAPS
    */
   treemap(dg) {
-    const {dataset, drilldowns, membersCount, members, timeDrilldown} = dg;
-    const stdDrilldowns = drilldowns.filter(lvl => lvl !== timeDrilldown);
+    const {dataset, membersCount, members, timeDrilldown, stdDrilldowns} = dg;
     const chartType = CT.TREEMAP;
+
+    if (timeDrilldown && stdDrilldowns.length === 0) {
+      return [];
+    }
 
     if (
 
