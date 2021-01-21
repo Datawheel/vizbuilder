@@ -2,7 +2,7 @@ import {TesseractDataSource, Client} from "@datawheel/olap-client";
 import React, {useEffect, useState} from "react";
 import ReactDOM from "react-dom";
 import {Vizdebugger} from "../src/components/Vizdebugger";
-import {Vizbuilder, buildQueryParams} from "../src";
+import {Vizbuilder, buildQueryParams} from "../src/index";
 
 import "./style.css";
 

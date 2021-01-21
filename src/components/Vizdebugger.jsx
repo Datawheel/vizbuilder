@@ -38,6 +38,9 @@ export const Vizdebugger = props => {
   const chart = charts[chartIndex];
 
   const content = useMemo(() => {
+    if (charts.length === 0) {
+      return <div>No charts outputted.</div>;
+    }
     if (!chart) {
       return <div>Chart with key {currentChart} not found.</div>;
     }
@@ -46,7 +49,7 @@ export const Vizdebugger = props => {
     return (
       <ChartCard
         chart={chart}
-        currentChart={currentChart}
+        currentChart={isSingleChart || isUniqueChart ? currentChart : ""}
         currentPeriod={currentPeriod}
         isSingleChart={isSingleChart}
         isUniqueChart={isUniqueChart}
@@ -86,10 +89,10 @@ export const Vizdebugger = props => {
             <input type="checkbox" onChange={() => setSingleChart(!isSingleChart)} />
             <span>Single</span>
           </label>
-          {/* <RawObject object={chart} depthExpanded={2} tagName="div" /> */}
         </div>
         <div className="vb-charts-wrapper unique">{content}</div>
         <div className="vb-props-wrapper">
+          <ObjectInspector data={props.queries} />
           <ObjectInspector data={chart} />
         </div>
       </div>

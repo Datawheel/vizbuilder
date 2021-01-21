@@ -78,12 +78,12 @@ export function createChartConfig(chart, uiParams) {
     const {currentPeriod, onPeriodChange} = uiParams;
     const timeDrilldownId = getColumnId(timeDrilldown.caption, dg.dataset);
     const epochReference = keyBy(dg.dataset, d => new Date(d[timeDrilldownId]).getTime());
-    
+
     // eslint-disable-next-line eqeqeq
     config.timeFilter = currentPeriod ? d => d[timeDrilldownId] == currentPeriod : undefined;
     config.timelineConfig = {
       on: {
-        end: !onPeriodChange 
+        end: !onPeriodChange
           ? undefined
           : date => {
             const periodDatum = epochReference[date.getTime()];
@@ -182,8 +182,8 @@ const makeConfig = {
 
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel 
-      ? getColumnId(timeLevel.caption, dg.dataset) 
+    const timeLevelName = timeLevel
+      ? getColumnId(timeLevel.caption, dg.dataset)
       : firstLevelName;
 
     const config = assign(
