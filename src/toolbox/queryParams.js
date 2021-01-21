@@ -21,7 +21,12 @@ export function buildQueryParams(query, formatters = {}) {
 
   return {
     booleans: query.getParam("options"),
-    cuts: [],
+    cuts: query.getParam("cuts")
+      .filter(item => Level.isLevel(item.drillable))
+      .map(item => ({
+        ...item.drillable.descriptor,
+        members: item.members
+      })),
     drilldowns: query.getParam("drilldowns")
       .filter(Level.isLevel)
       .map(item => ({
@@ -30,8 +35,8 @@ export function buildQueryParams(query, formatters = {}) {
         level: item.uniqueName
       })),
     filters: query.getParam("filters").map(item => ({
-      measure: typeof item.measure === "string" 
-        ? item.measure 
+      measure: typeof item.measure === "string"
+        ? item.measure
         : item.measure.name,
       constraint1: item.const1,
       constraint2: item.const2,

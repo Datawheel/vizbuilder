@@ -3,6 +3,7 @@ import keyBy from "lodash/keyBy";
 import {relativeStdDev} from "./math";
 import {sortByCustomKey} from "./sort";
 import {getColumnId} from "./strings";
+import {chartTitleGenerator} from "./title";
 
 /**
  * @typedef UIParams
@@ -97,13 +98,9 @@ export function createChartConfig(chart, uiParams) {
   config.tooltipConfig = tooltipGenerator(chart, uiParams);
   config.zoom = chartType === "geomap" && isSingleChart;
 
-  // if (config.title === undefined) {
-  //   config.title = chartTitleGenerator(chart, {
-  //     activeChart,
-  //     selectedTime,
-  //     isTimeline: isTimeline || config.timeline
-  //   });
-  // }
+  if (config.title === undefined) {
+    config.title = chartTitleGenerator(chart, uiParams);
+  }
 
   assign(config, uiParams.measureConfig[measureName] || {});
   config.data = dg.dataset;
