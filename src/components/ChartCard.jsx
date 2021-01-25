@@ -71,18 +71,18 @@ export const ChartCard = props => {
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
 
   return (
-    <ErrorBoundary>
-      <div className="vb-chart-card">
-        <aside className="vb-chart-toolbar">
-          {!isUniqueChart && <Button
-            icon={buttonIcon}
-            minimal
-            onClick={props.onToggle}
-            text={buttonText}
-          />}
-        </aside>
+    <div className="vb-chart-card">
+      <aside className="vb-chart-toolbar">
+        {!isUniqueChart && <Button
+          icon={buttonIcon}
+          minimal
+          onClick={props.onToggle}
+          text={buttonText}
+        />}
+      </aside>
+      <ErrorBoundary>
         <ChartComponent className="vb-chart-viz" config={config} />
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </div>
   );
 };
