@@ -1,6 +1,6 @@
-import {shortHash} from "./math";
-import flattenDeep from "lodash/flattenDeep";
 import flatMap from "lodash/flatMap";
+import flattenDeep from "lodash/flattenDeep";
+import includes from "lodash/includes";
 import range from "lodash/range";
 import {
   buildMemberMap,
@@ -8,6 +8,7 @@ import {
   getTopTenByPeriod,
   permutationIterator
 } from "./array";
+import {shortHash} from "./math";
 import {isGeographicLevel, isTimeLevel} from "./validation";
 
 /** @type {Record<string, VizBldr.ChartType>} */
@@ -156,9 +157,8 @@ const remixerForChartType = {
      */
     const allowedMeasures = dg.measureSets.filter(
       ({measure}) =>
-        ["SUM", "UNKNOWN"].includes(measure.aggregatorType) &&
-        (stdDrilldowns.length < 2 || 
-          ["Percentage", "Rate"].includes(`${measure.annotations.units_of_measurement}`))
+        includes(["SUM", "UNKNOWN"], measure.aggregatorType) &&
+        (stdDrilldowns.length < 2 || includes(["Percentage", "Rate"], measure.annotations.units_of_measurement))
     );
 
     return defaultChart(CT.BARCHARTYEAR, {...dg, measureSets: allowedMeasures});
@@ -170,8 +170,7 @@ const remixerForChartType = {
    */
   donut(dg) {
     const allowedMeasures = dg.measureSets.filter(
-      measureSet =>
-        !["SUM", "UNKNOWN"].includes(measureSet.measure.aggregatorType)
+      measureSet => !includes(["SUM", "UNKNOWN"], measureSet.measure.aggregatorType)
     );
 
     return defaultChart("donut", {...dg, measureSets: allowedMeasures});
@@ -333,8 +332,8 @@ const remixerForChartType = {
      */
     const allowedMeasures = dg.measureSets.filter(
       ({measure}) =>
-        !["AVG", "AVERAGE", "MEDIAN", "NONE"].includes(measure.aggregatorType) ||
-        ["Percentage", "Rate"].includes(`${measure.annotations.units_of_measurement}`) &&
+        !includes(["AVG", "AVERAGE", "MEDIAN", "NONE"], measure.aggregatorType) ||
+        includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
           membersCount[drilldowns[0].caption] > 1
     );
 
@@ -372,10 +371,10 @@ const remixerForChartType = {
       if (
 
         /** Treemaps only work with SUM-aggregated measures  */
-        !["SUM", "UNKNOWN"].includes(measure.aggregatorType) ||
+        !includes(["SUM", "UNKNOWN"], measure.aggregatorType) ||
 
         /** @see {@link https://github.com/Datawheel/canon/issues/487} */
-        ["Percentage", "Rate"].indexOf(`${measure.annotations.units_of_measurement}`) > -1 &&
+        includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
           membersCount[stdDrilldowns[0].caption] > 1
       ) {
         return [];

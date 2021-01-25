@@ -1,5 +1,6 @@
 import {assign} from "d3plus-common";
 import keyBy from "lodash/keyBy";
+import includes from "lodash/includes";
 import {relativeStdDev} from "./math";
 import {sortByCustomKey} from "./sort";
 import {getColumnId} from "./strings";
@@ -65,13 +66,13 @@ export function createChartConfig(chart, uiParams) {
   );
 
   if (
-    ["Percentage", "Rate"].indexOf(`${measure.annotations.units_of_measurement}`) === -1 &&
-    ["SUM", "UNKNOWN"].indexOf(measure.aggregatorType) > -1
+    !includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
+    includes(["SUM", "UNKNOWN"], measure.aggregatorType)
   ) {
     config.total = measureName;
   }
 
-  if (timeDrilldown && config.time && !["lineplot", "stacked"].includes(chartType)) {
+  if (timeDrilldown && config.time && !includes(["lineplot", "stacked"], chartType)) {
     config.timeline = isEnlarged;
   }
 
@@ -312,7 +313,8 @@ const makeConfig = {
           title: measureName
         },
         time: timeLevelName,
-        timeline: false
+        timeline: false,
+        total: false
       },
       userConfig
     );
@@ -399,7 +401,7 @@ const makeConfig = {
 
 /**
  * Checks if all the additional measures (MoE, UCI, LCI) in a dataset are different from zero.
- * @see Issue#257 on {@link https://github.com/Datawheel/canon/issues/257 | Github}
+ * @see {@link https://github.com/Datawheel/canon/issues/257 Issue#257 on Github}
  * @param {any[]} dataset The dataset to analyze.
  * @param {Record<string, string>} names
  */
@@ -422,10 +424,10 @@ function areMetaMeasuresZero(
 
 /**
  * Generates the function to render the labels in the shapes of a chart.
- * @param {string} lvlName1
- * @param {string[]} lvlName2
+ * @param {string[]} levels
  */
-function labelFunctionGenerator(lvlName1, ...lvlName2) {
+function labelFunctionGenerator(...levels) {
+  const [lvlName1, ...lvlName2] = levels;
   return Array.isArray(lvlName2) && lvlName2.length > 0
     ? d => `${d[lvlName1]} (${lvlName2.map(k => d[k]).join(", ")})`
     : d => `${d[lvlName1]}`;
