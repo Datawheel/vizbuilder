@@ -88,11 +88,11 @@ export function createChartConfig(chart, uiParams) {
         end: !onPeriodChange
           ? undefined
           : date => {
-            const periodDatum = epochReference[date.getTime()];
+            const periodDatum = epochReference[date.valueOf()];
             periodDatum && onPeriodChange(periodDatum[timeDrilldown.name], periodDatum[timeDrilldownId]);
           }
       },
-      tickFormat: epoch => epochReference[epoch][timeDrilldown.name]
+      tickFormat: date => epochReference[date.valueOf()][timeDrilldown.name]
     };
   }
 
