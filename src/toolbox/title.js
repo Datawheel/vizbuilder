@@ -46,15 +46,15 @@ export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
 
   if (levels.length > 0) {
     if (chart.isTopTen) {
-      title += ` for top ${joinStringsWithCommaAnd(levels)}`;
+      title += ` for top ${arrayToSentence(levels)}`;
     }
     else {
-      title += ` by ${joinStringsWithCommaAnd(levels)}`;
+      title += ` by ${arrayToSentence(levels)}`;
     }
   }
 
   if (cuts.length > 0) {
-    title += `, for ${joinStringsWithCommaAnd(cuts)}`;
+    title += `, for ${arrayToSentence(cuts)}`;
   }
 
   if (timeLevelName) {
@@ -72,14 +72,23 @@ export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
 }
 
 /**
- * @param {string[]} strings 
+ * @param {string[]} strings
+ * @param {Record<string, string>} [options]
  * @returns {string}
  */
-function joinStringsWithCommaAnd(strings) {
+function arrayToSentence(strings, options = {}) {
+  const allWords = options.all_words || ", ";
+  const twoWords = options.two_words || " and ";
+  const lastWord = options.last_word || ", and ";
+  strings = strings.filter(Boolean);
+
+  if (strings.length === 2) {
+    return strings.join(twoWords);
+  }
   if (strings.length > 1) {
     const bulk = strings.slice();
     const last = bulk.pop();
-    return `${bulk.join(", ")}, and ${last}`;
+    return [bulk.join(allWords), last].join(lastWord);
   }
   return strings.join("");
 }
