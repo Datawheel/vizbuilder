@@ -105,8 +105,7 @@ export function createChartConfig(chart, uiParams) {
     }
 
     config.timelineConfig = {
-      brushing: true,
-      buttonBehavior: "buttons",
+      brushing: false,
       on: {
         end: !onPeriodChange
           ? undefined
