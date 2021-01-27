@@ -1,6 +1,9 @@
 /**
  * Returns a common title string from a list of parameters.
  * @param {VizBldr.Struct.Chart} chart
+ * @param {object} options
+ * @param {string} options.currentChart
+ * @param {[string, string]} options.currentPeriod
  */
 export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
   const {dg, measureSet} = chart;
@@ -56,7 +59,7 @@ export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
 
   if (timeLevelName) {
     if (chart.key === currentChart && ["lineplot", "stacked"].includes(chart.chartType)) {
-      title += ` (${currentPeriod})`;
+      title += ` (${currentPeriod.filter(Boolean).join(" - ")})`;
     }
     else {
       title = title

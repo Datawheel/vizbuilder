@@ -1,7 +1,9 @@
 import {assign} from "d3plus-common";
-import keyBy from "lodash/keyBy";
 import includes from "lodash/includes";
-import {relativeStdDev} from "./math";
+import keyBy from "lodash/keyBy";
+import {asArray} from "./array";
+import {isBetween, relativeStdDev} from "./math";
+import {parseDate} from "./parse";
 import {sortByCustomKey} from "./sort";
 import {getColumnId} from "./strings";
 import {chartTitleGenerator} from "./title";
@@ -9,12 +11,12 @@ import {chartTitleGenerator} from "./title";
 /**
  * @typedef UIParams
  * @property {string} currentChart
- * @property {string} currentPeriod
+ * @property {[string, string]} currentPeriod
  * @property {boolean} isSingleChart
  * @property {boolean} isUniqueChart
  * @property {string} locale
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
- * @property {(periodLabel: string, periodId?: string) => void} [onPeriodChange]
+ * @property {(periodLeft: string, periodRight?: string) => void} [onPeriodChange]
  * @property {boolean} showConfidenceInt
  * @property {import("./useTranslation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
@@ -79,20 +81,41 @@ export function createChartConfig(chart, uiParams) {
   if (timeDrilldown && config.timeline) {
     const {currentPeriod, onPeriodChange} = uiParams;
     const timeDrilldownId = getColumnId(timeDrilldown.caption, dg.dataset);
-    const epochReference = keyBy(dg.dataset, d => new Date(d[timeDrilldownId]).getTime());
+    const epochReference = keyBy(dg.dataset, d => parseDate(d[timeDrilldownId]).valueOf());
 
-    // eslint-disable-next-line eqeqeq
-    config.timeFilter = currentPeriod ? d => d[timeDrilldownId] == currentPeriod : undefined;
+    /** @type {(date: Date | number) => [string, string]} */
+    const getPeriodForDate = date => {
+      const epoch = date.valueOf();
+      const tzOffset = new Date(epoch).getTimezoneOffset() * 60000;
+      const datum = epochReference[epoch] || epochReference[epoch + tzOffset] || {};
+      return [datum[timeDrilldown.caption] || "", datum[timeDrilldownId] || ""];
+    };
+
+    if (currentPeriod[1]) {
+      const isBetweenPeriods = isBetween.bind(
+        null,
+        parseDate(currentPeriod[0]).valueOf() - 1,
+        parseDate(currentPeriod[1]).valueOf() + 1
+      );
+      config.timeFilter = d => isBetweenPeriods(parseDate(d[timeDrilldownId]).valueOf());
+    }
+    else if (currentPeriod[0]) {
+      // eslint-disable-next-line eqeqeq
+      config.timeFilter = d => currentPeriod[0] == d[timeDrilldownId];
+    }
+
     config.timelineConfig = {
+      brushing: true,
+      buttonBehavior: "buttons",
       on: {
         end: !onPeriodChange
           ? undefined
           : date => {
-            const periodDatum = epochReference[date.valueOf()];
-            periodDatum && onPeriodChange(periodDatum[timeDrilldown.name], periodDatum[timeDrilldownId]);
+            const [periodLeft, periodRight = []] = asArray(date).map(getPeriodForDate);
+            periodLeft && onPeriodChange(periodLeft[1], periodRight[1]);
           }
       },
-      tickFormat: date => epochReference[date.valueOf()][timeDrilldown.name]
+      tickFormat: date => getPeriodForDate(date)[0] || ""
     };
   }
 

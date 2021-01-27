@@ -1,4 +1,5 @@
 import {formatAbbreviate} from "d3plus-format";
+import {parseDate} from "./parse";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -18,7 +19,7 @@ export function findFirstNumber(string, elseValue) {
 export function findHigherCurrentPeriod(timelist) {
   const currentTime = new Date().getTime();
   const matchIndex = timelist.reduce((selected, item, index, list) => {
-    const itemValue = new Date(item).getTime();
+    const itemValue = parseDate(item).getTime();
     if (itemValue <= currentTime) {
       const selectedValue = new Date(list[selected] || -8640000000000000).getTime();
       return Math.max(itemValue, selectedValue) === itemValue ? index : selected;
