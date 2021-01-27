@@ -1,3 +1,10 @@
+/**
+ * Sorting module
+ * Functions in this module can be classified in 2 groups:
+ * - sort functions, which receive a list and parameters, and return the sorted list.
+ * - sorter functions, which generate functions compatible with the Array.prototype.sort method.
+ */
+
 import {findFirstNumber} from "./find";
 import {areKindaNumeric} from "./validation";
 
@@ -7,7 +14,10 @@ import {areKindaNumeric} from "./validation";
  * @param {boolean} [desc]
  */
 export function sortNumbers(list, desc = false) {
-  return list.sort(desc ? (a, b) => a - b : (a, b) => b - a);
+  const sorterFn = desc
+    ? (a, b) => a - b
+    : (a, b) => b - a;
+  return list.slice().sort(sorterFn);
 }
 
 /**
@@ -16,20 +26,20 @@ export function sortNumbers(list, desc = false) {
  * @param {boolean} [desc]
  */
 export function sortLabels(list, desc = false) {
-  return list.sort(
-    desc ? (a, b) => `${a}`.localeCompare(`${b}`) : (a, b) => `${b}`.localeCompare(`${a}`)
-  );
+  const sorterFn = desc
+    ? (a, b) => "".localeCompare.call(a || "", b || "")
+    : (a, b) => "".localeCompare.call(b || "", a || "");
+  return list.slice().sort(sorterFn);
 }
 
 /**
- * Generates a sorting function to be used in `Array.prototype.sort`,
- * based on a certain key.
- * @param {string} key The key to the property to be used as comparison string
+ * Generates a sorter function for a list of objects based on their `key`
+ * property. It tries to apply a natural sorting if the property is numeric.
+ * @param {string} key The key to the property to be used as comparison string.
+ * @param {string[] | number[]} members A list of members the function will work with.
  */
-export function sortByCustomKey(key, members) {
-  if (areKindaNumeric(members)) {
-    return (a, b) => findFirstNumber(a) - findFirstNumber(b);
-  }
-
-  return (a, b) => `${a[key]}`.localeCompare(`${b[key]}`);
+export function sorterByCustomKey(key, members) {
+  return areKindaNumeric(members)
+    ? (a, b) => findFirstNumber(a[key]) - findFirstNumber(b[key])
+    : (a, b) => "".localeCompare.call(a[key] || "", b[key] || "");
 }

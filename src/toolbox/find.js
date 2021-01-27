@@ -31,23 +31,6 @@ export function findHigherCurrentPeriod(timelist) {
 
 /**
  * @param {import("@datawheel/olap-client").Cube} cube
- * @param {VizBldr.Struct.DrilldownItem | VizBldr.Struct.CutItem} item
- * @returns {import("@datawheel/olap-client").Level | undefined}
- */
-export function findLevelInCube(cube, item) {
-  const {dimension: dimName, hierarchy: hieName, level: lvlName} = item;
-  for (const level of cube.levelIterator) {
-    if (level.name === lvlName || level.uniqueName === lvlName || level.fullName === lvlName) {
-      if ((!dimName || dimName === level.dimension.name) && (!hieName || hieName === level.hierarchy.name)) {
-        return level;
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * @param {import("@datawheel/olap-client").Cube} cube
  * @param {VizBldr.Struct.MeasureItem} item
  * @returns {VizBldr.Struct.MeasureSet | undefined}
  */

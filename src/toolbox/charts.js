@@ -107,9 +107,9 @@ const remixerForChartType = {
       const chartProps = {chartType, dg, measureSet, members};
       const kValues = range(1, stdDrilldowns.length + 1);
 
-      return flatMap(kValues, k => 
+      return flatMap(kValues, k =>
         Array.from(permutationIterator(stdDrilldowns, k), levels => {
-    
+
           /** Barcharts with more than 20 members are hard to read. */
           if (membersCount[levels[0].caption] > 20) return null;
 

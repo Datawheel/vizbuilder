@@ -1,9 +1,9 @@
 import {Cube} from "@datawheel/olap-client";
-import maxBy from "lodash/maxBy";
 import {formatAbbreviate} from "d3plus-format";
+import maxBy from "lodash/maxBy";
 import {buildMemberMap} from "./array";
-import {findLevelInCube, findMeasuresInCube} from "./find";
-import {isGeographicLevel, isTimeLevel} from "./validation";
+import {findMeasuresInCube} from "./find";
+import {isGeographicLevel, isMatchingLevel, isTimeLevel} from "./validation";
 
 /**
  * @param {VizBldr.QueryResult} qr
@@ -24,10 +24,21 @@ export function buildDatagroup(qr, props) {
     measureSet && measureSets.push(measureSet);
   }
 
+  const cuts = new Map();
   const drilldowns = [];
-  for (const item of params.drilldowns) {
-    const level = findLevelInCube(cube, item);
-    level && drilldowns.push(level);
+  for (const level of cube.levelIterator) {
+    for (const item of params.drilldowns) {
+      if (isMatchingLevel(item, level)) {
+        drilldowns.push(level);
+        break;
+      }
+    }
+    for (const item of params.cuts) {
+      if (isMatchingLevel(item, level)) {
+        cuts.set(level.caption, item.members);
+        break;
+      }
+    }
   }
 
   const timeDrilldown = drilldowns.find(isTimeLevel);
@@ -45,12 +56,6 @@ export function buildDatagroup(qr, props) {
 
   const drilldownNames = drilldowns.map(lvl => lvl.caption);
   const {members, membersCount} = buildMemberMap(dataset, drilldownNames);
-
-  const cuts = new Map();
-  for (const item of params.cuts) {
-    const level = findLevelInCube(cube, item);
-    level && cuts.set(level.caption, item.members);
-  }
 
   const filters = params.filters.map(item => ({
     ...item,

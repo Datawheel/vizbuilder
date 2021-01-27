@@ -4,7 +4,7 @@ import keyBy from "lodash/keyBy";
 import {asArray} from "./array";
 import {isBetween, relativeStdDev} from "./math";
 import {parseDate} from "./parse";
-import {sortByCustomKey} from "./sort";
+import {sorterByCustomKey} from "./sort";
 import {getColumnId} from "./strings";
 import {chartTitleGenerator} from "./title";
 
@@ -167,7 +167,7 @@ const makeConfig = {
             }
           }
         },
-        ySort: sortByCustomKey(firstLevelName, dg.members[firstLevelName])
+        ySort: sorterByCustomKey(firstLevelName, dg.members[firstLevelName])
       },
       uiParams.userConfig
     );

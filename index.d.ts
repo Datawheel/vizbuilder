@@ -1,15 +1,12 @@
 import React from "react";
-import * as OlapClnt from "@datawheel/olap-client";
-
-// tslint:disable-next-line:export-just-namespace
-export = VizBldr;
-export as namespace VizBldr;
+import * as OlapClient from "@datawheel/olap-client";
 
 declare namespace VizBldr {
   const Vizbuilder: React.FC<VizbuilderProps>;
+
   function buildQueryParams(
-    query: OlapClnt.Query,
-    formatters?: ((measure: OlapClnt.Measure | string) => Formatter) | Record<string, Formatter>
+    query: OlapClient.Query,
+    formatters?: ((measure: OlapClient.Measure | string) => Formatter) | Record<string, Formatter>
   ): QueryParams;
 
   interface VizbuilderProps {
@@ -17,12 +14,12 @@ declare namespace VizBldr {
     className?: string;
     datacap?: number;
     defaultLocale?: string;
-    measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClnt.Measure) => D3plusConfig);
+    measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClient.Measure) => D3plusConfig);
     onPeriodChange?: (period: Date) => void;
     queries: QueryResult | QueryResult[];
     showConfidenceInt?: boolean;
     toolbar?: React.ReactNode;
-    topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClnt.Level) => D3plusConfig);
+    topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClient.Level) => D3plusConfig);
     translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;
   }
@@ -43,7 +40,7 @@ declare namespace VizBldr {
     | "treemap";
 
   interface QueryResult {
-    cube: OlapClnt.AdaptedCube;
+    cube: OlapClient.AdaptedCube;
     dataset: any[];
     params: QueryParams;
   }
@@ -73,6 +70,11 @@ declare namespace VizBldr {
       "message": string;
       "title": string;
     };
+    "sentence_connectors": {
+      "all_words": string;
+      "two_words": string;
+      "last_word": string;
+    };
   }
 
   namespace Struct {
@@ -81,6 +83,7 @@ declare namespace VizBldr {
       hierarchy?: string;
       level: string;
       members: string[];
+      exclude?: boolean;
     }
 
     interface DrilldownItem {
@@ -92,8 +95,8 @@ declare namespace VizBldr {
     }
 
     interface FilterItem {
-      constraint1: [OlapClnt.Comparison, number];
-      constraint1?: [OlapClnt.Comparison, number] | undefined;
+      constraint1: [OlapClient.Comparison, number];
+      constraint1?: [OlapClient.Comparison, number] | undefined;
       formatter?: Formatter;
       joint?: "and" | "or" | undefined;
       measure: string;
@@ -117,67 +120,90 @@ declare namespace VizBldr {
     }
 
     interface Datagroup {
-      cube: OlapClnt.Cube;
+      cube: OlapClient.Cube;
       cuts: Map<string, string[]>;
       datacap: number;
       dataset: any[];
-      drilldowns: OlapClnt.Level[];
+      drilldowns: OlapClient.Level[];
       filters: FilterSet[];
-      geoDrilldown: OlapClnt.Level | undefined;
+      geoDrilldown: OlapClient.Level | undefined;
       maxPeriod: number | undefined;
       measureSets: MeasureSet[];
       members: Record<string, number[]> | Record<string, string[]>;
       membersCount: Record<string, number>;
       params: QueryParams;
-      stdDrilldowns: OlapClnt.Level[];
-      timeDrilldown: OlapClnt.Level | undefined;
+      stdDrilldowns: OlapClient.Level[];
+      timeDrilldown: OlapClient.Level | undefined;
       topojsonConfig: D3plusConfig | undefined;
     }
 
     interface Chart {
       chartType: ChartType;
+
+      /** The Datagroup object where this Chart comes from. */
       dg: Datagroup;
+
+      /** Indicates if this Chart is intended to be presented as a map. */
       isMap: boolean;
+
+      /** Indicates if this Chart has a dimension that shows variations over a period of time. Charts with a time axis don't count. */
       isTimeline: boolean;
+
+      /** Indicates if this Chart only presents a few selected items from a much longer list, to simplify the interpretation. */
       isTopTen?: boolean;
+
+      /** A string that uniquely identifies this chart in the context of the query it belongs to. */
       key: string;
-      levels: OlapClnt.Level[];
+
+      /** A list of the Levels shown in this Chart. */
+      levels: OlapClient.Level[];
+
+      /** The measure (and its associated error measures) shown in this chart. */
       measureSet: MeasureSet;
     }
 
     interface FilterSet {
-      constraint1: [OlapClnt.Comparison, number];
-
-      constraint2?: [OlapClnt.Comparison, number] | undefined;
-
-      formatter: Formatter;
-
-      joint?: "and" | "or" | undefined;
-
-      measure: OlapClnt.Measure;
-    }
-
-    interface MeasureSet {
       /** The measure set directly by the user. */
-      measure: OlapClnt.Measure;
+      measure: OlapClient.Measure;
 
       /** A formatting function to display values. */
       formatter: Formatter;
 
-      /** Collection measure. */
-      collection: OlapClnt.Measure | undefined;
+      /** Main constraint for the filter */
+      constraint1: [OlapClient.Comparison, number];
+
+      /** Additional constraint for the filter, associated to the same measure. */
+      constraint2?: [OlapClient.Comparison, number];
+
+      /** The joint condition for the constraints, only valid when both are defined. */
+      joint?: "and" | "or";
+    }
+
+    interface MeasureSet {
+      /** The measure set directly by the user. */
+      measure: OlapClient.Measure;
+
+      /** A formatting function to display values. */
+      formatter: Formatter;
 
       /** */
-      source: OlapClnt.Measure | undefined;
+      collection: OlapClient.Measure | undefined;
 
-      /** Margin of error measure for the current measure. */
-      moe?: OlapClnt.Measure;
+      /** */
+      source: OlapClient.Measure | undefined;
+
+      /** Margin of Error measure for the current measure. */
+      moe?: OlapClient.Measure;
 
       /** The Lower Confidence Interval measure for the current measure. */
-      lci?: OlapClnt.Measure;
+      lci?: OlapClient.Measure;
 
       /** The Upper Confidence Interval measure for the current measure. */
-      uci?: OlapClnt.Measure;
+      uci?: OlapClient.Measure;
     }
   }
 }
+
+// tslint:disable-next-line:export-just-namespace
+export = VizBldr;
+export as namespace VizBldr;
