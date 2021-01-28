@@ -13,6 +13,11 @@
       "default": "./dist/index.esm.js"
     }
   },
+  "files": [
+    "dist/index.cjs.js",
+    "dist/index.esm.js",
+    "index.d.ts"
+  ],
   "scripts": {
     "build": "rollup --config rollup.config.js --environment NODE_ENV:production,BABEL_ENV:production",
     "prepublishOnly": "npm run build",
