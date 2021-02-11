@@ -1,7 +1,7 @@
 const httpProxy = require("http-proxy");
 const proxy = httpProxy.createServer({
-  auth: "workspace:work_in_progress",
-  target: "http://explorer.dev.thomasnet.com"
+  auth: "username:password",
+  target: "http://olap-server.url"
 });
 
 /** @type {import("snowpack").SnowpackUserConfig} */
@@ -14,7 +14,7 @@ module.exports = {
   routes: [{
     match: "all",
     src: "/tesseract.*",
-    dest: (req, res) => proxy.web(req, res),
+    dest: (req, res) => proxy.web(req, res)
   }],
   devOptions: {
     open: "none"
