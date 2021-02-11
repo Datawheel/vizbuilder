@@ -50,3 +50,26 @@ dialog::backdrop {
 .vb-wrapper.debugger .vb-toolbar-wrapper {
   grid-column: span 2;
 }
+
+dialog {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  margin: auto;
+  box-shadow: 0 0 1em rgba(0, 0, 0, 0.4);
+  border-width: 1px;
+  border-radius: 3px;
+}
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(0.2);
+}
+
+dialog textarea {
+  display: block;
+  width: 50vw;
+  height: 50vh;
+  box-sizing: border-box;
+}

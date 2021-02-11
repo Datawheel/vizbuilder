@@ -5,6 +5,8 @@ node_modules/
 .DS_Store
 .env*
 
+*.debug
+
 index.cjs.js
 index.esm.js
 

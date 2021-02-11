@@ -1,4 +1,5 @@
 import {formatAbbreviate} from "d3plus-format";
+import {parseDate} from "./parse";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -18,7 +19,7 @@ export function findFirstNumber(string, elseValue) {
 export function findHigherCurrentPeriod(timelist) {
   const currentTime = new Date().getTime();
   const matchIndex = timelist.reduce((selected, item, index, list) => {
-    const itemValue = new Date(item).getTime();
+    const itemValue = parseDate(item).getTime();
     if (itemValue <= currentTime) {
       const selectedValue = new Date(list[selected] || -8640000000000000).getTime();
       return Math.max(itemValue, selectedValue) === itemValue ? index : selected;
@@ -26,23 +27,6 @@ export function findHigherCurrentPeriod(timelist) {
     return selected;
   }, -1);
   return matchIndex > -1 ? timelist[matchIndex] : timelist[0];
-}
-
-/**
- * @param {import("@datawheel/olap-client").Cube} cube
- * @param {VizBldr.Struct.DrilldownItem | VizBldr.Struct.CutItem} item
- * @returns {import("@datawheel/olap-client").Level | undefined}
- */
-export function findLevelInCube(cube, item) {
-  const {dimension: dimName, hierarchy: hieName, level: lvlName} = item;
-  for (const level of cube.levelIterator) {
-    if (level.name === lvlName || level.uniqueName === lvlName || level.fullName === lvlName) {
-      if ((!dimName || dimName === level.dimension.name) && (!hieName || hieName === level.hierarchy.name)) {
-        return level;
-      }
-    }
-  }
-  return undefined;
 }
 
 /**

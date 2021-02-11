@@ -30,11 +30,11 @@ export const chartComponents = {
  * @typedef ChartCardProps
  * @property {VizBldr.Struct.Chart} chart The information needed to build a specific chart configuration.
  * @property {string} currentChart The key of the currently selected chart
- * @property {string} currentPeriod The currently selected time period
+ * @property {[string, string]} currentPeriod The currently selected time period
  * @property {boolean} isSingleChart The view has other charts, but the user is enlarging this one
  * @property {boolean} isUniqueChart The view only has this chart
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
- * @property {(period: string) => void} onPeriodChange A handler for when the user selects a different time period on the timeline of a chart.
+ * @property {(periodLeft: string, periodRight?: string) => void} onPeriodChange A handler for when the user selects a different time period on the timeline of a chart.
  * @property {() => void} onToggle A handler for when the user selects a specific chart.
  * @property {VizBldr.VizbuilderProps["showConfidenceInt"]} showConfidenceInt Toggles confidence intervals/margins of error when available.
  * @property {VizBldr.VizbuilderProps["userConfig"]} userConfig A global d3plus config that gets applied on all charts. Has priority over the individually generated configs per chart, but can be overridden by internal working configurations.
@@ -71,18 +71,18 @@ export const ChartCard = props => {
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
 
   return (
-    <ErrorBoundary>
-      <div className="vb-chart-card">
-        <aside className="vb-chart-toolbar">
-          {!isUniqueChart && <Button
-            icon={buttonIcon}
-            minimal
-            onClick={props.onToggle}
-            text={buttonText}
-          />}
-        </aside>
+    <div className="vb-chart-card">
+      <aside className="vb-chart-toolbar">
+        {!isUniqueChart && <Button
+          icon={buttonIcon}
+          minimal
+          onClick={props.onToggle}
+          text={buttonText}
+        />}
+      </aside>
+      <ErrorBoundary>
         <ChartComponent className="vb-chart-viz" config={config} />
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/vizbuilder",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "description": "A React component that visualizes multiple kinds of charts according to the data from a olap-client query.",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.js",
@@ -13,6 +13,11 @@
       "default": "./dist/index.esm.js"
     }
   },
+  "files": [
+    "dist/index.cjs.js",
+    "dist/index.esm.js",
+    "index.d.ts"
+  ],
   "scripts": {
     "build": "rollup --config rollup.config.js --environment NODE_ENV:production,BABEL_ENV:production",
     "prepublishOnly": "npm run build",

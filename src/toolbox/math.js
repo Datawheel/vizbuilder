@@ -90,11 +90,11 @@ export function variance(values) {
 }
 
 /**
- * @param {number} value 
- * @param {number} min 
- * @param {number} max 
+ * @param {number} value
+ * @param {number} min
+ * @param {number} max
  */
-export function isBetween(value, min, max) {
+export function isBetween(min, max, value) {
   return value > min && value < max;
 }
 
