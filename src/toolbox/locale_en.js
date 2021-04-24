@@ -1,6 +1,7 @@
 /** @type {VizBldr.Translation} */
 export const LOCALE_EN = {
   action_close: "Close",
+  action_download: "Download {format}",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
   action_retry: "Retry",
@@ -12,7 +13,7 @@ export const LOCALE_EN = {
   },
   error: {
     detail: "",
-    message: "Error details: \"{{message}}\".",
+    message: "Error details: \"{message}\".",
     title: "Title: "
   },
   sentence_connectors: {

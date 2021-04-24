@@ -33,7 +33,7 @@ export const Vizdebugger = props => {
       window.history.replaceState(currentChart, "", nextLocation);
     }
   }, [currentChart]);
-  
+
   const chartIndex = charts.findIndex(chart => chart.key === currentChart);
   const chart = charts[chartIndex];
 
@@ -51,6 +51,7 @@ export const Vizdebugger = props => {
         chart={chart}
         currentChart={isSingleChart || isUniqueChart ? currentChart : ""}
         currentPeriod={currentPeriod}
+        downloadFormats={props.downloadFormats}
         isSingleChart={isSingleChart}
         isUniqueChart={isUniqueChart}
         key={chart.key}

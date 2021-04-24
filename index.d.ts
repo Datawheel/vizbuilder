@@ -1,6 +1,10 @@
 import React from "react";
 import * as OlapClient from "@datawheel/olap-client";
 
+// tslint:disable-next-line:export-just-namespace
+export = VizBldr;
+export as namespace VizBldr;
+
 declare namespace VizBldr {
   const Vizbuilder: React.FC<VizbuilderProps>;
 
@@ -14,6 +18,7 @@ declare namespace VizBldr {
     className?: string;
     datacap?: number;
     defaultLocale?: string;
+    downloadFormats?: string[];
     measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClient.Measure) => D3plusConfig);
     onPeriodChange?: (period: Date) => void;
     queries: QueryResult | QueryResult[];
@@ -56,6 +61,7 @@ declare namespace VizBldr {
 
   interface Translation {
     "action_close": string;
+    "action_download": string;
     "action_enlarge": string;
     "action_retry": string;
     "action_fileissue": string;
@@ -203,7 +209,3 @@ declare namespace VizBldr {
     }
   }
 }
-
-// tslint:disable-next-line:export-just-namespace
-export = VizBldr;
-export as namespace VizBldr;

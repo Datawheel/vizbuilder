@@ -27,6 +27,7 @@ export const Vizbuilder = props => {
           chart={chart}
           currentChart={currentChart}
           currentPeriod={currentPeriod}
+          downloadFormats={props.downloadFormats}
           isSingleChart={isSingleChart}
           isUniqueChart={isUniqueChart}
           key={chart.key}
