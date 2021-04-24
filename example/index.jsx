@@ -4,8 +4,6 @@ import {Vizdebugger} from "../src/components/Vizdebugger";
 import {Vizbuilder} from "../src/index";
 import {useQuery} from "./useQuery";
 
-import "./style.css";
-
 const Demo = () => {
   const [isDebugging, setDebugger] = useState(true);
   const [dialogState, setDialogState] = useState(false);
@@ -28,7 +26,8 @@ const Demo = () => {
   return (
     <div className="demo">
       <Vizwrapper
-        queries={result} 
+        queries={result}
+        downloadFormats={["svg", "png"]}
         allowedChartTypes={["barchart", "barchartyear", "geomap", "lineplot", "stacked", "treemap"]}
         toolbar={
           <React.Fragment>
@@ -36,7 +35,7 @@ const Demo = () => {
             <dialog open={dialogState}>
               <form method="dialog" onSubmit={({target: form}) => {
                 setQuery(form.plainQuery.value);
-                setDialogState(true);
+                setDialogState(false);
               }}>
                 <textarea name="plainQuery" defaultValue={query} />
                 <button type="submit">Cerrar</button>
@@ -53,7 +52,7 @@ const Demo = () => {
 };
 
 ReactDOM.render(
-  React.createElement(Demo), 
+  React.createElement(Demo),
   document.getElementById("app")
 );
 

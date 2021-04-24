@@ -34,7 +34,10 @@ export default commandLineArgs => ({
   ],
   plugins: [
     replace({
-      ENVIRONMENT: JSON.stringify(environment)
+      preventAssignment: true,
+      values: {
+        ENVIRONMENT: JSON.stringify(environment)
+      }
     }),
     resolve({
       extensions: [".mjs", ".js", ".jsx"],
