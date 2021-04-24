@@ -14,7 +14,8 @@ export const useQuery = () => {
   });
 
   const setQuery = value => {
-    typeof window === "object" && localStorage.setItem("vizbuilder-query", value);
+    typeof window === "object" &&
+      window.localStorage.setItem("vizbuilder-query", value);
     setPlainQuery(value);
   };
 
@@ -27,7 +28,8 @@ export const useQuery = () => {
 
     client.getCube(q.cube)
       .then(cube => {
-        const query = fillQueryFromJSON(cube.query, q.query)
+        const query = cube.query
+          .fromJSON(q)
           .setFormat(Format.jsonrecords);
 
         return client.execQuery(query).then(queryForVizbuilder);

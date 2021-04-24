@@ -1,5 +1,6 @@
 import React from "react";
 import * as OlapClient from "@datawheel/olap-client";
+import * as I18N from "@datawheel/use-translation";
 
 // tslint:disable-next-line:export-just-namespace
 export = VizBldr;
@@ -59,7 +60,7 @@ declare namespace VizBldr {
     measures: Struct.MeasureItem[];
   }
 
-  interface Translation {
+  interface Translation extends I18N.TranslationDict {
     "action_close": string;
     "action_download": string;
     "action_enlarge": string;

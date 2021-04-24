@@ -18,7 +18,7 @@ import {chartTitleGenerator} from "./title";
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
  * @property {(periodLeft: string, periodRight?: string) => void} [onPeriodChange]
  * @property {boolean} showConfidenceInt
- * @property {import("./useTranslation").TranslateFunction} translate
+ * @property {import("@datawheel/use-translation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
  */
 
