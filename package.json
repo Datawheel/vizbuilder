@@ -41,17 +41,15 @@
     "url": "https://github.com/Datawheel/vizbuilder.git"
   },
   "dependencies": {
-    "@babel/runtime-corejs3": "^7.13.17",
+    "@babel/runtime-corejs3": "^7.0.0",
     "@datawheel/olap-client": "^2.0.0-beta.1",
-    "@datawheel/use-translation": "^0.1.2",
-    "classnames": "^2.3.1",
-    "d3plus-common": "^1.0.3",
+    "@datawheel/use-translation": "^0.1.0",
+    "classnames": "^2.0.0",
+    "d3plus-common": "^1.0.0",
     "d3plus-export": "^1.0.0",
     "d3plus-format": "^1.0.0",
     "d3plus-react": "^1.0.0",
-    "lodash": "^4.17.21",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "lodash": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.13.16",
@@ -70,10 +68,16 @@
     "eslint-plugin-react": "^7.23.2",
     "http-proxy": "^1.18.1",
     "react-inspector": "^5.1.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
     "rollup": "^2.45.2",
     "rollup-plugin-cleanup": "^3.2.1",
     "rollup-plugin-terser": "^7.0.2",
     "snowpack": "^3.3.5"
+  },
+  "peerDependencies": {
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
   },
   "eslintConfig": {
     "extends": "@datawheel",
