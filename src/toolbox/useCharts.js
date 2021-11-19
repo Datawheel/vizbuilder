@@ -74,7 +74,7 @@ function calculateDefaultPeriod(query) {
       // Prevent empty charts by getting only time members where
       // the measure has an useful value
       // eslint-disable-next-line eqeqeq
-      query.dataset.filter(d => d[measure] != 0).map(d => d[captionId])
+      query.dataset.filter(d => d[measure] != 0).map(d => ''.concat(d[captionId]))
     );
     return findHigherCurrentPeriod([...timeMembers]);
   });
