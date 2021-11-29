@@ -4,6 +4,7 @@ import {normalizeMeasureConfig, resizeEnsureHandler, scrollEnsureHandler} from "
 import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard} from "./ChartCard";
+import NonIdealState from "./NonIdealState";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */
 export const Vizbuilder = props => {
@@ -20,7 +21,7 @@ export const Vizbuilder = props => {
     const isSingleChart = currentChart !== "" && charts.length > 1;
     const measureConfig = normalizeMeasureConfig(props.measureConfig);
 
-    return charts
+    const chartCards = charts
       .filter(chart => chart && (currentChart ? chart.key === currentChart : true))
       .map(chart =>
         <ChartCard
@@ -38,6 +39,9 @@ export const Vizbuilder = props => {
           userConfig={props.userConfig}
         />
       );
+
+      // return NonIdealState comp if the list of available chart types is empty
+      return chartCards.length > 0 ? chartCards : <NonIdealState/>;
   }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
 
   useEffect(() => {
