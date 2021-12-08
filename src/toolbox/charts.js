@@ -189,43 +189,49 @@ const remixerForChartType = {
    * - geoLevel required
    */
   geomap(dg) {
-    const {cuts, geoDrilldown, stdDrilldowns, members} = dg;
+    const {cuts, drilldowns, geoDrilldown, stdDrilldowns, membersCount} = dg;
 
+    /* DISABLE IF... */
     if (
-
-      /** Disable if there's no user-defined topojson config for the geoLevel */
+      /* there's no user-defined topojson config for the geoLevel */
       !dg.topojsonConfig ||
 
-      /** Disable if there's no geoLevel in this query */
-      !geoDrilldown
+      /* there's no geoLevel in this query */
+      !geoDrilldown ||
+
+      /* more than one other drilldown dimension */
+      drilldowns.length > 2 ||
+
+      /* geoLevel has less than 3 regions */
+      membersCount[geoDrilldown.caption] < 3 ||
+
+      /* there's a standard drilldown dimension with only one cut */
+      (stdDrilldowns[0] && cuts.get(stdDrilldowns[0]?.caption)?.length !== 1)
     ) {
       return [];
     }
 
-    const geoDrilldownName = geoDrilldown.caption;
-    const geoDrilldownMembers = members[geoDrilldownName] || [];
+    /*
+      Assumptions at this point:
+      - one geo level with 3 or more members
+      - no other levels
+      -   OR one standard level with a cut of only one member
+      -   OR one time level
 
-    const isGeoPlusUniqueCutQuery = () => {
-      const notGeoDrilldown = stdDrilldowns[0];
-      if (notGeoDrilldown) {
-        const notGeoLvlCut = cuts.get(notGeoDrilldown.caption);
-        return notGeoLvlCut && notGeoLvlCut.length === 1;
-      }
-      return false;
-    };
+      Now we construct one chart configuration for each measure...
+     */
 
-    if (
+    // TODO - add in logic to iterate over a standard drilldown level with only a few cuts or members
 
-      /** Disable if the geoLevel has less than 3 regions */
-      geoDrilldownMembers.length < 3 ||
-
-      /** If besides geoLevel, there's another level with only one cut */
-      stdDrilldowns.length === 1 && !isGeoPlusUniqueCutQuery()
-    ) {
-      return [];
-    }
-
-    return defaultChart(CT.GEOMAP, dg);
+    return flatMap(dg.measureSets, measureSet => ({
+      chartType: CT.GEOMAP,
+      dg,
+      isMap: true,
+      isTimeline: !!dg.timeDrilldown,
+      key: keyMaker(dg.dataset, drilldowns, measureSet, CT.GEOMAP),
+      drilldowns,
+      measureSet
+    }));  
   },
 
   /**
