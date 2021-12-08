@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@babel/runtime-corejs3": "^7.0.0",
-    "@datawheel/olap-client": "^2.0.0-beta.1",
+    "@datawheel/olap-client": "^2.0.0-beta.3",
     "@datawheel/use-translation": "^0.1.0",
     "classnames": "^2.0.0",
     "d3plus-common": "^1.0.0",
