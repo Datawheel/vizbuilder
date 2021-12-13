@@ -292,14 +292,21 @@ const remixerForChartType = {
       });
     }
 
+    // get list of all non-time drilldowns -- a Chart will be created for each
+    let otherDrilldowns =
+      (dg.stdDrilldowns || []).concat((dg.geoDrilldown ? [dg.geoDrilldown] : []))
+      .filter(lvl => dg.membersCount[lvl.caption] <= 20);
+
+    // TODO - figure out how to show a line plot with no other drilldown levels
+
     return flatMap(dg.measureSets, measureSet =>
-      dg.stdDrilldowns.map(level => {
+      otherDrilldowns.map(level => {
         const levels = [level];
         return {
           chartType: CT.LINEPLOT,
           dg,
           isMap: isGeographicLevel(level),
-          isTimeline: isTimeLevel(level),
+          isTimeline: false, // time level is plotted on x-axis in line plot
           key: keyMaker(dg.dataset, levels, measureSet, CT.LINEPLOT),
           levels,
           measureSet
