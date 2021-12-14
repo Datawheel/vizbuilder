@@ -16,11 +16,13 @@ declare namespace VizBldr {
 
   interface VizbuilderProps {
     allowedChartTypes?: ChartType[];
+    chartLimits?: Optional<ChartLimits>;
     className?: string;
     datacap?: number;
     defaultLocale?: string;
     downloadFormats?: string[];
     measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClient.Measure) => D3plusConfig);
+    nonIdealState?: React.ComponentType,
     onPeriodChange?: (period: Date) => void;
     queries: QueryResult | QueryResult[];
     showConfidenceInt?: boolean;
@@ -28,7 +30,6 @@ declare namespace VizBldr {
     topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClient.Level) => D3plusConfig);
     translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;
-    chartLimits: Optional<ChartLimits>;
   }
 
   type Formatter = (value: number) => string;
