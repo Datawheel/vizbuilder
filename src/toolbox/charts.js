@@ -2,6 +2,7 @@ import flatMap from "lodash/flatMap";
 import flattenDeep from "lodash/flattenDeep";
 import includes from "lodash/includes";
 import range from "lodash/range";
+import VizBldr from "../..";
 import {
   getPermutations,
   permutationIterator
@@ -20,17 +21,6 @@ const CT = {
   PIE: "pie",
   STACKED: "stacked",
   TREEMAP: "treemap"
-};
-
-/**
- * Parameters for determining the constraints and limits of certain chart types
- */
-const DEFAULT_CHART_LIMITS = {
-  MAX_BARS: 20,
-  LINE_POINT_MIN: 2,
-  LINE_MAX: 20,
-  STACKED_SHAPE_MAX: 200,
-  TREE_MAP_MAX_SHAPE: 1000
 };
 
 /**
@@ -53,11 +43,12 @@ const keyMaker = (dataset, levels, measureSet, chartType) =>
  *    and what the specified chart type allows
  * @param {VizBldr.Struct.Datagroup} dg
  * @param {VizBldr.ChartType} chartType
+ * @param {VizBldr.ChartLimits} chartLimits
  * @returns {VizBldr.Struct.Chart[]}
  */
-export function chartRemixer(dg, chartType) {
+export function chartRemixer(dg, chartType, chartLimits) {
   const newCharts = remixerForChartType.hasOwnProperty(chartType)
-    ? remixerForChartType[chartType](dg)
+    ? remixerForChartType[chartType](dg, chartLimits)
     : defaultChart(chartType, dg);
   return newCharts;
 }
@@ -87,7 +78,7 @@ function defaultChart(chartType, dg) {
 
 /**
  * Map of ChartType -> function for building valid Chart config arrays
- * @type {Record<string, (dg: VizBldr.Struct.Datagroup) => VizBldr.Struct.Chart[]>}
+ * @type {Record<string, (dg: VizBldr.Struct.Datagroup, chartLimits: VizBldr.ChartLimits) => VizBldr.Struct.Chart[]>}
  */
 const remixerForChartType = {
 
@@ -101,7 +92,7 @@ const remixerForChartType = {
    * Notes:
    * - By default is horizontal because improves label readability
    */
-  barchart(dg) {
+  barchart(dg, chartLimits) {
     const chartType = CT.BARCHART;
     const {dataset, members, membersCount, timeDrilldown} = dg;
 
@@ -127,7 +118,7 @@ const remixerForChartType = {
         Array.from(permutationIterator(validDrilldowns, k), levels => {
 
           /** Disable if too many bars would make the chart unreadable */
-          if (membersCount[levels[0].caption] > DEFAULT_CHART_LIMITS.MAX_BARS) return null;
+          if (membersCount[levels[0].caption] > chartLimits.MAX_BARS) return null;
 
           return {
             ...chartProps,
@@ -149,7 +140,7 @@ const remixerForChartType = {
    * Notes:
    * - By default is vertical because of time notion
    */
-  barchartyear(dg) {
+  barchartyear(dg, chartLimits) {
     const {membersCount, timeDrilldown, stdDrilldowns} = dg;
     const firstLevel = stdDrilldowns[0] || timeDrilldown;
 
@@ -190,7 +181,7 @@ const remixerForChartType = {
    * Requirements:
    * - measure cannot have SUM or UNKNOWN aggregation type
    */
-  donut(dg) {
+  donut(dg, chartLimits) {
     const allowedMeasures = dg.measureSets.filter(
       measureSet => !includes(["SUM", "UNKNOWN"], measureSet.measure.aggregatorType)
     );
@@ -202,8 +193,8 @@ const remixerForChartType = {
    * PIE CHART
    * - Works the same as donut
    */
-  pie(dg) {
-    return remixerForChartType.donut(dg);
+  pie(dg, chartLimits) {
+    return remixerForChartType.donut(dg, chartLimits);
   },
 
   /**
@@ -215,7 +206,7 @@ const remixerForChartType = {
    * - 2 or less drilldowns
    * - more than 3 geo level members
    */
-  geomap(dg) {
+  geomap(dg, chartLimits) {
     const {cuts, drilldowns, geoDrilldown, stdDrilldowns, membersCount} = dg;
 
     /* DISABLE IF... */
@@ -263,7 +254,7 @@ const remixerForChartType = {
    * HISTOGRAM
    * - TODO: implement bucket detection
    */
-  histogram(dg) {
+  histogram(dg, chartLimits) {
     return [];
 
     // const allowedMeasures = dg.measureSets.filter(
@@ -283,7 +274,7 @@ const remixerForChartType = {
    * - time drilldown with at least LINE_POINT_MIN members
    * - std drilldowns
    */
-  lineplot(dg) {
+  lineplot(dg, chartLimits) {
     const {membersCount, timeDrilldown, stdDrilldowns} = dg;
 
     /* DISABLE IF... */
@@ -292,7 +283,7 @@ const remixerForChartType = {
       !timeDrilldown ||
       
       // time level members are less than minimum required 
-      membersCount[timeDrilldown.caption] < DEFAULT_CHART_LIMITS.LINE_POINT_MIN
+      membersCount[timeDrilldown.caption] < chartLimits.LINE_POINT_MIN
     ) {
       return [];
     }
@@ -303,7 +294,7 @@ const remixerForChartType = {
 
     //
     const otherDrilldownsUnderMemberLimit = otherDrilldowns
-      .filter(lvl => dg.membersCount[lvl.caption] <= DEFAULT_CHART_LIMITS.LINE_MAX);
+      .filter(lvl => dg.membersCount[lvl.caption] <= chartLimits.LINE_MAX);
 
     // if there are non-time drilldowns with a valid number of members...
     const validDrilldowns = otherDrilldownsUnderMemberLimit.length > 0
@@ -337,7 +328,7 @@ const remixerForChartType = {
    * - total combination of datapoint groups is less than CHART_LIMITS.STACKED_SHAPE_MAX
    * - measure is not aggregation type of AVG, MEDIAN, or NONE
    */
-  stacked(dg) {
+  stacked(dg, chartLimits) {
     const {drilldowns, membersCount, timeDrilldown} = dg;
 
     /* DISABLE IF... */
@@ -347,7 +338,7 @@ const remixerForChartType = {
       membersCount[timeDrilldown.caption] < 2 ||
 
       /** Disable if there will be more than CHART_LIMITS.STACKED_SHAPE_MAX shapes in the chart */
-      drilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > DEFAULT_CHART_LIMITS.STACKED_SHAPE_MAX ||
+      drilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.STACKED_SHAPE_MAX ||
 
       /** Disable if all levels, especially timeLevel, contain only 1 member */
       drilldowns.every(lvl => membersCount[lvl.caption] === 1)
@@ -378,7 +369,7 @@ const remixerForChartType = {
    * - standard drilldown with more than one member present
    * - measure is of aggregation type SUM or UNKNOWN
    */
-  treemap(dg) {
+  treemap(dg, chartLimits) {
     const {dataset, membersCount, members, timeDrilldown, stdDrilldowns} = dg;
     const chartType = CT.TREEMAP;
 
@@ -388,7 +379,7 @@ const remixerForChartType = {
       (timeDrilldown && stdDrilldowns.length === 0) ||
 
       // there will be more than ChartLimits.TREE_MAP_MAX_SHAPE shapes in the chart
-      stdDrilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > DEFAULT_CHART_LIMITS.TREE_MAP_MAX_SHAPE ||
+      stdDrilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.TREE_MAP_SHAPE_MAX ||
 
       // all levels, except for timeLevel, have only 1 member.
       stdDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
