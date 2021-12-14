@@ -2,7 +2,7 @@ import flatMap from "lodash/flatMap";
 import flattenDeep from "lodash/flattenDeep";
 import includes from "lodash/includes";
 import range from "lodash/range";
-import VizBldr from "../..";
+
 import {
   getPermutations,
   permutationIterator

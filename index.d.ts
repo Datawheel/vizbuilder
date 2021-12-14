@@ -28,11 +28,25 @@ declare namespace VizBldr {
     topojsonConfig?: Record<string, D3plusConfig> | ((level: OlapClient.Level) => D3plusConfig);
     translations?: Record<string, Translation>;
     userConfig?: D3plusConfig;
+    chartLimits: Optional<ChartLimits>;
   }
 
   type Formatter = (value: number) => string;
 
   type D3plusConfig = {[key: string]: any};
+
+  interface ChartLimits {
+    /** Maximum number of bars in barchart */
+    MAX_BARS: number;
+    /** Minimum number of data points in groupto render a line in lineplot */
+    LINE_POINT_MIN: number;
+    /** Max number of lines to render in lineplot */
+    LINE_MAX: number;
+    /** Max shapes to render in stacked chart */
+    STACKED_SHAPE_MAX: number;
+    /** Max number of shapes to render in tree map */
+    TREE_MAP_SHAPE_MAX: number;
+  }
 
   type ChartType =
     | "barchart"
