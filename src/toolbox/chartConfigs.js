@@ -315,15 +315,17 @@ const makeConfig = {
     const {timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
 
-    const levelName = levels[0].caption;
+    const levelName = levels[0]?.caption;
     const measureName = measure.name;
     const timeLevelName = timeLevel ? getColumnId(timeLevel.caption, dg.dataset) : levelName;
+    // group by a static string if there are no other dimensions besides time
+    const groupBy = levels?.length ? levels.map(lvl => lvl.caption) : () => "ALL";
 
     const config = assign(
       {
         confidence: false,
         discrete: "x",
-        groupBy: levels.map(lvl => lvl.caption),
+        groupBy,
         x: timeLevelName,
         xConfig: {
           title: timeLevel?.caption
@@ -465,7 +467,7 @@ function tooltipGenerator(chart, {translate: t}) {
   const {measure, collection, source, moe, uci, lci, formatter} = measureSet;
 
   const measureName = measure.name;
-  const firstLevelName = levels[0].name;
+  const firstLevelName = levels[0]?.name;
 
   const collectionName = collection ? collection.name : "";
   const lciName = lci ? lci.name : "";

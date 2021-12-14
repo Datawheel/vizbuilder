@@ -292,16 +292,16 @@ const remixerForChartType = {
       });
     }
 
-    // get list of all non-time drilldowns -- a Chart will be created for each
+    // get list of all non-time drilldowns (geo + standard) with less than 20 members
     let otherDrilldowns =
       (dg.stdDrilldowns || []).concat((dg.geoDrilldown ? [dg.geoDrilldown] : []))
       .filter(lvl => dg.membersCount[lvl.caption] <= 20);
 
-    // TODO - figure out how to show a line plot with no other drilldown levels
-
+    // for each measure...
     return flatMap(dg.measureSets, measureSet =>
-      otherDrilldowns.map(level => {
-        const levels = [level];
+      // if other drilldowns exist, create one for each
+      (otherDrilldowns.length > 0 ? otherDrilldowns : [false]).map(level => {
+        const levels = level ? [level] : [];
         return {
           chartType: CT.LINEPLOT,
           dg,
