@@ -68,6 +68,10 @@ export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
     }
   }
 
+  if (title[title.length - 1] === ",") {
+    return title.slice(0, -1)
+  }
+
   return title;
 }
 

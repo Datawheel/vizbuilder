@@ -3,6 +3,7 @@ import flatMap from "lodash/flatMap";
 import {useEffect, useMemo, useState} from "react";
 import {chartComponents} from "../components/ChartCard";
 import {asArray} from "./array";
+import {DEFAULT_CHART_LIMITS} from "./chartLimits";
 import {chartRemixer} from "./charts";
 import {buildDatagroup} from "./datagroup";
 import {findHigherCurrentPeriod} from "./find";
@@ -19,17 +20,20 @@ export const useCharts = props => {
     getDefaultPeriod(props.queries)
   );
 
+  
   const charts = useMemo(() => {
     const allowedChartTypes = props.allowedChartTypes || Object.keys(chartComponents);
     const datagroupProps = {
       datacap: props.datacap || 20000,
       getTopojsonConfig: normalizeTopojsonConfig(props.topojsonConfig)
     };
+    const chartLimits = {...DEFAULT_CHART_LIMITS, ...(props.chartLimits || {})};
+
     return flatMap(asArray(props.queries), query => {
       const datagroup = buildDatagroup(query, datagroupProps);
-      return flatMap(allowedChartTypes, chartType => chartRemixer(datagroup, chartType));
+      return flatMap(allowedChartTypes, chartType => chartRemixer(datagroup, chartType, chartLimits));
     });
-  }, [props.queries]);
+  }, [props.queries, props.chartLimits]);
 
   useEffect(() => {
     const defaultPeriod = getDefaultPeriod(props.queries);

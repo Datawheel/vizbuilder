@@ -18,6 +18,7 @@ const LOCALE_EN = {
     message: "Error details: \"{message}\".",
     title: "Title: "
   },
+  nonidealstate_msg: "No results",
   sentence_connectors: {
     all_words: ", ",
     two_words: " and ",

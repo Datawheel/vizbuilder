@@ -6,6 +6,7 @@
  */
 export function parseDate(dateString) {
   // dateString is quarter, in format `2010Q2` or `10Q2`
+  dateString = dateString?.toString() || "";
   const maybeQuarter = dateString.match(/(\d{2,4})(Q\d)/i);
   if (maybeQuarter) {
     const [, year, quarter] = maybeQuarter;

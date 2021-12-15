@@ -16,7 +16,7 @@ export function areKindaNumeric(list, tolerance = 0.8) {
  * @returns {boolean}
  */
 export function isGeographicLevel(level) {
-  return level.dimension.dimensionType === DimensionType.Geographic;
+  return level?.dimension?.dimensionType === DimensionType.Geographic;
 }
 
 /**
@@ -44,5 +44,5 @@ export function isNumeric(n) {
  * @returns {boolean}
  */
 export function isTimeLevel(level) {
-  return level.dimension.dimensionType === DimensionType.Time;
+  return level?.dimension?.dimensionType === DimensionType.Time;
 }
