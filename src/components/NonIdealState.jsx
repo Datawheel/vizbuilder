@@ -1,11 +1,14 @@
 import React from "react";
+import {useTranslation} from "../toolbox/useTranslation";
 
-const NonIdealState = () => 
-<div className="vizbuilder-nonidealstate">
-  <h1 className="vizbuilder-nonidealstate-header">
-    {"No results"}
-  </h1>
-  }
-</div>;
+const NonIdealState = () => {
+  const {translate: t} = useTranslation();
+
+  return <div className="vizbuilder-nonidealstate">
+    <h1 className="vizbuilder-nonidealstate-header">
+      {t("nonidealstate_msg")}
+    </h1>
+  </div>;
+}
 
 export default NonIdealState;

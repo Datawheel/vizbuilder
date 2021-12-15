@@ -20,14 +20,15 @@ export const useCharts = props => {
     getDefaultPeriod(props.queries)
   );
 
-  const chartLimits = {...DEFAULT_CHART_LIMITS, ...(props.chartLimits || {})};
-
+  
   const charts = useMemo(() => {
     const allowedChartTypes = props.allowedChartTypes || Object.keys(chartComponents);
     const datagroupProps = {
       datacap: props.datacap || 20000,
       getTopojsonConfig: normalizeTopojsonConfig(props.topojsonConfig)
     };
+    const chartLimits = {...DEFAULT_CHART_LIMITS, ...(props.chartLimits || {})};
+
     return flatMap(asArray(props.queries), query => {
       const datagroup = buildDatagroup(query, datagroupProps);
       return flatMap(allowedChartTypes, chartType => chartRemixer(datagroup, chartType, chartLimits));
