@@ -118,7 +118,7 @@ const remixerForChartType = {
         Array.from(permutationIterator(validDrilldowns, k), levels => {
 
           /** Disable if too many bars would make the chart unreadable */
-          if (membersCount[levels[0].caption] > chartLimits.MAX_BARS) return null;
+          if (membersCount[levels[0].caption] > chartLimits.BARCHART_MAX_BARS) return null;
 
           return {
             ...chartProps,
@@ -153,7 +153,7 @@ const remixerForChartType = {
       membersCount[timeDrilldown.caption] < 2 ||
 
       /** Barcharts with more than 20 members are hard to read. */
-      // membersCount[firstLevel.caption] > 20 ||
+      membersCount[firstLevel.caption] > chartLimits.BARCHART_YEAR_MAX_BARS ||
 
       /** all levels, except for timeLevel, have only 1 member. */
       stdDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
@@ -283,7 +283,7 @@ const remixerForChartType = {
       !timeDrilldown ||
       
       // time level members are less than minimum required 
-      membersCount[timeDrilldown.caption] < chartLimits.LINE_POINT_MIN
+      membersCount[timeDrilldown.caption] < chartLimits.LINEPLOT_LINE_POINT_MIN
     ) {
       return [];
     }
@@ -294,7 +294,7 @@ const remixerForChartType = {
 
     //
     const otherDrilldownsUnderMemberLimit = otherDrilldowns
-      .filter(lvl => dg.membersCount[lvl.caption] <= chartLimits.LINE_MAX);
+      .filter(lvl => dg.membersCount[lvl.caption] <= chartLimits.LINEPLOT_LINE_MAX);
 
     // if there are non-time drilldowns with a valid number of members...
     const validDrilldowns = otherDrilldownsUnderMemberLimit.length > 0

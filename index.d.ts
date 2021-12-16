@@ -38,11 +38,13 @@ declare namespace VizBldr {
 
   interface ChartLimits {
     /** Maximum number of bars in barchart */
-    MAX_BARS: number;
+    BARCHART_MAX_BARS: number;
+    /** Maximum number of bars in a year barchart */
+    BARCHART_YEAR_MAX_BARS: number;
     /** Minimum number of data points in groupto render a line in lineplot */
-    LINE_POINT_MIN: number;
+    LINEPLOT_LINE_POINT_MIN: number;
     /** Max number of lines to render in lineplot */
-    LINE_MAX: number;
+    LINEPLOT_LINE_MAX: number;
     /** Max shapes to render in stacked chart */
     STACKED_SHAPE_MAX: number;
     /** Max number of shapes to render in tree map */
