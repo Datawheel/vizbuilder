@@ -193,11 +193,11 @@ const remixerForChartType = {
    * DONUT CHART
    * 
    * Requirements:
-   * - measure cannot have UNKNOWN aggregation type
+   * - measure cannot have UNKNOWN, AVERAGE, MEDIAN, or NONE aggregation type
    */
   donut(dg, chartLimits) {
     const allowedMeasures = dg.measureSets.filter(
-      measureSet => !includes(["UNKNOWN"], measureSet.measure.aggregatorType)
+      measureSet => !includes(["UNKNOWN", "AVG", "AVERAGE", "MEDIAN", "NONE"], measureSet.measure.aggregatorType)
     );
     return defaultChart("donut", {...dg, measureSets: allowedMeasures});
   },
@@ -302,7 +302,7 @@ const remixerForChartType = {
     }
 
     // get list of all non-time drilldowns (geo + standard)
-    const otherDrilldowns = dg.drilldowns.filter(lvl => !isTimeLevel(lvl));
+    const otherDrilldowns = getNonTimeDrilldowns(dg);
 
     const otherDrilldownsUnderMemberLimit = otherDrilldowns
       .filter(lvl => dg.membersCount[lvl.caption] <= chartLimits.LINEPLOT_LINE_MAX);
@@ -335,7 +335,7 @@ const remixerForChartType = {
    * STACKED AREA
    * 
    * Requirements:
-   * - timeLevel with 2 or more members
+   * - timeLevel with chartLimits.STACKED_TIME_MEMBER_MIN or more members
    * - total combination of datapoint groups is less than chartLimits.STACKED_SHAPE_MAX
    * - measure is not aggregation type of AVG, MEDIAN, or NONE
    * - data for a certain measure is SIGN_CONSISTENT (meaning it is all negative or all positive, non including zero values)
