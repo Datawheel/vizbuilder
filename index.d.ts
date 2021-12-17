@@ -47,6 +47,8 @@ declare namespace VizBldr {
     LINEPLOT_LINE_MAX: number;
     /** Max shapes to render in stacked chart */
     STACKED_SHAPE_MAX: number;
+    /** Min number of data members in the time dimension (e.g. number of years) required to render stacked area chart */
+    STACKED_TIME_MEMBER_MIN: number;
     /** Max number of shapes to render in tree map */
     TREE_MAP_SHAPE_MAX: number;
   }

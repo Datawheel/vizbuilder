@@ -389,7 +389,6 @@ const makeConfig = {
     if (levels.length > 1) {
       config.groupBy = levels.map(lvl => lvl.caption);
     }
-
     return config;
   },
 

@@ -46,3 +46,22 @@ export function isNumeric(n) {
 export function isTimeLevel(level) {
   return level?.dimension?.dimensionType === DimensionType.Time;
 }
+
+/**
+ * Determines whether the data, given a certain measure, is either all negative or all positive (zeros are treated as neutral)
+ * @param {Object[]} data 
+ * @param {import("@datawheel/olap-client").Measure} measure 
+ * @returns {boolean}
+ */
+export function dataIsSignConsistent(data, measure) {
+  if (!Array.isArray(data) || !data.length) return false;
+  let isPositive = null;
+  return data.every(d => {
+    const val = d[measure.caption];
+    if (isPositive === null) {
+      if (val !== 0) isPositive = val > 0;
+      return true;
+    }
+    else return isPositive ? val >= 0 : val <= 0;
+  });
+}
