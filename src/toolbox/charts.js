@@ -8,7 +8,7 @@ import {
   permutationIterator
 } from "./array";
 import {shortHash} from "./math";
-import {isGeographicLevel, isTimeLevel} from "./validation";
+import {dataIsSignConsistent, isGeographicLevel, isTimeLevel} from "./validation";
 
 /** @type {Record<string, VizBldr.ChartType>} */
 const CT = {
@@ -22,6 +22,20 @@ const CT = {
   STACKED: "stacked",
   TREEMAP: "treemap"
 };
+
+/**
+ * Returns a combined list of all drilldowns that are NOT of a time type
+ * @param {VizBldr.Struct.Datagroup} dg 
+ * @returns {import("@datawheel/olap-client").Level[]} List of combined non-time levels
+ */
+const getNonTimeDrilldowns = dg => dg.drilldowns.filter(lvl => !isTimeLevel(lvl));
+
+/**
+ * Returns a combined list of all drilldowns that are NOT of a geographical type
+ * @param {VizBldr.Struct.Datagroup} dg 
+ * @returns {import("@datawheel/olap-client").Level[]} List of combined non-geo levels
+ */
+ const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
 
 /**
  * Generates a unique key based on the parameters set for a chart.
@@ -179,13 +193,12 @@ const remixerForChartType = {
    * DONUT CHART
    * 
    * Requirements:
-   * - measure cannot have SUM or UNKNOWN aggregation type
+   * - measure cannot have UNKNOWN aggregation type
    */
   donut(dg, chartLimits) {
     const allowedMeasures = dg.measureSets.filter(
-      measureSet => !includes(["SUM", "UNKNOWN"], measureSet.measure.aggregatorType)
+      measureSet => !includes(["UNKNOWN"], measureSet.measure.aggregatorType)
     );
-
     return defaultChart("donut", {...dg, measureSets: allowedMeasures});
   },
 
@@ -275,7 +288,7 @@ const remixerForChartType = {
    * - std drilldowns
    */
   lineplot(dg, chartLimits) {
-    const {membersCount, timeDrilldown, stdDrilldowns} = dg;
+    const {membersCount, timeDrilldown} = dg;
 
     /* DISABLE IF... */
     if (
@@ -289,10 +302,8 @@ const remixerForChartType = {
     }
 
     // get list of all non-time drilldowns (geo + standard)
-    const otherDrilldowns =
-      (dg.stdDrilldowns || []).concat((dg.geoDrilldown ? [dg.geoDrilldown] : []));
+    const otherDrilldowns = dg.drilldowns.filter(lvl => !isTimeLevel(lvl));
 
-    //
     const otherDrilldownsUnderMemberLimit = otherDrilldowns
       .filter(lvl => dg.membersCount[lvl.caption] <= chartLimits.LINEPLOT_LINE_MAX);
 
@@ -324,24 +335,29 @@ const remixerForChartType = {
    * STACKED AREA
    * 
    * Requirements:
-   * - timeLevel
-   * - total combination of datapoint groups is less than CHART_LIMITS.STACKED_SHAPE_MAX
+   * - timeLevel with 2 or more members
+   * - total combination of datapoint groups is less than chartLimits.STACKED_SHAPE_MAX
    * - measure is not aggregation type of AVG, MEDIAN, or NONE
+   * - data for a certain measure is SIGN_CONSISTENT (meaning it is all negative or all positive, non including zero values)
    */
   stacked(dg, chartLimits) {
     const {drilldowns, membersCount, timeDrilldown} = dg;
 
+    const nonTimeDrilldowns = getNonTimeDrilldowns(dg);
+
     /* DISABLE IF... */
     if (
-      /** timeLevel is required on stacked area charts */
+      /** no time level */
       !timeDrilldown ||
-      membersCount[timeDrilldown.caption] < 2 ||
 
-      /** Disable if there will be more than CHART_LIMITS.STACKED_SHAPE_MAX shapes in the chart */
-      drilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.STACKED_SHAPE_MAX ||
+      /** time level has less than two members */
+      membersCount[timeDrilldown.caption] < chartLimits.STACKED_TIME_MEMBER_MIN ||
 
-      /** Disable if all levels, especially timeLevel, contain only 1 member */
-      drilldowns.every(lvl => membersCount[lvl.caption] === 1)
+      /** there are more than CHART_LIMITS.STACKED_SHAPE_MAX shapes in the chart */
+      nonTimeDrilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.STACKED_SHAPE_MAX ||
+
+      /** other levels contain only 1 member */
+      nonTimeDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
     ) {
       return [];
     }
@@ -354,9 +370,13 @@ const remixerForChartType = {
      */
     const allowedMeasures = dg.measureSets.filter(
       ({measure}) =>
-        !includes(["AVG", "AVERAGE", "MEDIAN", "NONE"], measure.aggregatorType) ||
-        includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
-          membersCount[drilldowns[0].caption] > 1
+        (
+          // measure must be of a "stackable" aggregation type like SUM
+          !includes(["AVG", "AVERAGE", "MEDIAN", "NONE"], measure.aggregatorType) ||
+          (includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) && membersCount[drilldowns[0].caption] > 1)
+        ) &&
+        // make sure that data is all negative or all positive
+        dataIsSignConsistent(dg.dataset, measure)
     );
 
     return defaultChart("stacked", {...dg, measureSets: allowedMeasures});
