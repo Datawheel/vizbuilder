@@ -5,68 +5,77 @@
  * @param {string} options.currentChart
  * @param {[string, string]} options.currentPeriod
  */
-export function chartTitleGenerator(chart, {currentChart, currentPeriod}) {
+export function chartTitleGenerator(chart, {currentPeriod}) {
+
+  console.log("Chart", chart.chartType, chart);
+
   const {dg, measureSet} = chart;
-  const {stdDrilldowns, timeDrilldown, members} = dg;
+  const {members} = dg;
 
-  const timeLevelName = timeDrilldown?.name;
   const measureName = measureSet.measure.name;
-
-  const getName = obj => obj.name;
-  const levels = chart.levels.map(getName);
-  const appliedCuts = [...dg.cuts.keys()];
 
   const cuts = [];
 
-  let n = stdDrilldowns.length;
+  const allLevels = [...chart.levels];
+  const allLevelNames = allLevels.map(obj => obj.name);
+
+  let n = allLevels.length;
   while (n--) {
-    const level = stdDrilldowns[n];
+    const level = allLevels[n];
     const levelName = level.caption;
     const values = members[levelName];
 
     let label;
-    if (appliedCuts.indexOf(levelName) === -1) {
-      // label = `All ${pluralize(levelName, 2)}`;
+    if (values.length === 1) {
+      label = `${levelName}: ${values[0]}`;
+      const levelIndex = allLevelNames.indexOf(levelName);
+      if (levelIndex > -1) allLevelNames.splice(levelIndex, 1);
+    }
+    else if (!dg.cuts.has(levelName)) {
       continue;
     }
     else if (values.length > 1) {
-      label = `the ${values.length} selected cuts for ${levelName}`;
-    }
-    else if (values.length === 1) {
-      label = values[0];
-      const levelIndex = levels.indexOf(levelName);
-      if (levelIndex > -1) {
-        levels.splice(levelIndex, 1);
-      }
+      label = `the ${values.length} selected cuts of ${levelName}`;
     }
     cuts.unshift(label);
   }
 
   let title = measureName;
 
-  if (levels.length > 0) {
-    if (chart.isTopTen) {
-      title += ` for top ${arrayToSentence(levels)}`;
+  // add levels / dimensions to titles
+  if (allLevelNames.length > 0) {
+    title += chart.isTopTen
+      ? ` for top ${arrayToSentence(allLevelNames)}`
+      : ` by ${arrayToSentence(allLevelNames)}`;
+  }
+  
+  if (dg.timeDrilldown) {
+    // for charts with enabled timelines...
+    if (dg.membersCount[dg.timeDrilldown.caption] === 1) {
+      title += ` (${dg.dataset[0][dg.timeDrilldown.caption]})`;
     }
-    else {
-      title += ` by ${arrayToSentence(levels)}`;
+    else if (chart.isTimeline) {
+      // add current period to title (because it should be the only period being shown)
+      title += ` (${dg.timeDrilldown.caption}: ${periodToString(currentPeriod)})`;
+    } else {
+      title += ` over Time`;
     }
   }
-
+  
   if (cuts.length > 0) {
-    title += `, for ${arrayToSentence(cuts)}`;
+    title += ` (${arrayToSentence(cuts)})`;
   }
 
-  if (timeLevelName) {
-    if (chart.key === currentChart && ["lineplot", "stacked"].includes(chart.chartType)) {
-      title += ` (${currentPeriod.filter(Boolean).join(" - ")})`;
-    }
-    else {
-      title = title
-        .replace(measureName, `${measureName} by ${timeLevelName},`)
-        .replace(",,", ",");
-    }
-  }
+  // if (timeLevelName) {
+  //   if (chart.key === currentChart && ["lineplot", "stacked"].includes(chart.chartType)) {
+  //     title += ` (${currentPeriod.filter(Boolean).join(" - ")})`;
+  //   }
+  //   else {
+  //     title = title
+  //       .replace(measureName, `${measureName} by ${timeLevelName},`)
+  //       .replace(",,", ",");
+  //   }
+  // }
 
   if (title[title.length - 1] === ",") {
     return title.slice(0, -1)
@@ -95,4 +104,13 @@ function arrayToSentence(strings, options = {}) {
     return [bulk.join(allWords), last].join(lastWord);
   }
   return strings.join("");
+}
+
+/**
+ * 
+ * @param {[string, string]} currentPeriod - array of one or two time 
+ * @returns 
+ */
+function periodToString(currentPeriod) {
+  return `${currentPeriod[0]}${currentPeriod[1] ? ` - ${currentPeriod[1]}` : ""}`;
 }

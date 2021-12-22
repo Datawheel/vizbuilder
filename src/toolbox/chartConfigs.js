@@ -74,7 +74,7 @@ export function createChartConfig(chart, uiParams) {
     config.total = measureName;
   }
 
-  if (timeDrilldown && config.time && !includes(["lineplot", "stacked"], chartType)) {
+  if (timeDrilldown && config.time && chart.isTimeline) {
     config.timeline = isEnlarged;
   }
 
@@ -91,7 +91,7 @@ export function createChartConfig(chart, uiParams) {
       return [datum[timeDrilldown.caption] || "", datum[timeDrilldownId] || ""];
     };
 
-    if (currentPeriod[1]) {
+    if (currentPeriod?.[1]) {
       const isBetweenPeriods = isBetween.bind(
         null,
         parseDate(currentPeriod[0]).valueOf() - 1,
@@ -99,7 +99,7 @@ export function createChartConfig(chart, uiParams) {
       );
       config.timeFilter = d => isBetweenPeriods(parseDate(d[timeDrilldownId]).valueOf());
     }
-    else if (currentPeriod[0]) {
+    else if (currentPeriod?.[0]) {
       // eslint-disable-next-line eqeqeq
       config.timeFilter = d => currentPeriod[0] == d[timeDrilldownId];
     }

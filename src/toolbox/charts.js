@@ -11,7 +11,7 @@ import {shortHash} from "./math";
 import {dataIsSignConsistent, isGeographicLevel, isTimeLevel} from "./validation";
 
 /** @type {Record<string, VizBldr.ChartType>} */
-const CT = {
+export const CT = {
   BARCHART: "barchart",
   BARCHARTYEAR: "barchartyear",
   DONUT: "donut",
@@ -22,6 +22,11 @@ const CT = {
   STACKED: "stacked",
   TREEMAP: "treemap"
 };
+
+/** List of ChartTypes that do not directly visualize time dimensions but might show time via timeline feature */
+const TIME_NATIVE_CHART_TYPES = [
+  CT.BARCHARTYEAR, CT.LINEPLOT, CT.STACKED
+];
 
 /**
  * Returns a combined list of all drilldowns that are NOT of a time type
@@ -77,11 +82,13 @@ function defaultChart(chartType, dg) {
   const kValues = range(1, dg.stdDrilldowns.length + 1);
   return flatMap(dg.measureSets, measureSet =>
     flatMap(kValues, k =>
-      Array.from(permutationIterator(dg.stdDrilldowns, k), levels => ({
+      // get different combinations of non-time (discrete) drilldowns
+      Array.from(permutationIterator(getNonTimeDrilldowns(dg), k), levels => ({
         chartType,
         dg,
         isMap: levels.some(isGeographicLevel),
-        isTimeline: levels.some(isTimeLevel),
+        // timeline is only possible if time drilldown is present and the chartType does not include a time axis already
+        isTimeline: !!dg.timeDrilldown && !TIME_NATIVE_CHART_TYPES.includes(chartType),
         key: keyMaker(dg.dataset, levels, measureSet, chartType),
         levels,
         measureSet
@@ -111,8 +118,7 @@ const remixerForChartType = {
     const {dataset, members, membersCount, timeDrilldown} = dg;
 
     // get all drilldowns that are not time-related and have more than one member
-    const validDrilldowns = dg.drilldowns
-      .filter(lvl => lvl !== timeDrilldown && membersCount[lvl.caption] > 1);
+    const validDrilldowns = getNonTimeDrilldowns(dg).filter(lvl => membersCount[lvl.caption] > 1);
 
     /* DISABLE if no non-time drilldowns with more than one member */
     if (validDrilldowns.length === 0) return [];
@@ -124,21 +130,28 @@ const remixerForChartType = {
     const validMeasures =
       dg.measureSets.filter(measureSet => measureSet?.measure?.aggregatorType && measureSet.measure.aggregatorType !== "UNKNOWN");
 
+    const isTimeline = !!timeDrilldown;
+
     return flatMap(validMeasures, measureSet => {
-      const chartProps = {chartType, dg, measureSet, members};
+      const chartProps = {chartType, dg, measureSet, members, isTimeline};
       const kValues = range(1, validDrilldowns.length + 1);
 
+      /** @type {VizBldr.Struct.Chart[]} */
       return flatMap(kValues, k =>
         Array.from(permutationIterator(validDrilldowns, k), levels => {
 
+          // TODO: change this to compute the product of different drilldowns
           /** Disable if too many bars would make the chart unreadable */
           if (membersCount[levels[0].caption] > chartLimits.BARCHART_MAX_BARS) return null;
 
-          return {
+          /** @type {VizBldr.Struct.Chart} */
+          const output = {
             ...chartProps,
             levels,
+            isMap: false,
             key: keyMaker(dataset, levels, measureSet, chartType)
           };
+          return output;
         }).filter(Boolean)
       );
     });
@@ -322,7 +335,7 @@ const remixerForChartType = {
           chartType: CT.LINEPLOT,
           dg,
           isMap: isGeographicLevel(level),
-          isTimeline: false, // time level is plotted on x-axis in line plot
+          isTimeline: false, // time level is plotted on an axis in line plot
           key: keyMaker(dg.dataset, levels, measureSet, CT.LINEPLOT),
           levels,
           measureSet
@@ -390,46 +403,56 @@ const remixerForChartType = {
    * - measure is of aggregation type SUM or UNKNOWN
    */
   treemap(dg, chartLimits) {
-    const {dataset, membersCount, members, timeDrilldown, stdDrilldowns} = dg;
+    const {dataset, membersCount, members, timeDrilldown} = dg;
     const chartType = CT.TREEMAP;
+
+    // const nonTimeDrilldowns = getNonTimeDrilldowns(dg);
+    const nonTimeDrilldowns = getNonTimeDrilldowns(dg);
 
     /* DISABLE IF... */
     if (
       // only drilldown is time level
-      (timeDrilldown && stdDrilldowns.length === 0) ||
-
-      // there will be more than ChartLimits.TREE_MAP_MAX_SHAPE shapes in the chart
-      stdDrilldowns.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.TREE_MAP_SHAPE_MAX ||
+      (timeDrilldown && nonTimeDrilldowns.length === 0) ||
 
       // all levels, except for timeLevel, have only 1 member.
-      stdDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
+      nonTimeDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
 
     ) {
       return [];
     }
     
-    const relevantLevels = stdDrilldowns.filter(lvl => membersCount[lvl.caption] > 1);
+    const relevantLevels = nonTimeDrilldowns.filter(lvl => membersCount[lvl.caption] > 1);
     
     const chartReductions = dg.measureSets.map(measureSet => {
       const {measure} = measureSet;
 
       if (
-
         /** Treemaps only work with SUM-aggregated measures  */
         !includes(["SUM", "UNKNOWN"], measure.aggregatorType) ||
 
         /** @see {@link https://github.com/Datawheel/canon/issues/487} */
-        includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
-          membersCount[stdDrilldowns[0].caption] > 1
+        (includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
+          membersCount[nonTimeDrilldowns?.[0].caption] > 1) ||
+
+        // make sure that data is all positive
+        !dataIsSignConsistent(dg.dataset, measure)
       ) {
         return [];
       }
       const chartProps = {chartType, dataset, dg, measureSet, members};
-      return getPermutations(relevantLevels).map(levels => ({
-        ...chartProps,
-        levels,
-        key: keyMaker(dataset, levels, measureSet, chartType)
-      }));
+      return getPermutations(relevantLevels).map(levels => {
+
+        // DISABLE if there will be more than ChartLimits.TREE_MAP_MAX_SHAPE shapes in the chart
+        if (levels.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.TREE_MAP_SHAPE_MAX) return null;
+
+        return {
+          ...chartProps,
+          levels,
+          isMap: false,
+          isTimeline: !!timeDrilldown,
+          key: keyMaker(dataset, levels, measureSet, chartType)
+        }
+      });
     });
 
     return flattenDeep(chartReductions).filter(Boolean);

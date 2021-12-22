@@ -84,5 +84,6 @@ function calculateDefaultPeriod(query) {
   });
 
   // Return lowest common period
-  return periodSet.sort()[0];
+  
+  return periodSet.sort()[periodSet.length - 1];
 }
