@@ -406,7 +406,6 @@ const remixerForChartType = {
     const {dataset, membersCount, members, timeDrilldown} = dg;
     const chartType = CT.TREEMAP;
 
-    // const nonTimeDrilldowns = getNonTimeDrilldowns(dg);
     const nonTimeDrilldowns = getNonTimeDrilldowns(dg);
 
     /* DISABLE IF... */

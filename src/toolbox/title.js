@@ -7,7 +7,7 @@
  */
 export function chartTitleGenerator(chart, {currentPeriod}) {
 
-  console.log("Chart", chart.chartType, chart);
+  console.log("Chart title", chart.chartType, chart);
 
   const {dg, measureSet} = chart;
   const {members} = dg;
@@ -58,7 +58,7 @@ export function chartTitleGenerator(chart, {currentPeriod}) {
       // add current period to title (because it should be the only period being shown)
       title += ` (${dg.timeDrilldown.caption}: ${periodToString(currentPeriod)})`;
     } else {
-      title += ` over Time`;
+      title += ` Over Time`;
     }
   }
   
