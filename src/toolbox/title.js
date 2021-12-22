@@ -1,11 +1,11 @@
+import { getColumnId } from "./strings";
+
 /**
  * Returns a common title string from a list of parameters.
  * @param {VizBldr.Struct.Chart} chart
  * @param {object} options
- * @param {string} options.currentChart
- * @param {[string, string]} options.currentPeriod
  */
-export function chartTitleGenerator(chart, {currentPeriod}) {
+export function chartTitleGenerator(chart, options) {
 
   console.log("Chart title", chart.chartType, chart);
 
@@ -48,15 +48,24 @@ export function chartTitleGenerator(chart, {currentPeriod}) {
       ? ` for top ${arrayToSentence(allLevelNames)}`
       : ` by ${arrayToSentence(allLevelNames)}`;
   }
+
+  let titleFn = null;
   
   if (dg.timeDrilldown) {
+    const timeLevelName = dg.timeDrilldown.caption;
+    const timeLevelId = getColumnId(timeLevelName, dg.dataset);
     // for charts with enabled timelines...
     if (dg.membersCount[dg.timeDrilldown.caption] === 1) {
-      title += ` (${dg.dataset[0][dg.timeDrilldown.caption]})`;
+      title += ` (${dg.dataset[0][timeLevelName]})`;
     }
     else if (chart.isTimeline) {
       // add current period to title (because it should be the only period being shown)
-      title += ` (${dg.timeDrilldown.caption}: ${periodToString(currentPeriod)})`;
+      titleFn = data => {
+        const allTimeValues = [...data.map(d => d[timeLevelId])];
+        const minYear = Math.min(...allTimeValues);
+        const maxYear = Math.max(...allTimeValues);
+        return `${title} (${timeLevelName}: ${periodToString(minYear, maxYear !== minYear && maxYear)})`;
+      }
     } else {
       title += ` Over Time`;
     }
@@ -66,22 +75,11 @@ export function chartTitleGenerator(chart, {currentPeriod}) {
     title += ` (${arrayToSentence(cuts)})`;
   }
 
-  // if (timeLevelName) {
-  //   if (chart.key === currentChart && ["lineplot", "stacked"].includes(chart.chartType)) {
-  //     title += ` (${currentPeriod.filter(Boolean).join(" - ")})`;
-  //   }
-  //   else {
-  //     title = title
-  //       .replace(measureName, `${measureName} by ${timeLevelName},`)
-  //       .replace(",,", ",");
-  //   }
-  // }
-
   if (title[title.length - 1] === ",") {
     return title.slice(0, -1)
   }
 
-  return title;
+  return titleFn || title;
 }
 
 /**
@@ -111,6 +109,6 @@ function arrayToSentence(strings, options = {}) {
  * @param {[string, string]} currentPeriod - array of one or two time 
  * @returns 
  */
-function periodToString(currentPeriod) {
-  return `${currentPeriod[0]}${currentPeriod[1] ? ` - ${currentPeriod[1]}` : ""}`;
+function periodToString(start, end) {
+  return `${start}${end ? ` - ${end}` : ""}`;
 }

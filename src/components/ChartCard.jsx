@@ -40,7 +40,6 @@ export const ChartCard = props => {
   const {
     chart,
     currentChart,
-    currentPeriod,
     isSingleChart,
     isUniqueChart
   } = props;
@@ -53,16 +52,14 @@ export const ChartCard = props => {
 
   const config = useMemo(() => createChartConfig(chart, {
     currentChart,
-    currentPeriod,
     isSingleChart,
     isUniqueChart,
     locale,
     measureConfig: props.measureConfig,
-    onPeriodChange: props.onPeriodChange,
     showConfidenceInt: Boolean(props.showConfidenceInt),
     translate,
     userConfig: props.userConfig || {}
-  }), [isSingleChart, isUniqueChart, locale, currentPeriod]);
+  }), [isSingleChart, isUniqueChart, locale]);
 
   console.log(chart.chartType, config);
 
