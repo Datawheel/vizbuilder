@@ -1,3 +1,4 @@
+import { findTimeRange } from "./find";
 import { getColumnId } from "./strings";
 
 /**
@@ -61,10 +62,8 @@ export function chartTitleGenerator(chart, options) {
     else if (chart.isTimeline) {
       // add current period to title (because it should be the only period being shown)
       titleFn = data => {
-        const allTimeValues = [...data.map(d => d[timeLevelId])];
-        const minYear = Math.min(...allTimeValues);
-        const maxYear = Math.max(...allTimeValues);
-        return `${title} (${timeLevelName}: ${periodToString(minYear, maxYear !== minYear && maxYear)})`;
+        const {minTime, maxTime} = findTimeRange(data, timeLevelId, timeLevelName);
+        return `${title} (${timeLevelName}: ${periodToString(minTime, maxTime !== minTime && maxTime)})`;
       }
     } else {
       title += ` Over Time`;

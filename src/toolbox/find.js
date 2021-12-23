@@ -41,3 +41,27 @@ export function findMeasuresInCube({measuresByName}, item) {
     };
   }
 }
+
+const getDisplayTime = (d, timeLevelId, timeLevelName) => d?.hasOwnProperty(timeLevelName) ? d[timeLevelName] : d?.[timeLevelId];
+
+/**
+ * Finds the min and max time properties of an array of data objects
+ * @param {object[]} data - data to search
+ * @param {string} timeLevelId - property name of time field to compare
+ * @param {string} timeLevelName - name of time level to return (if it exists) to make for a better display name than the ID
+ * @returns {minTime: string, maxTime: string} - the display strings of the min and max time fields
+ */
+export function findTimeRange(data, timeLevelId, timeLevelName) {
+  if (!(data && data.length && timeLevelId)) return {min: null, max: null};
+
+  const out = data.reduce((acc, d) => {
+    if (d[timeLevelId] < acc.min[timeLevelId]) acc.min = d;
+    if (d[timeLevelId] > acc.max[timeLevelId]) acc.max = d;
+    return acc;
+  }, {max: data[0], min: data[0]});
+
+  return {
+    minTime: getDisplayTime(out.min, timeLevelId, timeLevelName).toString(),
+    maxTime: getDisplayTime(out.max, timeLevelId, timeLevelName).toString()
+  };
+}
