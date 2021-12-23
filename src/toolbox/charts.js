@@ -271,7 +271,7 @@ const remixerForChartType = {
       isMap: true,
       isTimeline: !!dg.timeDrilldown,
       key: keyMaker(dg.dataset, drilldowns, measureSet, CT.GEOMAP),
-      levels: drilldowns,
+      levels: getNonTimeDrilldowns(dg),
       measureSet
     }));  
   },
