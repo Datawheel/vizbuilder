@@ -61,8 +61,6 @@ export const ChartCard = props => {
     userConfig: props.userConfig || {}
   }), [isSingleChart, isUniqueChart, locale]);
 
-  console.log(chart.chartType, config);
-
   const saveChart = useCallback(format => {
     const chartInstance = nodeRef.current;
     if (chartInstance) {
