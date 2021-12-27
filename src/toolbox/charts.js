@@ -40,7 +40,7 @@ const getNonTimeDrilldowns = dg => dg.drilldowns.filter(lvl => !isTimeLevel(lvl)
  * @param {VizBldr.Struct.Datagroup} dg 
  * @returns {import("@datawheel/olap-client").Level[]} List of combined non-geo levels
  */
- const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
+const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
 
 /**
  * Generates a unique key based on the parameters set for a chart.

@@ -372,6 +372,10 @@ const makeConfig = {
       config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
 
+    // TODO - add ability to control this threshold value
+    config.threshold = 0.005;
+    config.thresholdName = firstLevel.caption;
+
     return config;
   }
 };

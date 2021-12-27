@@ -67,9 +67,16 @@ export const ChartCard = props => {
     const chartInstance = nodeRef.current;
     if (chartInstance) {
       const svgElement = chartInstance.container.querySelector("svg");
-      const filename = config.title
-        .replace(/[^\w]/g, "_")
-        .replace(/[_]+/g, "_");
+
+      const filename = ((config.title instanceof Function)
+        // If title is a Function, it means that the title is dependent upon the filtered data.
+        // Because d3plus handles this generation internally, we need to generate title again using the viz's
+        // internal '_filteredData' variable as its param
+        ? config.title(chartInstance.viz._filteredData)
+        : config.title)
+          // and replace special characters with underscores
+          .replace(/[^\w]/g, "_")
+          .replace(/[_]+/g, "_");
 
       const getBackground = node => {
         if (node.nodeType !== Node.ELEMENT_NODE) return "white";
