@@ -1,3 +1,4 @@
+import { AggregatorType } from "@datawheel/olap-client";
 import flatMap from "lodash/flatMap";
 import flattenDeep from "lodash/flattenDeep";
 import includes from "lodash/includes";
@@ -206,13 +207,33 @@ const remixerForChartType = {
    * DONUT CHART
    * 
    * Requirements:
-   * - measure cannot have UNKNOWN, AVERAGE, MEDIAN, or NONE aggregation type
+   * - measure must be of aggregator types sum or count
    */
   donut(dg, chartLimits) {
+    // filter measures to make sure that 
     const allowedMeasures = dg.measureSets.filter(
-      measureSet => !includes(["UNKNOWN", "AVG", "AVERAGE", "MEDIAN", "NONE"], measureSet.measure.aggregatorType)
+      // measure aggregation type is of valid type
+      measureSet => includes([AggregatorType.SUM, AggregatorType.COUNT], measureSet.measure.aggregatorType)
     );
-    return defaultChart("donut", {...dg, measureSets: allowedMeasures});
+    // and filter drilldowns to make sure we only consider ones with multiple members
+    const multipleMemberLevels = getNonTimeDrilldowns(dg).filter(lvl => dg.membersCount[lvl.caption] > 1);
+
+    const kValues = range(1, multipleMemberLevels.length + 1);
+    return flatMap(allowedMeasures, measureSet =>
+      flatMap(kValues, k =>
+        // get different combinations of non-time (discrete) drilldowns
+        Array.from(permutationIterator(multipleMemberLevels, k), levels => ({
+          chartType: CT.DONUT,
+          dg,
+          isMap: false,
+          // timeline is only possible if time drilldown is present and the chartType does not include a time axis already
+          isTimeline: !!dg.timeDrilldown,
+          key: keyMaker(dg.dataset, levels, measureSet, CT.DONUT),
+          levels,
+          measureSet
+        }))
+      )
+    );
   },
 
   /**
