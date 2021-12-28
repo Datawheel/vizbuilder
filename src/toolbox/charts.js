@@ -221,12 +221,10 @@ const remixerForChartType = {
     const kValues = range(1, multipleMemberLevels.length + 1);
     return flatMap(allowedMeasures, measureSet =>
       flatMap(kValues, k =>
-        // get different combinations of non-time (discrete) drilldowns
         Array.from(permutationIterator(multipleMemberLevels, k), levels => ({
           chartType: CT.DONUT,
           dg,
           isMap: false,
-          // timeline is only possible if time drilldown is present and the chartType does not include a time axis already
           isTimeline: !!dg.timeDrilldown,
           key: keyMaker(dg.dataset, levels, measureSet, CT.DONUT),
           levels,
