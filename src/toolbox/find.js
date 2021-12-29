@@ -12,24 +12,6 @@ export function findFirstNumber(string, elseValue) {
 }
 
 /**
- * Returns the value of the highest timeLevel value in the dataset,
- * but lower or equal than the current time.
- * @param {string[]} timelist An array with time-related members
- */
-export function findHigherCurrentPeriod(timelist) {
-  const currentTime = new Date().getTime();
-  const matchIndex = timelist.reduce((selected, item, index, list) => {
-    const itemValue = parseDate(item).getTime();
-    if (itemValue <= currentTime) {
-      const selectedValue = new Date(list[selected] || -8640000000000000).getTime();
-      return Math.max(itemValue, selectedValue) === itemValue ? index : selected;
-    }
-    return selected;
-  }, -1);
-  return matchIndex > -1 ? timelist[matchIndex] : timelist[0];
-}
-
-/**
  * @param {import("@datawheel/olap-client").Cube} cube
  * @param {VizBldr.Struct.MeasureItem} item
  * @returns {VizBldr.Struct.MeasureSet | undefined}
@@ -58,4 +40,28 @@ export function findMeasuresInCube({measuresByName}, item) {
       uci: measuresByName[`${item.uci}`]
     };
   }
+}
+
+const getDisplayTime = (d, timeLevelId, timeLevelName) => d?.hasOwnProperty(timeLevelName) ? d[timeLevelName] : d?.[timeLevelId];
+
+/**
+ * Finds the min and max time properties of an array of data objects
+ * @param {object[]} data - data to search
+ * @param {string} timeLevelId - property name of time field to compare
+ * @param {string} timeLevelName - name of time level to return (if it exists) to make for a better display name than the ID
+ * @returns {minTime: string, maxTime: string} - the display strings of the min and max time fields
+ */
+export function findTimeRange(data, timeLevelId, timeLevelName) {
+  if (!(data && data.length && timeLevelId)) return {min: null, max: null};
+
+  const out = data.reduce((acc, d) => {
+    if (d[timeLevelId] < acc.min[timeLevelId]) acc.min = d;
+    if (d[timeLevelId] > acc.max[timeLevelId]) acc.max = d;
+    return acc;
+  }, {max: data[0], min: data[0]});
+
+  return {
+    minTime: getDisplayTime(out.min, timeLevelId, timeLevelName).toString(),
+    maxTime: getDisplayTime(out.max, timeLevelId, timeLevelName).toString()
+  };
 }

@@ -11,12 +11,10 @@ import {chartTitleGenerator} from "./title";
 /**
  * @typedef UIParams
  * @property {string} currentChart
- * @property {[string, string]} currentPeriod
  * @property {boolean} isSingleChart
  * @property {boolean} isUniqueChart
  * @property {string} locale
  * @property {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig} measureConfig
- * @property {(periodLeft: string, periodRight?: string) => void} [onPeriodChange]
  * @property {boolean} showConfidenceInt
  * @property {import("@datawheel/use-translation").TranslateFunction} translate
  * @property {VizBldr.D3plusConfig} userConfig
@@ -40,26 +38,16 @@ export function createChartConfig(chart, uiParams) {
   const config = assign(
     {
       legend: false,
-      duration: 0,
 
       total: false,
       totalFormat: d => `Total: ${formatter(d)}`,
 
-      xConfig: {
-        duration: 0
-        // title: null
-      },
       yConfig: {
-        duration: 0,
         title: measureName,
         tickFormat: formatter
       },
       label: labelFunctionGenerator(...levelNames),
       locale: uiParams.locale,
-
-      shapeConfig: {
-        duration: 0
-      },
 
       sum: measureName,
       value: measureName
@@ -74,47 +62,13 @@ export function createChartConfig(chart, uiParams) {
     config.total = measureName;
   }
 
-  if (timeDrilldown && config.time && !includes(["lineplot", "stacked"], chartType)) {
+  if (timeDrilldown && config.time && chart.isTimeline) {
     config.timeline = isEnlarged;
   }
 
   if (timeDrilldown && config.timeline) {
-    const {currentPeriod, onPeriodChange} = uiParams;
-    const timeDrilldownId = getColumnId(timeDrilldown.caption, dg.dataset);
-    const epochReference = keyBy(dg.dataset, d => parseDate(d[timeDrilldownId]).valueOf());
-
-    /** @type {(date: Date | number) => [string, string]} */
-    const getPeriodForDate = date => {
-      const epoch = date.valueOf();
-      const tzOffset = new Date(epoch).getTimezoneOffset() * 60000;
-      const datum = epochReference[epoch] || epochReference[epoch + tzOffset] || {};
-      return [datum[timeDrilldown.caption] || "", datum[timeDrilldownId] || ""];
-    };
-
-    if (currentPeriod[1]) {
-      const isBetweenPeriods = isBetween.bind(
-        null,
-        parseDate(currentPeriod[0]).valueOf() - 1,
-        parseDate(currentPeriod[1]).valueOf() + 1
-      );
-      config.timeFilter = d => isBetweenPeriods(parseDate(d[timeDrilldownId]).valueOf());
-    }
-    else if (currentPeriod[0]) {
-      // eslint-disable-next-line eqeqeq
-      config.timeFilter = d => currentPeriod[0] == d[timeDrilldownId];
-    }
-
     config.timelineConfig = {
-      brushing: false,
-      on: {
-        end: !onPeriodChange
-          ? undefined
-          : date => {
-            const [periodLeft, periodRight = []] = asArray(date).map(getPeriodForDate);
-            periodLeft && onPeriodChange(periodLeft[1], periodRight[1]);
-          }
-      },
-      tickFormat: date => getPeriodForDate(date)[0] || ""
+      brushing: false
     };
   }
 
@@ -417,6 +371,10 @@ const makeConfig = {
     if (timeLevel) {
       config.time = getColumnId(timeLevel.caption, dg.dataset);
     }
+
+    // TODO - add ability to control this threshold value
+    config.threshold = 0.005;
+    config.thresholdName = firstLevel.caption;
 
     return config;
   }
