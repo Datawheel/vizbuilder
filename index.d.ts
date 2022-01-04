@@ -41,6 +41,8 @@ declare namespace VizBldr {
     BARCHART_MAX_BARS: number;
     /** Maximum number of bars in a year barchart */
     BARCHART_YEAR_MAX_BARS: number;
+    /** Max number of groups to be rendered in a donut or pie chart */
+    DONUT_SHAPE_MAX: number;
     /** Minimum number of data points in groupto render a line in lineplot */
     LINEPLOT_LINE_POINT_MIN: number;
     /** Max number of lines to render in lineplot */
@@ -227,5 +229,16 @@ declare namespace VizBldr {
       /** The Upper Confidence Interval measure for the current measure. */
       uci?: OlapClient.Measure;
     }
+  }
+
+  interface UIParams {
+    currentChart: string;
+    isSingleChart: boolean;
+    isUniqueChart: boolean;
+    locale: string;
+    measureConfig: (measure: OlapClient.Measure) => D3plusConfig;
+    showConfidenceInt: boolean;
+    translate: I18N.TranslateFunction;
+    userConfig: D3plusConfig;
   }
 }

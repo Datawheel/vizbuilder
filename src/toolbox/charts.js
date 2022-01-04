@@ -1,3 +1,4 @@
+/* eslint-disable lines-around-comment */
 import { AggregatorType } from "@datawheel/olap-client";
 import flatMap from "lodash/flatMap";
 import flattenDeep from "lodash/flattenDeep";
@@ -42,6 +43,14 @@ const getNonTimeDrilldowns = dg => dg.drilldowns.filter(lvl => !isTimeLevel(lvl)
  * @returns {import("@datawheel/olap-client").Level[]} List of combined non-geo levels
  */
 const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
+
+/**
+ * 
+ * @param {VizBldr.Struct.Datagroup} dg 
+ * @param {import("@datawheel/olap-client").Level[]} levels 
+ * @returns {number}
+ */
+const getNumberGroupsFromLevels = (dg, levels) => levels.reduce((acc, lvl) => acc * dg.membersCount[lvl.caption], 1);
 
 /**
  * Generates a unique key based on the parameters set for a chart.
@@ -141,9 +150,8 @@ const remixerForChartType = {
       return flatMap(kValues, k =>
         Array.from(permutationIterator(validDrilldowns, k), levels => {
 
-          // TODO: change this to compute the product of different drilldowns
           /** Disable if too many bars would make the chart unreadable */
-          if (membersCount[levels[0].caption] > chartLimits.BARCHART_MAX_BARS) return null;
+          if (getNumberGroupsFromLevels(dg, levels) > chartLimits.BARCHART_MAX_BARS) return null;
 
           /** @type {VizBldr.Struct.Chart} */
           const output = {
@@ -208,6 +216,7 @@ const remixerForChartType = {
    * 
    * Requirements:
    * - measure must be of aggregator types sum or count
+   * - number of data groups for a combination of dimensions must be less that chartLimits.DONUT_SHAPE_MAX
    */
   donut(dg, chartLimits) {
     // filter measures to make sure that 
@@ -221,15 +230,20 @@ const remixerForChartType = {
     const kValues = range(1, multipleMemberLevels.length + 1);
     return flatMap(allowedMeasures, measureSet =>
       flatMap(kValues, k =>
-        Array.from(permutationIterator(multipleMemberLevels, k), levels => ({
-          chartType: CT.DONUT,
-          dg,
-          isMap: false,
-          isTimeline: !!dg.timeDrilldown,
-          key: keyMaker(dg.dataset, levels, measureSet, CT.DONUT),
-          levels,
-          measureSet
-        }))
+        Array.from(permutationIterator(multipleMemberLevels, k), levels => {
+
+          /* DISABLE if there are too many shapes / data groups */
+          if (getNumberGroupsFromLevels(dg, levels) > chartLimits.DONUT_SHAPE_MAX) return null;
+          return {
+            chartType: CT.DONUT,
+            dg,
+            isMap: false,
+            isTimeline: !!dg.timeDrilldown,
+            key: keyMaker(dg.dataset, levels, measureSet, CT.DONUT),
+            levels,
+            measureSet
+          };
+        }).filter(Boolean)
       )
     );
   },
@@ -461,7 +475,7 @@ const remixerForChartType = {
       return getPermutations(relevantLevels).map(levels => {
 
         // DISABLE if there will be more than ChartLimits.TREE_MAP_MAX_SHAPE shapes in the chart
-        if (levels.reduce((total, lvl) => total * membersCount[lvl.caption], 1) > chartLimits.TREE_MAP_SHAPE_MAX) return null;
+        if (getNumberGroupsFromLevels(dg, levels) > chartLimits.TREE_MAP_SHAPE_MAX) return null;
 
         return {
           ...chartProps,
