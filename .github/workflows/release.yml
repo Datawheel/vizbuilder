@@ -1,0 +1,36 @@
+name: Create new Github Releases
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  tag-release:
+    name: "New Release from version Tag"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install nodejs 12
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npm run build
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          automatic_release_tag: latest
+          files: |
+            dist/*.js
+            index.d.ts
+            LICENSE.txt
+            package.json
