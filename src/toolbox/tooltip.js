@@ -1,14 +1,15 @@
+import {abbreviateList} from "./strings";
+
 /**
  * Generates the parameters for the tooltip shown for the current datagroup.
  * @param {VizBldr.Struct.Chart} chart
  * @param {VizBldr.UIParams} uiParams
  */
 export function tooltipGenerator(chart, {translate: t}) {
-  const {dg, levels, measureSet} = chart;
+  const {dg, measureSet} = chart;
   const {measure, collection, source, moe, uci, lci, formatter} = measureSet;
 
   const measureName = measure.name;
-  const firstLevelName = levels[0]?.name;
 
   const collectionName = collection ? collection.name : "";
   const lciName = lci ? lci.name : "";
@@ -24,52 +25,65 @@ export function tooltipGenerator(chart, {translate: t}) {
     uciName
   });
 
-  const tbody = Object.keys(dg.members)
-    .filter(lvl => lvl !== firstLevelName)
-    .map(lvl => [lvl, d => d[lvl]]);
-  tbody.push([measureName, d => formatter(d[measureName])]);
+  const titleFn = input => chart.levels
+    // get drilldown names
+    .map(lvl => lvl.caption)
+    .map(lvlName => {
+      // if there are multiple members in a drilldown level
+      if (Array.isArray(input[lvlName])) {
+        // ...and there is a cut applied on this drilldown level or data group has been aggregated (as in threshold of treemap)
+        return dg.cuts.has(lvlName) || input._isAggregation
+          // then list the members in this data point
+          ? abbreviateList(input[lvlName])
+          // else, show that all members are aggregated
+          : `All ${lvlName}`;
+      }
+      return input[lvlName];
+    })
+    // add parentheses to drilldown labels after the first level
+    .map((lvlLabel, idx) => idx > 0 ? `(${lvlLabel})` : lvlLabel)
+    .join(" ");
 
-  // TODO: restore measure share tooltip
-  // if (measure.aggregationType === "SUM") {
-  //   const percentFormatter = formatters.Rate;
-  //   tbody.push([
-  //     t("chart_labels.measure_share", {measureName}),
-  //     d => percentFormatter(d[`${measureName} Share`])
-  //   ]);
-  // }
+  const bodyFn = input => {
+    const output = [];
 
-  if (shouldShow.lci && shouldShow.uci) {
-    tbody.push([
-      t("chart_labels.ci"),
-      d => `${formatter(d[lciName] * 1 || 0)} - ${formatter(d[uciName] * 1 || 0)}`
-    ]);
-  }
-  else if (shouldShow.moe) {
-    tbody.push([
-      t("chart_labels.moe"),
-      d => `± ${formatter(d[moeName] * 1 || 0)}`
-    ]);
-  }
-
-  if (shouldShow.src) {
-    tbody.push([t("chart_labels.source"), d => `${d[sourceName]}`]);
-  }
-
-  if (shouldShow.clt) {
-    tbody.push([t("chart_labels.collection"), d => `${d[collectionName]}`]);
-  }
-
-  dg.filters.forEach(filter => {
-    const {measure, formatter} = filter;
-    const measureName = measure.name;
-    if (dg.params.measures.some(item => item.measure === measureName)) {
-      tbody.push([measureName, d => `${formatter(d[measureName])}`]);
+    if (shouldShow.lci && shouldShow.uci) {
+      output.push([
+        t("chart_labels.ci"),
+        d => `${formatter(d[lciName] * 1 || 0)} - ${formatter(d[uciName] * 1 || 0)}`
+      ]);
     }
-  });
+    else if (shouldShow.moe) {
+      output.push([
+        t("chart_labels.moe"),
+        d => `± ${formatter(d[moeName] * 1 || 0)}`
+      ]);
+    }
+  
+    if (shouldShow.src) {
+      output.push([t("chart_labels.source"), d => `${d[sourceName]}`]);
+    }
+  
+    if (shouldShow.clt) {
+      output.push([t("chart_labels.collection"), d => `${d[collectionName]}`]);
+    }
+
+    // if there is a time drilldown, it will not be included in the drilldown
+    // levels and needs to be specified in tooltip body
+    if (chart.dg.timeDrilldown) {
+      const timeLvlName = chart.dg.timeDrilldown.caption;
+      output.push([timeLvlName, input[timeLvlName]]);
+    }
+
+    // add measure value at end
+    output.push([measureName, formatter(input[measureName])]);
+
+    return output;
+  };
 
   return {
-    title: d => [].concat(d[firstLevelName]).join(", "),
-    tbody
+    title: titleFn,
+    tbody: bodyFn
   };
 }
 
