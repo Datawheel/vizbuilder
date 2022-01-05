@@ -12,10 +12,13 @@ export function getColumnId(columnName, dataset) {
 }
 
 /**
+ * Returns a string of an abbreviated list of items so that only the first 
+ * few elements are shown if there are more items than the `maxPrinted` param.
  * 
- * @param {*} arr 
- * @param {*} maxPrinted 
- * @returns 
+ * @param {any[]} arr -- array of items to print
+ * @param {number} maxPrinted - default: 2 - max number of items to show befo
+ * @returns {string} string in format "item1, ..., itemK, and N-K more" where N
+ *                   is the length of the given array and K is `maxPrinted` param
  */
 export function abbreviateList(arr, maxPrinted = 2) {
   if (!Array.isArray(arr)) return arr;
