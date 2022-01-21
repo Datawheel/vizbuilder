@@ -1,5 +1,4 @@
 import {formatAbbreviate} from "d3plus-format";
-import {parseDate} from "./parse";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.

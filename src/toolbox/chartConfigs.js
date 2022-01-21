@@ -257,7 +257,7 @@ const makeConfig = {
 
     const levelName = levels[0]?.caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel ? getColumnId(timeLevel.caption, dg.dataset) : levelName;
+    const timeLevelName = timeLevel?.caption;
     // group by a static string if there are no other dimensions besides time
     const groupBy = levels?.length ? levels.map(lvl => lvl.caption) : () => "ALL";
 
