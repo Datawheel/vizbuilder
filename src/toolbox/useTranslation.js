@@ -7,6 +7,11 @@ const LOCALE_EN = {
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
   action_retry: "Retry",
+  aggregators: {
+    avg: "Average",
+    max: "Max",
+    min: "Min"
+  },
   chart_labels: {
     ci: "Confidence Interval",
     moe: "Margin of Error",
@@ -23,6 +28,12 @@ const LOCALE_EN = {
     all_words: ", ",
     two_words: " and ",
     last_word: ", and "
+  },
+  title: {
+    of_selected_cut_members: "of Selected {members} Members",
+    top_drilldowns: "for Top {drilldowns}",
+    by_drilldowns: "by {drilldowns}",
+    over_time: "Over Time"
   }
 };
 

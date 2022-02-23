@@ -62,7 +62,7 @@ export function createChartConfig(chart, uiParams) {
   config.zoom = chartType === "geomap" && isSingleChart;
 
   if (config.title === undefined) {
-    config.title = chartTitleGenerator(chart, uiParams);
+    config.title = chartTitleGenerator(chart, uiParams.translate);
   }
 
   assign(config, uiParams.measureConfig[measureName] || {});

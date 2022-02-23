@@ -1,18 +1,5 @@
-import { AggregatorType } from "@datawheel/olap-client";
-import { findTimeRange } from "./find";
-import { getColumnId } from "./strings";
-
-/**
- * Human-readable names of special aggregator types.
- * Needed to make certain types of measures more explicit about their measure's derivation.
- * 
- * If an aggregation type needs clarification beyond measure name, insert it here.
- */
-const SPECIAL_AGGREGATOR_QUALIFIERS = {
-  [AggregatorType.AVG]: "Average",
-  [AggregatorType.MAX]: "Max",
-  [AggregatorType.MIN]: "Min"
-};
+import {findTimeRange} from "./find";
+import {getColumnId} from "./strings";
 
 /**
  * Returns a common title string from a list of parameters.
@@ -35,9 +22,9 @@ const SPECIAL_AGGREGATOR_QUALIFIERS = {
  * _MEASURE_NAME of Selected CUT_LEVEL_NAME Members by DRILLDOWN_1_
  * 
  * @param {VizBldr.Struct.Chart} chart
- * @param {object} options
+ * @param {Function} translate
  */
-export function chartTitleGenerator(chart, options) {
+export function chartTitleGenerator(chart, translate) {
 
   const {dg, measureSet} = chart;
   const {members} = dg;
@@ -45,12 +32,14 @@ export function chartTitleGenerator(chart, options) {
   let title;
 
   // FIRST, add measure (with appropriate qualifiers) to the start of the title
-  title = `${getAggregationTypeQualifier(measureSet.measure.aggregatorType)}${measureSet.measure.name}`;
+  title = `${getAggregationTypeQualifier(measureSet.measure.aggregatorType, translate)}${measureSet.measure.name}`;
 
   /** Set of cut level names, to be filtered to include only levels not accounted for in drilldowns */
   const allCutNames = new Set(dg.cuts.keys());
+
   /** List of Level names to include in CUT clause */
   const cutLabels = [];
+
   /** Labels of drilldowns with only a single member */
   const singleMemberDrilldownLabels = [];
 
@@ -77,16 +66,14 @@ export function chartTitleGenerator(chart, options) {
   cutLabels.unshift(...allCutNames.values());
 
   // add labels for cut levels not included in Chart.levels
-  if (cutLabels.length > 0) title += ` of Selected ${arrayToSentence(cutLabels)} Members`;
+  if (cutLabels.length > 0) title += ` ${translate("title.of_selected_cut_members", {members: arrayToSentence(cutLabels, translate)})}`;
 
   // add labels for levels with single member
   if (singleMemberDrilldownLabels.length > 0) title += ` (${singleMemberDrilldownLabels.join(", ")})`;
 
   // add levels with multiple members to titles
   if (drilldownNames.length > 0) {
-    title += chart.isTopTen
-      ? ` for top ${arrayToSentence(drilldownNames)}`
-      : ` by ${arrayToSentence(drilldownNames)}`;
+    title += ` ${translate(`title.${chart.isTopTen ? "top" : "by"}_drilldowns`, {drilldowns: arrayToSentence(drilldownNames, translate)})}`;
   }
 
   let titleFn = null;
@@ -105,10 +92,10 @@ export function chartTitleGenerator(chart, options) {
       titleFn = data => {
         const {minTime, maxTime} = findTimeRange(data, timeLevelId, timeLevelName);
         return `${title} (${timeLevelName}: ${periodToString(minTime, maxTime !== minTime && maxTime)})`;
-      }
+      };
     }
     // else, if time is shown on one axis, say "Over Time"
-    else title += ` Over Time`;
+    else title += ` ${translate("title.over_time")}`;
   }
 
   return titleFn || title;
@@ -116,22 +103,18 @@ export function chartTitleGenerator(chart, options) {
 
 /**
  * @param {string[]} strings
- * @param {Record<string, string>} [options]
+ * @param {Function} translate
  * @returns {string}
  */
-function arrayToSentence(strings, options = {}) {
-  const allWords = options.all_words || ", ";
-  const twoWords = options.two_words || " and ";
-  const lastWord = options.last_word || ", and ";
+function arrayToSentence(strings, translate) {
   strings = strings.filter(Boolean);
-
   if (strings.length === 2) {
-    return strings.join(twoWords);
+    return strings.join(translate("sentence_connectors.two_words"));
   }
   if (strings.length > 1) {
     const bulk = strings.slice();
     const last = bulk.pop();
-    return [bulk.join(allWords), last].join(lastWord);
+    return [bulk.join(translate("sentence_connectors.all_words")), last].join(translate("sentence_connectors.last_word"));
   }
   return strings.join("");
 }
@@ -139,12 +122,13 @@ function arrayToSentence(strings, options = {}) {
 /**
  * Returns a string giving a few qualifying words (if necessary) to add to a measure in the case
  * that a measure does not have a self-evident aggregation method (like sum)
- * @param {import("@datawheel/olap-client").AggregatorType} aggregationType - 
+ * @param {import("@datawheel/olap-client").AggregatorType} aggregationType
+ * @param {Function} translate - translation function
  * @returns 
  */
-function getAggregationTypeQualifier(aggregationType) {
-  const qualifier = SPECIAL_AGGREGATOR_QUALIFIERS[aggregationType];
-  return qualifier ? `${qualifier} ` : "";
+function getAggregationTypeQualifier(aggregationType, translate) {
+  const qualifier = aggregationType && typeof aggregationType === "string" && translate(`aggregators.${aggregationType.toLowerCase()}`);
+  return qualifier && !qualifier.startsWith("aggregators.") ? `${qualifier} ` : "";
 }
 
 /**
