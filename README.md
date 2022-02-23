@@ -214,10 +214,10 @@ For ease of development, this package also exports [a helper function `buildQuer
 
 ### `interface Translation`
 
-An object whose keys are message keys, and its values the localized string to show in the interface.
+An object whose keys are message keys, and its values the localized string to show in the interface. See `src/toolbox/useTranslation.js` for an example of the defaults and how they are used.
 
 ```ts
-interface Translation {
+    interface Translation extends I18N.TranslationDict {
   /* These are actions shown in buttons in the UI */
   "action_close": string;
   "action_enlarge": string;
@@ -238,6 +238,23 @@ interface Translation {
     "message": string;
     "title": string;
   };
+  /* Message for the default NonIdealState when no charts are valid for queries */ 
+  "nonidealstate_msg"?: string;
+  /* For listing words */
+  "sentence_connectors": {
+    "all_words": string;
+    "two_words": string;
+    "last_word": string;
+  };
+  /* Sentence fragments for dynamically constructing chart titles (see example for use)*/
+  "title": {
+    "of_selected_cut_members": string;
+    "top_drilldowns": string;
+    "by_drilldowns": string;
+    "over_time": string;
+    "measure_and_modifier": string;
+  }
+}
 }
 ```
 
