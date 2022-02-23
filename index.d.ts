@@ -87,6 +87,11 @@ declare namespace VizBldr {
     "action_enlarge": string;
     "action_retry": string;
     "action_fileissue": string;
+    "aggregators": {
+      "avg": string,
+      "max": string,
+      "min": string
+    };
     "chart_labels": {
       "ci": string;
       "collection": string;
@@ -98,11 +103,19 @@ declare namespace VizBldr {
       "message": string;
       "title": string;
     };
+    "nonidealstate_msg"?: string;
     "sentence_connectors": {
       "all_words": string;
       "two_words": string;
       "last_word": string;
     };
+    "title": {
+      "of_selected_cut_members": string;
+      "top_drilldowns": string;
+      "by_drilldowns": string;
+      "over_time": string;
+      "measure_and_modifier": string;
+    }
   }
 
   namespace Struct {

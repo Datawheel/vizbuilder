@@ -32,7 +32,10 @@ export function chartTitleGenerator(chart, translate) {
   let title;
 
   // FIRST, add measure (with appropriate qualifiers) to the start of the title
-  title = `${getAggregationTypeQualifier(measureSet.measure.aggregatorType, translate)}${measureSet.measure.name}`;
+  title = translate("title.measure_and_modifier", {
+    modifier: getAggregationTypeQualifier(measureSet.measure.aggregatorType, translate),
+    measure: measureSet.measure.name
+  }).trim(); // remove starting or trailing whitespaces
 
   /** Set of cut level names, to be filtered to include only levels not accounted for in drilldowns */
   const allCutNames = new Set(dg.cuts.keys());
@@ -128,7 +131,7 @@ function arrayToSentence(strings, translate) {
  */
 function getAggregationTypeQualifier(aggregationType, translate) {
   const qualifier = aggregationType && typeof aggregationType === "string" && translate(`aggregators.${aggregationType.toLowerCase()}`);
-  return qualifier && !qualifier.startsWith("aggregators.") ? `${qualifier} ` : "";
+  return qualifier && !qualifier.startsWith("aggregators.") ? qualifier : "";
 }
 
 /**
