@@ -7,26 +7,26 @@ specifiers:
   '@babel/plugin-transform-runtime': ^7.13.15
   '@babel/preset-env': ^7.13.15
   '@babel/preset-react': ^7.13.13
-  '@babel/runtime-corejs3': ^7.13.17
+  '@babel/runtime-corejs3': ^7.0.0
   '@datawheel/eslint-config': ^1.0.3
-  '@datawheel/olap-client': ^2.0.0-beta.1
-  '@datawheel/use-translation': ^0.1.2
+  '@datawheel/olap-client': ^2.0.0-beta.3
+  '@datawheel/use-translation': ^0.1.3
   '@rollup/plugin-babel': ^5.3.0
   '@rollup/plugin-commonjs': ^17.1.0
   '@rollup/plugin-node-resolve': ^11.2.1
   '@rollup/plugin-replace': ^2.4.2
   '@snowpack/plugin-react-refresh': ^2.4.2
-  classnames: ^2.3.1
-  d3plus-common: ^1.0.3
+  classnames: ^2.0.0
+  d3plus-common: ^1.0.0
   d3plus-export: ^1.0.0
   d3plus-format: ^1.0.0
   d3plus-react: ^1.0.0
   eslint: ^7.25.0
   eslint-plugin-react: ^7.23.2
   http-proxy: ^1.18.1
-  lodash: ^4.17.21
-  react: ^16.14.0
-  react-dom: ^16.14.0
+  lodash: ^4.0.0
+  react: ^16.12.0
+  react-dom: ^16.12.0
   react-inspector: ^5.1.1
   rollup: ^2.45.2
   rollup-plugin-cleanup: ^3.2.1
@@ -35,16 +35,14 @@ specifiers:
 
 dependencies:
   '@babel/runtime-corejs3': 7.13.17
-  '@datawheel/olap-client': 2.0.0-beta.1
-  '@datawheel/use-translation': 0.1.2_react@16.14.0
+  '@datawheel/olap-client': 2.0.0-beta.4
+  '@datawheel/use-translation': 0.1.3_react@16.14.0
   classnames: 2.3.1
   d3plus-common: 1.0.3
   d3plus-export: 1.0.0
   d3plus-format: 1.0.0
   d3plus-react: 1.0.0_react@16.14.0
   lodash: 4.17.21
-  react: 16.14.0
-  react-dom: 16.14.0_react@16.14.0
 
 devDependencies:
   '@babel/core': 7.13.16
@@ -62,6 +60,8 @@ devDependencies:
   eslint: 7.25.0
   eslint-plugin-react: 7.23.2_eslint@7.25.0
   http-proxy: 1.18.1
+  react: 16.14.0
+  react-dom: 16.14.0_react@16.14.0
   react-inspector: 5.1.1_react@16.14.0
   rollup: 2.45.2
   rollup-plugin-cleanup: 3.2.1_rollup@2.45.2
@@ -1161,19 +1161,19 @@ packages:
       eslint-plugin-react: 7.23.2_eslint@7.25.0
     dev: true
 
-  /@datawheel/olap-client/2.0.0-beta.1:
-    resolution: {integrity: sha512-NFxvNfp7mBSIlFLrVyx+l58k7RbJ3bPwQ11UsN0CErrZeM2ryQ70e3DGkN2+o6lPUdDFhmSasQeVLUoRq4hDWg==}
+  /@datawheel/olap-client/2.0.0-beta.4:
+    resolution: {integrity: sha512-hjXhg3cJ173b0kUhChQkAL1cOp+44xNgWpeBMwnWxSSAe+7wBIn466XVZZkIiVO0UA+XkJgsZEH1SIlkkETsFA==}
     dependencies:
       axios: 0.21.1
-      form-urldecoded: 0.1.5
-      form-urlencoded: 4.5.1
+      form-urldecoded: 1.2.1
+      form-urlencoded: 6.0.6
       url-join: 4.0.1
     transitivePeerDependencies:
       - debug
     dev: false
 
-  /@datawheel/use-translation/0.1.2_react@16.14.0:
-    resolution: {integrity: sha512-7TCKnheqyCY7jBzgNsvPe+qQuND6Mxb93pb+Uq6ePOEif8epdm5X+WtWXf9NCkSOuSlF45mohAeapiHQk1eWpQ==}
+  /@datawheel/use-translation/0.1.3_react@16.14.0:
+    resolution: {integrity: sha512-hBI0vsChfq5LEy03gJO1yaJWCzqjVm60CW5uTW5Dpz5PcpLs6y3De0EKYnAFfnY0+rpPYebgpOR1s7uU8JUEsA==}
     peerDependencies:
       react: '>=16.10.0'
     dependencies:
@@ -2316,6 +2316,7 @@ packages:
 
   /encoding/0.1.13:
     resolution: {integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==}
+    requiresBuild: true
     dependencies:
       iconv-lite: 0.6.2
     dev: true
@@ -2606,12 +2607,12 @@ packages:
       mime-types: 2.1.30
     dev: true
 
-  /form-urldecoded/0.1.5:
-    resolution: {integrity: sha512-xBRqs/YgRxouoMiGBn5KEDTcMf7xhA6NJ6znC9trCEyiXSzIwpAHaBvGcTntcic2BCMXxuz2iXy+THcTlK2QKg==}
+  /form-urldecoded/1.2.1:
+    resolution: {integrity: sha512-NXtf/54+l4bgTciw8XDQFdIh2m82+0xxKXBSzUVc5bN0ljrtHA+Av5T3qNw7vNG/QdCJ257yRE6OQILL44cfGQ==}
     dev: false
 
-  /form-urlencoded/4.5.1:
-    resolution: {integrity: sha512-Rkd/RdMaprsMJEGzEbxolwacp78WupH7u369KEyIY3pEZ1fhL6HtyQ1FX+4HSfA1VVhET18UwCUcr5DVaDIaqg==}
+  /form-urlencoded/6.0.6:
+    resolution: {integrity: sha512-5n3L86l3uVJLFk8w+HTcuaV8WrEeH9pPqJcICxAbs3oW/gsKg9kJ8XVPZ3I1PJR50ld2fQjstT94p4G90JDMAg==}
     dev: false
 
   /fs-minipass/2.1.0:
@@ -2630,6 +2631,7 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     deprecated: '"Please update to latest v2.3 or v2.2"'
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -2637,6 +2639,7 @@ packages:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -3065,6 +3068,7 @@ packages:
 
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
+    dev: true
 
   /js-yaml/3.14.1:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
@@ -3176,6 +3180,7 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
+    dev: true
 
   /lru-cache/6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
@@ -3433,6 +3438,7 @@ packages:
   /object-assign/4.1.1:
     resolution: {integrity: sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM=}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /object-inspect/1.10.2:
     resolution: {integrity: sha512-gz58rdPpadwztRrPjZE9DZLOABUpTGdcANUgOwBFO1C+HZZhePoP83M65WGDmbpwFYJSWqavbl4SgDn4k8RYTA==}
@@ -3624,6 +3630,7 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
+    dev: true
 
   /psl/1.8.0:
     resolution: {integrity: sha512-RIdOzyoavK+hA18OGGWDqUTsCLhtA7IcZ/6NCs4fFJaHBDab+pDDmDIByWFRQJq2Cd7r1OoQxBGKOaztq+hjIQ==}
@@ -3655,7 +3662,7 @@ packages:
       prop-types: 15.7.2
       react: 16.14.0
       scheduler: 0.19.1
-    dev: false
+    dev: true
 
   /react-inspector/5.1.1_react@16.14.0:
     resolution: {integrity: sha512-GURDaYzoLbW8pMGXwYPDBIv6nqei4kK7LPRZ9q9HCZF54wqXz/dnylBp/kfE9XmekBhHvLDdcYeyIwSrvtOiWg==}
@@ -3670,6 +3677,7 @@ packages:
 
   /react-is/16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
+    dev: true
 
   /react-refresh/0.9.0:
     resolution: {integrity: sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==}
@@ -3683,7 +3691,7 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       prop-types: 15.7.2
-    dev: false
+    dev: true
 
   /read-package-json-fast/2.0.2:
     resolution: {integrity: sha512-5fyFUyO9B799foVk4n6ylcoAktG/FbE3jwRKxvwaeSrIunaoMc0u81dzXxjeAFKOce7O5KncdfwpGvvs6r5PsQ==}
@@ -3897,7 +3905,7 @@ packages:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
-    dev: false
+    dev: true
 
   /semver/6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
