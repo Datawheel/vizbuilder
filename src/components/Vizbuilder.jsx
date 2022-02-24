@@ -40,8 +40,8 @@ export const Vizbuilder = props => {
         />
       );
 
-      // return NonIdealState comp if the list of available chart types is empty
-      return chartCards.length > 0 ? chartCards : props.nonIdealState || <NonIdealState/>;
+    // return NonIdealState comp if the list of available chart types is empty
+    return chartCards.length > 0 ? chartCards : props.nonIdealState || <NonIdealState/>;
   }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
 
   useEffect(() => {
