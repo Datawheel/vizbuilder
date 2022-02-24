@@ -214,45 +214,53 @@ For ease of development, this package also exports [a helper function `buildQuer
 
 ### `interface Translation`
 
-An object whose keys are message keys, and its values the localized string to show in the interface. See `src/toolbox/useTranslation.js` for an example of the defaults and how they are used.
+An object whose keys are message keys, and its values the localized string to show in the interface. Here is an example of a `Translation` object and how it should be used.
 
 ```ts
-    interface Translation extends I18N.TranslationDict {
+const translation: Translation = {
   /* These are actions shown in buttons in the UI */
-  "action_close": string;
-  "action_enlarge": string;
-  "action_retry": string;
-  "action_fileissue": string;
-
+  action_close: "Close",
+  action_download: "Download {{format}}",
+  action_enlarge: "Enlarge",
+  action_fileissue: "File an issue",
+  action_retry: "Retry",
+  aggregators: {
+    avg: "Average",
+    max: "Max",
+    min: "Min"
+  },
+  
   /* These labels are shown in the charts tooltip */
-  "chart_labels": {
-    "ci": string;
-    "collection": string;
-    "moe": string;
-    "source": string;
-  };
+  chart_labels: {
+    ci: "Confidence Interval",
+    moe: "Margin of Error",
+    source: "Source",
+    collection: "Collection"
+  },
 
   /* These labels are shown in the suggested error message when filing a new issue */
-  "error": {
-    "detail": string;
-    "message": string;
-    "title": string;
-  };
+  error: {
+    detail: "",
+    message: "Error details: \"{{message}}\".",
+    title: "Title: "
+  },
+
   /* Message for the default NonIdealState when no charts are valid for queries */ 
-  "nonidealstate_msg"?: string;
+  nonidealstate_msg: "No results",
+
   /* For listing words */
-  "sentence_connectors": {
-    "and": string;
-  };
+  sentence_connectors: {
+    and: "and"
+  },
+
   /* Sentence fragments for dynamically constructing chart titles (see example for use)*/
-  "title": {
-    "of_selected_cut_members": string;
-    "top_drilldowns": string;
-    "by_drilldowns": string;
-    "over_time": string;
-    "measure_and_modifier": string;
+  title: {
+    of_selected_cut_members: "of Selected {{members}} Members",
+    top_drilldowns: "for Top {{drilldowns}}",
+    by_drilldowns: "by {{drilldowns}}",
+    over_time: "Over Time",
+    measure_and_modifier: "{{modifier}} {{measure}}"
   }
-}
 }
 ```
 

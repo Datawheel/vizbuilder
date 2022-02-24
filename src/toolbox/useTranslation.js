@@ -3,7 +3,7 @@ import {translationFactory} from "@datawheel/use-translation";
 /** @type {VizBldr.Translation} */
 const LOCALE_EN = {
   action_close: "Close",
-  action_download: "Download {format}",
+  action_download: "Download {{format}}",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
   action_retry: "Retry",
@@ -20,7 +20,7 @@ const LOCALE_EN = {
   },
   error: {
     detail: "",
-    message: "Error details: \"{message}\".",
+    message: "Error details: \"{{message}}\".",
     title: "Title: "
   },
   nonidealstate_msg: "No results",
@@ -28,11 +28,11 @@ const LOCALE_EN = {
     and: "and"
   },
   title: {
-    of_selected_cut_members: "of Selected {members} Members",
-    top_drilldowns: "for Top {drilldowns}",
-    by_drilldowns: "by {drilldowns}",
+    of_selected_cut_members: "of Selected {{members}} Members",
+    top_drilldowns: "for Top {{drilldowns}}",
+    by_drilldowns: "by {{drilldowns}}",
     over_time: "Over Time",
-    measure_and_modifier: "{modifier} {measure}"
+    measure_and_modifier: "{{modifier}} {{measure}}"
   }
 };
 
