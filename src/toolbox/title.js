@@ -112,12 +112,12 @@ export function chartTitleGenerator(chart, translate) {
 function arrayToSentence(strings, translate) {
   strings = strings.filter(Boolean);
   if (strings.length === 2) {
-    return strings.join(translate("sentence_connectors.two_words"));
+    return strings.join(` ${translate("sentence_connectors.and")} `);
   }
   if (strings.length > 1) {
     const bulk = strings.slice();
     const last = bulk.pop();
-    return [bulk.join(translate("sentence_connectors.all_words")), last].join(translate("sentence_connectors.last_word"));
+    return [bulk.join(", "), last].join(` ${translate("sentence_connectors.and")} `);
   }
   return strings.join("");
 }

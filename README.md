@@ -242,9 +242,7 @@ An object whose keys are message keys, and its values the localized string to sh
   "nonidealstate_msg"?: string;
   /* For listing words */
   "sentence_connectors": {
-    "all_words": string;
-    "two_words": string;
-    "last_word": string;
+    "and": string;
   };
   /* Sentence fragments for dynamically constructing chart titles (see example for use)*/
   "title": {

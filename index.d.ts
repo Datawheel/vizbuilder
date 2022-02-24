@@ -105,9 +105,7 @@ declare namespace VizBldr {
     };
     "nonidealstate_msg"?: string;
     "sentence_connectors": {
-      "all_words": string;
-      "two_words": string;
-      "last_word": string;
+      "and": string;
     };
     "title": {
       "of_selected_cut_members": string;

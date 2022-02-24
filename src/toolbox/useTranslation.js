@@ -25,15 +25,14 @@ const LOCALE_EN = {
   },
   nonidealstate_msg: "No results",
   sentence_connectors: {
-    all_words: ", ",
-    two_words: " and ",
-    last_word: ", and "
+    and: "and"
   },
   title: {
     of_selected_cut_members: "of Selected {members} Members",
     top_drilldowns: "for Top {drilldowns}",
     by_drilldowns: "by {drilldowns}",
-    over_time: "Over Time"
+    over_time: "Over Time",
+    measure_and_modifier: "{modifier} {measure}"
   }
 };
 
