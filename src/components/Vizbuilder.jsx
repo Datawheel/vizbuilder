@@ -21,7 +21,7 @@ export const Vizbuilder = props => {
     const isSingleChart = currentChart !== "" && charts.length > 1;
     const measureConfig = normalizeMeasureConfig(props.measureConfig);
 
-    const chartCards = charts
+    return charts
       .filter(chart => chart && (currentChart ? chart.key === currentChart : true))
       .map(chart =>
         <ChartCard
@@ -39,9 +39,6 @@ export const Vizbuilder = props => {
           userConfig={props.userConfig}
         />
       );
-
-    // return NonIdealState comp if the list of available chart types is empty
-    return chartCards.length > 0 ? chartCards : props.nonIdealState || <NonIdealState/>;
   }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
 
   useEffect(() => {
@@ -61,7 +58,9 @@ export const Vizbuilder = props => {
           {props.toolbar}
         </div>
         <div className={cls("vb-charts-wrapper", {unique: content.length === 1})}>
-          {content}
+          {content.length > 0
+            ? content
+            : props.nonIdealState || <NonIdealState/>}
         </div>
       </div>
     </TranslationProvider>
