@@ -48,13 +48,13 @@ A classname for CSS styling.
 * Type: `number`
 * **Optional**, default value: `20000`
 
-The maximum number of data points the instance can use to generate a chart, reduce it if the chart rendering frozes the browser.  
+The maximum number of data points the instance can use to generate a chart, reduce it if the chart rendering frozes the browser.
 
 ### `defaultLocale`
 * Type: `string`
 * **Optional**, default value: `"en"`
 
-If you implement another (or many) locale, this property sets the one shown initially.  
+If you implement another (or many) locale, this property sets the one shown initially.
 
 ### `measureConfig`
 * Type: `Record<string, D3plusConfig> | ((measure: OlapClient.Measure) => D3plusConfig)`
@@ -142,11 +142,11 @@ type ChartType =
 ### `interface QueryResult`
 
 An object with information about the cube where the info belongs to, the parameters used to execute the query, and the resulting dataset. This component is designed to work around the data structures defined on the `olap-client` package, so these properties can be easily obtained after executing a query with it. All properties are required.  
-The `AdaptedCube` interface comes from `olap-client`, and can be obtained from a `Cube` instance calling the `cube.toJSON()` method. The dataset is the tidy data array returned by a `jsonrecords` query. The `QueryParams` interface is described next, and can be constructed from a `olap-client` `Query` instance.
+The `PlainCube` interface comes from `olap-client`, and can be obtained from a `Cube` instance calling the `cube.toJSON()` method. The dataset is the tidy data array returned by a `jsonrecords` query. The `QueryParams` interface is described next, and can be constructed from a `olap-client` `Query` instance.
 
 ```ts
 interface QueryResult {
-  cube: OlapClient.AdaptedCube;
+  cube: OlapClient.PlainCube;
   dataset: any[];
   params: QueryParams;
 }
@@ -158,6 +158,7 @@ The `QueryParams` interface describes the parameters used in the query, using ra
 
 ```ts
 interface QueryParams {
+  locale: string;
   booleans: {
     [name: string]: boolean;
   };
@@ -180,12 +181,6 @@ interface QueryParams {
     measure: string;
     value: string;
   }>;
-  growth: Array<{
-    measure: string;
-    dimension?: string;
-    hierarchy?: string;
-    level: string;
-  }>;
   measures: Array<{
     collection?: string;
     formatter?: (value: number) => string;
@@ -200,7 +195,7 @@ interface QueryParams {
 
 Some remarks:
 
-* All the higher level properties (`booleans`, `cuts`, `drilldowns`, `filters`, `growth`, and `measures`) must be present, but can be empty arrays.
+* All the higher level properties (`booleans`, `cuts`, `drilldowns`, `filters`, and `measures`) must be present, but can be empty arrays.
 * In the descriptor objects, those with a question mark (`?`) at the end of the property name are optional, but encouraged to avoid collisions.
 * The `level` name used in the descriptor object can be the `uniqueName`, the `fullName`, or the `name` of the level; these three are matched in that order.
 * The `members` property in the `cuts` descriptor items is an array of member `key`, for the members defined in the cut on that `level`.
@@ -229,7 +224,7 @@ const translation: Translation = {
     max: "Max",
     min: "Min"
   },
-  
+
   /* These labels are shown in the charts tooltip */
   chart_labels: {
     ci: "Confidence Interval",
@@ -245,7 +240,7 @@ const translation: Translation = {
     title: "Title: "
   },
 
-  /* Message for the default NonIdealState when no charts are valid for queries */ 
+  /* Message for the default NonIdealState when no charts are valid for queries */
   nonidealstate_msg: "No results",
 
   /* For listing words */

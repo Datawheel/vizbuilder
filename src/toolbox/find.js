@@ -11,7 +11,7 @@ export function findFirstNumber(string, elseValue) {
 }
 
 /**
- * @param {import("@datawheel/olap-client").Cube} cube
+ * @param {OlapClient.Cube} cube
  * @param {VizBldr.Struct.MeasureItem} item
  * @returns {VizBldr.Struct.MeasureSet | undefined}
  */

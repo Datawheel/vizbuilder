@@ -1,15 +1,15 @@
 import {Level} from "@datawheel/olap-client";
-import {asArray} from "./array";
+import {isCutItem} from "./validation";
 
 /**
- * @param {import("@datawheel/olap-client").Query} query
- * @param {((measure: import("@datawheel/olap-client").Measure | string) => VizBldr.Formatter) | Record<string, VizBldr.Formatter>} [formatters]
+ * @param {OlapClient.Query} query
+ * @param {((measure: OlapClient.Measure | string) => VizBldr.Formatter) | Record<string, VizBldr.Formatter>} [formatters]
  * @returns {VizBldr.QueryParams}
  */
 export function buildQueryParams(query, formatters = {}) {
 
   /**
-   * @param {import("@datawheel/olap-client").Measure | string} measure
+   * @param {OlapClient.Measure | string} measure
    * @returns {VizBldr.Formatter}
    */
   const getFormatter = typeof formatters === "function"
@@ -20,13 +20,14 @@ export function buildQueryParams(query, formatters = {}) {
     };
 
   return {
+    locale: query.getParam("locale"),
     booleans: query.getParam("options"),
     cuts: query.getParam("cuts")
-      .filter(item => Level.isLevel(item.drillable))
-      .map(item => ({
+      .map(item => !Level.isLevel(item.drillable) ? null : {
         ...item.drillable.descriptor,
         members: item.members
-      })),
+      })
+      .filter(isCutItem),
     drilldowns: query.getParam("drilldowns")
       .filter(Level.isLevel)
       .map(item => ({
@@ -42,12 +43,6 @@ export function buildQueryParams(query, formatters = {}) {
       constraint2: item.const2,
       joint: item.joint,
       formatter: getFormatter(item.measure)
-    })),
-    growth: asArray(query.getParam("growth")).map(item => ({
-      dimension: item.level.dimension.name,
-      hierarchy: item.level.hierarchy.name,
-      level: item.level.name,
-      measure: item.measure.name
     })),
     measures: query.getParam("measures").map(item => ({
       measure: item.name,

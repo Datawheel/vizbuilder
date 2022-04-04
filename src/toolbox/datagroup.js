@@ -1,15 +1,15 @@
-import {Cube} from "@datawheel/olap-client";
+import {Cube, Measure} from "@datawheel/olap-client";
 import {formatAbbreviate} from "d3plus-format";
 import maxBy from "lodash/maxBy";
 import {buildMemberMap} from "./array";
 import {findMeasuresInCube} from "./find";
-import {isGeographicLevel, isMatchingLevel, isTimeLevel} from "./validation";
+import {isGeographicLevel, isTimeLevel} from "./validation";
 
 /**
  * @param {VizBldr.QueryResult} qr
  * @param {object} props
  * @param {number} props.datacap
- * @param {(level: import("@datawheel/olap-client").Level) => VizBldr.D3plusConfig} props.getTopojsonConfig
+ * @param {(level: OlapClient.Level) => VizBldr.D3plusConfig} props.getTopojsonConfig
  * @returns {VizBldr.Struct.Datagroup}
  */
 export function buildDatagroup(qr, props) {
@@ -25,17 +25,19 @@ export function buildDatagroup(qr, props) {
   }
 
   const cuts = new Map();
+  const cutLevels = new Map();
   const drilldowns = [];
   for (const level of cube.levelIterator) {
     for (const item of params.drilldowns) {
-      if (isMatchingLevel(item, level)) {
+      if (level.matches(item)) {
         drilldowns.push(level);
         break;
       }
     }
     for (const item of params.cuts) {
-      if (isMatchingLevel(item, level)) {
+      if (level.matches(item)) {
         cuts.set(level.caption, item.members);
+        cutLevels.set(level.caption, level);
         break;
       }
     }
@@ -74,6 +76,8 @@ export function buildDatagroup(qr, props) {
     measureSets,
     filters,
     cuts,
+    cutLevels,
+    locale: params.locale,
     maxPeriod,
     params,
     membersCount,

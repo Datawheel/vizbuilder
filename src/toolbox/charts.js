@@ -1,5 +1,5 @@
 /* eslint-disable lines-around-comment */
-import { AggregatorType } from "@datawheel/olap-client";
+import {AggregatorType} from "@datawheel/olap-client";
 import flatMap from "lodash/flatMap";
 import flattenDeep from "lodash/flattenDeep";
 import includes from "lodash/includes";
@@ -32,22 +32,22 @@ const TIME_NATIVE_CHART_TYPES = [
 
 /**
  * Returns a combined list of all drilldowns that are NOT of a time type
- * @param {VizBldr.Struct.Datagroup} dg 
- * @returns {import("@datawheel/olap-client").Level[]} List of combined non-time levels
+ * @param {VizBldr.Struct.Datagroup} dg
+ * @returns {OlapClient.Level[]} List of combined non-time levels
  */
 const getNonTimeDrilldowns = dg => dg.drilldowns.filter(lvl => !isTimeLevel(lvl));
 
 /**
  * Returns a combined list of all drilldowns that are NOT of a geographical type
- * @param {VizBldr.Struct.Datagroup} dg 
- * @returns {import("@datawheel/olap-client").Level[]} List of combined non-geo levels
+ * @param {VizBldr.Struct.Datagroup} dg
+ * @returns {OlapClient.Level[]} List of combined non-geo levels
  */
 const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
 
 /**
- * 
- * @param {VizBldr.Struct.Datagroup} dg 
- * @param {import("@datawheel/olap-client").Level[]} levels 
+ *
+ * @param {VizBldr.Struct.Datagroup} dg
+ * @param {OlapClient.Level[]} levels
  * @returns {number}
  */
 const getNumberGroupsFromLevels = (dg, levels) => levels.reduce((acc, lvl) => acc * dg.membersCount[lvl.caption], 1);
@@ -55,7 +55,7 @@ const getNumberGroupsFromLevels = (dg, levels) => levels.reduce((acc, lvl) => ac
 /**
  * Generates a unique key based on the parameters set for a chart.
  * @param {any[]} dataset
- * @param {import("@datawheel/olap-client").Level[]} levels
+ * @param {OlapClient.Level[]} levels
  * @param {VizBldr.Struct.MeasureSet} measureSet
  * @param {VizBldr.ChartType} chartType
  */
@@ -119,7 +119,7 @@ const remixerForChartType = {
    * - at least one non-time drilldown with more than one member
    * - measure that is not of aggregation type "UNKNOWN"
    * - first drilldown (in each combination of drilldowns) has less than CHART_LIMIT.MAX_BAR members
-   * 
+   *
    * Notes:
    * - By default is horizontal because improves label readability
    */
@@ -168,11 +168,11 @@ const remixerForChartType = {
 
   /**
    * BARCHART FOR YEARS
-   * 
+   *
    * Requirements:
    * - timeLevel with at least 2 members
    * - if std drilldowns exist, not all have only one member
-   * 
+   *
    * Notes:
    * - By default is vertical because of time notion
    */
@@ -213,13 +213,13 @@ const remixerForChartType = {
 
   /**
    * DONUT CHART
-   * 
+   *
    * Requirements:
    * - measure must be of aggregator types sum or count
    * - number of data groups for a combination of dimensions must be less that chartLimits.DONUT_SHAPE_MAX
    */
   donut(dg, chartLimits) {
-    // filter measures to make sure that 
+    // filter measures to make sure that
     const allowedMeasures = dg.measureSets.filter(
       // measure aggregation type is of valid type
       measureSet => includes([AggregatorType.SUM, AggregatorType.COUNT], measureSet.measure.aggregatorType)
@@ -258,9 +258,9 @@ const remixerForChartType = {
 
   /**
    * GEOMAP
-   * 
+   *
    * Requirements:
-   * - geoLevel 
+   * - geoLevel
    * - topoJsonConfig
    * - 2 or less drilldowns
    * - more than 3 geo level members
@@ -283,7 +283,7 @@ const remixerForChartType = {
       membersCount[geoDrilldown.caption] < 3 ||
 
       /* there's a standard drilldown dimension with more than one cut */
-      (stdDrilldowns[0] && (cuts.get(stdDrilldowns[0]?.caption)?.length || 1) > 1)
+      stdDrilldowns[0] && (cuts.get(stdDrilldowns[0]?.caption)?.length || 1) > 1
     ) {
       return [];
     }
@@ -306,7 +306,7 @@ const remixerForChartType = {
       key: keyMaker(dg.dataset, drilldowns, measureSet, CT.GEOMAP),
       levels: getNonTimeDrilldowns(dg),
       measureSet
-    }));  
+    }));
   },
 
   /**
@@ -327,7 +327,7 @@ const remixerForChartType = {
 
   /**
    * LINEPLOTS
-   * 
+   *
    * Requirements:
    * - time drilldown present
    * - time drilldown with at least LINE_POINT_MIN members
@@ -340,8 +340,8 @@ const remixerForChartType = {
     if (
       // no time drilldown
       !timeDrilldown ||
-      
-      // time level members are less than minimum required 
+
+      // time level members are less than minimum required
       membersCount[timeDrilldown.caption] < chartLimits.LINEPLOT_LINE_POINT_MIN
     ) {
       return [];
@@ -379,7 +379,7 @@ const remixerForChartType = {
 
   /**
    * STACKED AREA
-   * 
+   *
    * Requirements:
    * - timeLevel with chartLimits.STACKED_TIME_MEMBER_MIN or more members
    * - total combination of datapoint groups is less than chartLimits.STACKED_SHAPE_MAX
@@ -419,7 +419,7 @@ const remixerForChartType = {
         (
           // measure must be of a "stackable" aggregation type like SUM
           !includes(["AVG", "AVERAGE", "MEDIAN", "NONE"], measure.aggregatorType) ||
-          (includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) && membersCount[drilldowns[0].caption] > 1)
+          includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) && membersCount[drilldowns[0].caption] > 1
         ) &&
         // make sure that data is all negative or all positive
         dataIsSignConsistent(dg.dataset, measure)
@@ -430,7 +430,7 @@ const remixerForChartType = {
 
   /**
    * TREEMAPS
-   * 
+   *
    * Requirements:
    * - standard drilldown with more than one member present
    * - measure is of aggregation type SUM or UNKNOWN
@@ -444,7 +444,7 @@ const remixerForChartType = {
     /* DISABLE IF... */
     if (
       // only drilldown is time level
-      (timeDrilldown && nonTimeDrilldowns.length === 0) ||
+      timeDrilldown && nonTimeDrilldowns.length === 0 ||
 
       // all levels, except for timeLevel, have only 1 member.
       nonTimeDrilldowns.every(lvl => membersCount[lvl.caption] === 1)
@@ -452,9 +452,9 @@ const remixerForChartType = {
     ) {
       return [];
     }
-    
+
     const relevantLevels = nonTimeDrilldowns.filter(lvl => membersCount[lvl.caption] > 1);
-    
+
     const chartReductions = dg.measureSets.map(measureSet => {
       const {measure} = measureSet;
 
@@ -463,8 +463,8 @@ const remixerForChartType = {
         !includes(["SUM", "UNKNOWN"], measure.aggregatorType) ||
 
         /** @see {@link https://github.com/Datawheel/canon/issues/487} */
-        (includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
-          membersCount[nonTimeDrilldowns?.[0].caption] > 1) ||
+        includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
+          membersCount[nonTimeDrilldowns?.[0].caption] > 1 ||
 
         // make sure that data is all positive
         !dataIsSignConsistent(dg.dataset, measure)
@@ -483,7 +483,7 @@ const remixerForChartType = {
           isMap: false,
           isTimeline: !!timeDrilldown,
           key: keyMaker(dataset, levels, measureSet, chartType)
-        }
+        };
       });
     });
 

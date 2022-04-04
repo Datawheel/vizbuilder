@@ -1,9 +1,12 @@
 import debounce from "lodash/debounce";
 
 /**
- * 
- * @param {VizBldr.VizbuilderProps["measureConfig"]} measureConfig 
- * @returns {(measure: import("@datawheel/olap-client").Measure) => VizBldr.D3plusConfig}
+ * Normalizes the Vizbuilder Component Property "measureConfig", which can
+ * accept both a `(measure: OlapClient.Measure) => D3plusConfig` or a
+ * `Record<string, D3plusConfig>, into the function form for internal use.
+ *
+ * @param {VizBldr.VizbuilderProps["measureConfig"]} measureConfig
+ * @returns {(measure: OlapClient.Measure) => VizBldr.D3plusConfig}
  */
 export function normalizeMeasureConfig(measureConfig) {
   if (typeof measureConfig === "function") {
@@ -15,7 +18,7 @@ export function normalizeMeasureConfig(measureConfig) {
 
 /**
  * @param {VizBldr.VizbuilderProps["topojsonConfig"]} topojsonConfig
- * @returns {(level: import("@datawheel/olap-client").Level) => VizBldr.D3plusConfig}
+ * @returns {(level: OlapClient.Level) => VizBldr.D3plusConfig}
  */
 export function normalizeTopojsonConfig(topojsonConfig) {
   if (typeof topojsonConfig === "function") {

@@ -2,7 +2,7 @@ import {assign} from "d3plus-common";
 import includes from "lodash/includes";
 import {relativeStdDev} from "./math";
 import {sorterByCustomKey} from "./sort";
-import {getColumnId} from "./strings";
+import {getCaption, getColumnId} from "./strings";
 import {chartTitleGenerator} from "./title";
 import {tooltipGenerator} from "./tooltip";
 
@@ -12,7 +12,7 @@ import {tooltipGenerator} from "./tooltip";
  */
 export function createChartConfig(chart, uiParams) {
   const {chartType, dg, measureSet, levels} = chart;
-  const {timeDrilldown} = dg;
+  const {timeDrilldown, locale} = dg;
   const {formatter, measure} = measureSet;
   const {isSingleChart, isUniqueChart} = uiParams;
 
@@ -29,11 +29,11 @@ export function createChartConfig(chart, uiParams) {
       totalFormat: d => `Total: ${formatter(d)}`,
 
       yConfig: {
-        title: measureName,
+        title: getCaption(measure, locale),
         tickFormat: formatter
       },
       label: labelFunctionGenerator(...levelNames),
-      locale: uiParams.locale,
+      locale,
 
       sum: measureName,
       value: measureName
@@ -62,10 +62,10 @@ export function createChartConfig(chart, uiParams) {
   config.zoom = chartType === "geomap" && isSingleChart;
 
   if (config.title === undefined) {
-    config.title = chartTitleGenerator(chart, uiParams.translate);
+    config.title = chartTitleGenerator(chart, uiParams);
   }
 
-  assign(config, uiParams.measureConfig[measureName] || {});
+  assign(config, uiParams.measureConfig(measure) || {});
   config.data = dg.dataset;
 
   return config;
@@ -90,12 +90,12 @@ const makeConfig = {
         discrete: "y",
         x: measureName,
         xConfig: {
-          title: measureName,
+          title: getCaption(measure, dg.locale),
           tickFormat: formatter
         },
         y: firstLevelName,
         yConfig: {
-          title: firstLevelName,
+          title: getCaption(firstLevel, dg.locale),
           ticks: []
         },
         stacked: measure.aggregatorType === "SUM" && firstLevel.depth > 1,
@@ -151,11 +151,11 @@ const makeConfig = {
         discrete: "x",
         x: timeLevelName,
         xConfig: {
-          title: timeLevel?.caption
+          title: timeLevel ? getCaption(timeLevel, dg.locale) : null
         },
         y: measureName,
         yConfig: {
-          title: measureName,
+          title: getCaption(measure, dg.locale),
           tickFormat: formatter
         },
         stacked: true,
@@ -181,7 +181,7 @@ const makeConfig = {
       {
         y: measure.name,
         yConfig: {
-          title: measure.name,
+          title: getCaption(measure, dg.locale),
           tickFormat: formatter
         },
         groupBy: levels.map(lvl => lvl.caption)
@@ -250,10 +250,11 @@ const makeConfig = {
 
   /**
    */
-  lineplot(chart, {userConfig, showConfidenceInt}) {
+  lineplot(chart, uiParams) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
+    const {userConfig, showConfidenceInt} = uiParams;
 
     const levelName = levels[0]?.caption;
     const measureName = measure.name;
@@ -268,7 +269,7 @@ const makeConfig = {
         groupBy,
         x: timeLevelName,
         xConfig: {
-          title: timeLevel?.caption
+          title: timeLevel ? getCaption(timeLevel, dg.locale) : undefined
         },
         y: measureName,
         yConfig: {
@@ -324,7 +325,10 @@ const makeConfig = {
     const {measure} = chart.measureSet;
 
     const config = makeConfig.lineplot(chart, uiParams);
-    config.yConfig = {scale: "linear", title: measure.name};
+    config.yConfig = {
+      scale: "linear",
+      title: getCaption(measure, chart.dg.locale)
+    };
 
     if (levels.length > 1) {
       config.groupBy = levels.map(lvl => lvl.caption);

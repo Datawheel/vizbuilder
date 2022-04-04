@@ -23,7 +23,6 @@ declare namespace VizBldr {
     downloadFormats?: string[];
     measureConfig?: Record<string, D3plusConfig> | ((measure: OlapClient.Measure) => D3plusConfig);
     nonIdealState?: React.ComponentType,
-    onPeriodChange?: (period: Date) => void;
     queries: QueryResult | QueryResult[];
     showConfidenceInt?: boolean;
     toolbar?: React.ReactNode;
@@ -67,17 +66,17 @@ declare namespace VizBldr {
     | "treemap";
 
   interface QueryResult {
-    cube: OlapClient.AdaptedCube;
+    cube: OlapClient.PlainCube;
     dataset: any[];
     params: QueryParams;
   }
 
   interface QueryParams {
-    booleans: Record<string, boolean>;
+    booleans: Record<string, boolean | undefined>;
     cuts: Struct.CutItem[];
     drilldowns: Struct.DrilldownItem[];
     filters: Struct.FilterItem[];
-    growth: Struct.GrowthItem[];
+    locale: string;
     measures: Struct.MeasureItem[];
   }
 
@@ -141,13 +140,6 @@ declare namespace VizBldr {
       measure: string;
     }
 
-    interface GrowthItem {
-      measure: string;
-      dimension?: string;
-      hierarchy?: string;
-      level: string;
-    }
-
     interface MeasureItem {
       collection?: string;
       formatter?: Formatter;
@@ -161,11 +153,13 @@ declare namespace VizBldr {
     interface Datagroup {
       cube: OlapClient.Cube;
       cuts: Map<string, string[]>;
+      cutLevels: Map<string, OlapClient.Level>;
       datacap: number;
       dataset: any[];
       drilldowns: OlapClient.Level[];
       filters: FilterSet[];
       geoDrilldown: OlapClient.Level | undefined;
+      locale: string;
       maxPeriod: number | undefined;
       measureSets: MeasureSet[];
       members: Record<string, number[]> | Record<string, string[]>;
@@ -246,7 +240,6 @@ declare namespace VizBldr {
     currentChart: string;
     isSingleChart: boolean;
     isUniqueChart: boolean;
-    locale: string;
     measureConfig: (measure: OlapClient.Measure) => D3plusConfig;
     showConfidenceInt: boolean;
     translate: I18N.TranslateFunction;

@@ -12,23 +12,19 @@ export function areKindaNumeric(list, tolerance = 0.8) {
 }
 
 /**
- * @param {import("@datawheel/olap-client").Level} level
+ * @param {any} obj
+ * @returns {obj is VizBldr.Struct.CutItem}
+ */
+export function isCutItem(obj) {
+  return obj && obj.hasOwnProperty("level") && obj.hasOwnProperty("members");
+}
+
+/**
+ * @param {OlapClient.Level} level
  * @returns {boolean}
  */
 export function isGeographicLevel(level) {
   return level?.dimension?.dimensionType === DimensionType.Geographic;
-}
-
-/**
- * Checks if the provided `item` is a valid LevelDescriptor for `level`.
- * @param {VizBldr.Struct.DrilldownItem | VizBldr.Struct.CutItem} item
- * @param {import("@datawheel/olap-client").Level} level
- */
-export function isMatchingLevel(item, level) {
-  const {dimension: dimName, hierarchy: hieName, level: lvlName} = item;
-  return (level.name === lvlName || level.uniqueName === lvlName || level.fullName === lvlName) &&
-    (!hieName || hieName === level.hierarchy.name) &&
-    (!dimName || dimName === level.dimension.name);
 }
 
 /**
@@ -40,7 +36,7 @@ export function isNumeric(n) {
 }
 
 /**
- * @param {import("@datawheel/olap-client").Level} level
+ * @param {OlapClient.Level} level
  * @returns {boolean}
  */
 export function isTimeLevel(level) {
@@ -49,8 +45,8 @@ export function isTimeLevel(level) {
 
 /**
  * Determines whether the data, given a certain measure, is either all negative or all positive (zeros are treated as neutral)
- * @param {Object[]} data 
- * @param {import("@datawheel/olap-client").Measure} measure 
+ * @param {Object[]} data
+ * @param {OlapClient.Measure} measure
  * @returns {boolean}
  */
 export function dataIsSignConsistent(data, measure) {
