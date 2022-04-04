@@ -1,4 +1,4 @@
-name: Create new Github Releases
+name: Create new Github Release
 
 on:
   push:
@@ -24,13 +24,12 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Create tarball
+        run: npm pack
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-          automatic_release_tag: latest
-          files: |
-            dist/*.js
-            index.d.ts
-            LICENSE.txt
-            package.json
+          artifacts: "*.tgz"
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
