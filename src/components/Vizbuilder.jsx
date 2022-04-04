@@ -33,7 +33,6 @@ export const Vizbuilder = props => {
           isUniqueChart={isUniqueChart}
           key={chart.key}
           measureConfig={measureConfig}
-          onPeriodChange={(periodL, periodR) => setCurrentPeriod([periodL, periodR || ""])}
           onToggle={() => setCurrentChart(currentChart ? "" : chart.key)}
           showConfidenceInt={props.showConfidenceInt}
           userConfig={props.userConfig}

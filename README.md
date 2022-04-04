@@ -63,12 +63,6 @@ If you implement another (or many) locale, this property sets the one shown init
 Useful to set a specific d3plus config to use depending on the measure used in the query. The config parameters resulting from using this property have priority over all other config params determined by internal heuristic.  
 This property accepts a function or an object. If a function is passed, it will be called with the relevant `olap-client` `Measure` instance object, and must return an object with the properties wanted to be merged to the chart config. If an object is passed, the value whose key matches the `measure.name` will be merged to the chart config.
 
-### `onPeriodChange`
-* Type: `(period: Date) => void`
-* **Optional**, default value: `undefined`
-
-A function that's called when the user picks a different time period in the timeline of a chart. The parameter passed is the Date object for the selected time period, and it doesn't need a value to be returned.
-
 ### `showConfidenceInt`
 * Type: `boolean`
 * **Optional**, default value: `false`

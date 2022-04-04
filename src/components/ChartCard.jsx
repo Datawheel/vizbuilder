@@ -29,7 +29,6 @@ export const chartComponents = {
  * @property {boolean} isSingleChart The view has other charts, but the user is enlarging this one.
  * @property {boolean} isUniqueChart The view only has this chart.
  * @property {(measure: OlapClient.Measure) => VizBldr.D3plusConfig} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
- * @property {(periodLeft: string, periodRight?: string) => void} onPeriodChange A handler for when the user selects a different time period on the timeline of a chart.
  * @property {() => void} onToggle A handler for when the user selects a specific chart.
  * @property {VizBldr.VizbuilderProps["showConfidenceInt"]} showConfidenceInt Toggles confidence intervals/margins of error when available.
  * @property {VizBldr.VizbuilderProps["userConfig"]} userConfig A global d3plus config that gets applied on all charts. Has priority over the individually generated configs per chart, but can be overridden by internal working configurations.

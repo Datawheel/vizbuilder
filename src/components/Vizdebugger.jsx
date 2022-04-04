@@ -56,7 +56,6 @@ export const Vizdebugger = props => {
         isUniqueChart={isUniqueChart}
         key={chart.key}
         measureConfig={measureConfig}
-        onPeriodChange={(periodL, periodR) => setCurrentPeriod([periodL, periodR || ""])}
         onToggle={() => null}
         showConfidenceInt={props.showConfidenceInt}
         userConfig={props.userConfig}
