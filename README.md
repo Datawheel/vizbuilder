@@ -296,6 +296,29 @@ return {
 [...]
 ```
 
+## Localization
+
+### Localization of schema entities
+
+As a way to circumvent the limitations in the OLAP server, the labels of the entities used to formulate the Query can be localized through the use of the `caption` annotation. Vizbuilder uses the locale of the query to pick the localized caption from the `olap-client` entity Annotations, and uses that caption in Axis, Titles and Labels.
+
+#### Example of annotation rules
+
+If a Schema Entity contains the following properties:
+
+```json
+"name": "Calendar Year",
+"annotations": {
+  "caption": "Year",
+  "caption_es": "Año",
+},
+```
+
+* A Query with `"es"` locale would use the `"Año"` caption, from the `caption_es` annotation, in the UI.
+* If the locale were set to `"en"`, or any other, since there's no `caption_en` annotation, it would fallback to use `"caption"`, and would show `"Year"` in the UI.  
+* Ultimately, if there was no `caption` in the Annotations, the UI would use the `name` `"Calendar Year"` as final fallback.
+* The locale value also supports extended locale codes, like `"zh_CHS"`/`"zh_CHT"`. In these cases, an additional fallback step would look for a `caption_zh` if `caption_zh_CHS` wasn't present.
+
 ## License
 
 © 2019 [Datawheel, LLC](https://datawheel.us/)  
