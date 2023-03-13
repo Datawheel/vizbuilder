@@ -19,10 +19,10 @@
     "index.d.ts"
   ],
   "scripts": {
-    "build": "rollup --config rollup.config.js --environment NODE_ENV:production,BABEL_ENV:production",
-    "prepublishOnly": "npm run build",
-    "start": "snowpack dev",
-    "watch": "rollup --config rollup.config.js --environment NODE_ENV:development,BABEL_ENV:development --watch"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "tsup",
+    "start": "vite"
   },
   "keywords": [
     "charts",
@@ -41,7 +41,6 @@
     "url": "https://github.com/Datawheel/vizbuilder.git"
   },
   "dependencies": {
-    "@babel/runtime-corejs3": "^7.0.0",
     "@datawheel/olap-client": "^2.0.0-beta.3",
     "@datawheel/use-translation": "^0.1.3",
     "classnames": "^2.0.0",
@@ -52,34 +51,22 @@
     "lodash": "^4.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.13.16",
-    "@babel/eslint-parser": "^7.13.14",
-    "@babel/plugin-proposal-class-properties": "^7.13.0",
-    "@babel/plugin-transform-runtime": "^7.13.15",
-    "@babel/preset-env": "^7.13.15",
-    "@babel/preset-react": "^7.13.13",
     "@datawheel/eslint-config": "^1.0.3",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-commonjs": "^17.1.0",
-    "@rollup/plugin-node-resolve": "^11.2.1",
-    "@rollup/plugin-replace": "^2.4.2",
-    "@snowpack/plugin-react-refresh": "^2.4.2",
+    "@vitejs/plugin-react": "^3.1.0",
     "eslint": "^7.25.0",
     "eslint-plugin-react": "^7.23.2",
-    "http-proxy": "^1.18.1",
     "prop-types": "^15.8.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "query-string": "^7.1.1",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0",
     "react-inspector": "^5.1.1",
-    "rollup": "^2.45.2",
-    "rollup-plugin-cleanup": "^3.2.1",
-    "rollup-plugin-terser": "^7.0.2",
-    "snowpack": "^3.3.5"
+    "tsup": "^6.6.3",
+    "vite": "^4.1.4"
   },
   "peerDependencies": {
     "prop-types": "^15.8.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "react": "^16.12.0 || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.12.0 || ^17.0.0 || ^18.0.0"
   },
   "eslintConfig": {
     "extends": "@datawheel",

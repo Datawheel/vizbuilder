@@ -1,4 +1,4 @@
-import {Cube, Measure} from "@datawheel/olap-client";
+import {Cube} from "@datawheel/olap-client";
 import {formatAbbreviate} from "d3plus-format";
 import maxBy from "lodash/maxBy";
 import {buildMemberMap} from "./array";

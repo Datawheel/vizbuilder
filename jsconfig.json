@@ -10,7 +10,6 @@
   "include": [
     "example",
     "src",
-    "index.d.ts",
-    "global.d.ts",
+    "**/*.d.ts",
   ]
 }

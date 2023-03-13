@@ -134,7 +134,7 @@ declare namespace VizBldr {
 
     interface FilterItem {
       constraint1: [OlapClient.Comparison, number];
-      constraint1?: [OlapClient.Comparison, number] | undefined;
+      constraint2?: [OlapClient.Comparison, number] | undefined;
       formatter?: Formatter;
       joint?: "and" | "or" | undefined;
       measure: string;
