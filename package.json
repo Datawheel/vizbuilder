@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@datawheel/olap-client": "^2.0.0-beta.3",
-    "@datawheel/use-translation": "^0.1.3",
+    "@datawheel/use-translation": "^0.2.0",
     "classnames": "^2.0.0",
     "d3plus-common": "^1.0.0",
     "d3plus-export": "^1.0.0",
