@@ -25,6 +25,18 @@ export function createChartConfig(chart, uiParams) {
     {
       legend: false,
 
+      timelineConfig: {
+        brushing: false,
+        padding: 0
+      },
+
+      titleConfig: {
+        padding: 0
+      },
+      titlePadding: isEnlarged || isSingleChart,
+
+      tooltipConfig: tooltipGenerator(chart, uiParams),
+
       total: false,
       totalFormat: d => `Total: ${formatter(d)}`,
 
@@ -36,9 +48,10 @@ export function createChartConfig(chart, uiParams) {
       locale,
 
       sum: measureName,
-      value: measureName
+      value: measureName,
+      zoom: isEnlarged || isSingleChart
     },
-    makeConfig[chartType](chart, uiParams)
+    makeConfig[chartType](chart, uiParams, isEnlarged)
   );
 
   if (
@@ -52,15 +65,6 @@ export function createChartConfig(chart, uiParams) {
     config.timeline = isEnlarged;
   }
 
-  if (timeDrilldown && config.timeline) {
-    config.timelineConfig = {
-      brushing: false
-    };
-  }
-
-  config.tooltipConfig = tooltipGenerator(chart, uiParams);
-  config.zoom = chartType === "geomap" && isSingleChart;
-
   if (config.title === undefined) {
     config.title = chartTitleGenerator(chart, uiParams);
   }
@@ -71,11 +75,11 @@ export function createChartConfig(chart, uiParams) {
   return config;
 }
 
-/** @type {Record<VizBldr.ChartType, (chart: VizBldr.Struct.Chart, uiParams: VizBldr.UIParams) => any>} */
+/** @type {Record<VizBldr.ChartType, (chart: VizBldr.Struct.Chart, uiParams: VizBldr.UIParams, isEnlarged: Boolean) => any>} */
 const makeConfig = {
 
   /** */
-  barchart(chart, uiParams) {
+  barchart(chart, uiParams, isEnlarged) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
@@ -87,6 +91,7 @@ const makeConfig = {
     const config = assign(
       {
         groupBy: [firstLevelName],
+        groupPadding: isEnlarged ? 5 : 1,
         discrete: "y",
         x: measureName,
         xConfig: {
@@ -99,13 +104,6 @@ const makeConfig = {
           ticks: []
         },
         stacked: measure.aggregatorType === "SUM" && firstLevel.depth > 1,
-        shapeConfig: {
-          Bar: {
-            labelConfig: {
-              textAnchor: "start"
-            }
-          }
-        },
         ySort: sorterByCustomKey(firstLevelName, dg.members[firstLevelName])
       },
       uiParams.userConfig
