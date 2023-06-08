@@ -45,7 +45,7 @@ export const ChartCard = props => {
 
   const {translate} = useTranslation();
 
-  const nodeRef = useRef();
+  const nodeRef = useRef(null);
 
   const ChartComponent = chartComponents[chart.chartType];
 
@@ -62,14 +62,9 @@ export const ChartCard = props => {
   const saveChart = useCallback(format => {
     const chartInstance = nodeRef.current;
     if (chartInstance) {
-      const svgElement = chartInstance.container.querySelector("svg");
+      const svgElement = chartInstance.querySelector("svg");
 
-      const filename = (config.title instanceof Function
-        // If title is a Function, it means that the title is dependent upon the filtered data.
-        // Because d3plus handles this generation internally, we need to generate title again using the viz's
-        // internal '_filteredData' variable as its param
-        ? config.title(chartInstance.viz._filteredData)
-        : config.title)
+      const filename = (config.title instanceof Function ? config.title() : config.title)
         // and replace special characters with underscores
         .replace(/[^\w]/g, "_")
         .replace(/[_]+/g, "_");
@@ -108,7 +103,9 @@ export const ChartCard = props => {
         />}
       </aside>
       <ErrorBoundary>
-        <ChartComponent ref={nodeRef} className="vb-chart-viz" config={config} />
+        <div className="vb-chart-viz" ref={nodeRef}>
+          <ChartComponent config={config} />
+        </div>
       </ErrorBoundary>
     </div>
   );

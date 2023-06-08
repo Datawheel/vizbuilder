@@ -26,6 +26,9 @@
   min-width: 0;
   min-height: 300px;
 }
+.vb-wrapper .vb-chart-card .viz {
+  height: 100%;
+}
 .vb-wrapper .vb-chart-viz svg {
   display: block !important;
   max-width: 100%;
