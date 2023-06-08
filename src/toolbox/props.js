@@ -27,9 +27,3 @@ export function normalizeTopojsonConfig(topojsonConfig) {
   const config = topojsonConfig != null ? topojsonConfig : {};
   return level => config[level.uniqueName] || config[level.fullName] || config[level.name];
 }
-
-export const scrollEnsureHandler =
-  debounce(() => window.dispatchEvent(new CustomEvent("scroll")), 400);
-
-export const resizeEnsureHandler =
-  debounce(() => window.dispatchEvent(new CustomEvent("resize")), 400);

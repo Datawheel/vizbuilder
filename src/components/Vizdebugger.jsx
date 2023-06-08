@@ -1,7 +1,7 @@
 import cls from "classnames";
 import React, {useEffect, useMemo, useState} from "react";
 import {ObjectInspector} from "react-inspector";
-import {normalizeMeasureConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
+import {normalizeMeasureConfig} from "../toolbox/props";
 import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard} from "./ChartCard";
@@ -12,8 +12,7 @@ export const Vizdebugger = props => {
     charts,
     currentChart,
     currentPeriod,
-    setCurrentChart,
-    setCurrentPeriod
+    setCurrentChart
   } = useCharts(props);
   const [isUniqueChart, setUniqueChart] = useState(false);
   const [isSingleChart, setSingleChart] = useState(false);
@@ -63,19 +62,12 @@ export const Vizdebugger = props => {
     );
   }, [currentPeriod, chart, isSingleChart, isUniqueChart, props.showConfidenceInt]);
 
-  useEffect(() => {
-    requestAnimationFrame(resizeEnsureHandler);
-  }, [content]);
-
   return (
     <TranslationProvider
       defaultLocale={props.defaultLocale}
       translations={props.translations}
     >
-      <div
-        className={cls("vb-wrapper debugger", props.className)}
-        onScroll={scrollEnsureHandler}
-      >
+      <div className={cls("vb-wrapper debugger", props.className)}>
         <div className="vb-toolbar-wrapper">
           {props.toolbar}
           <button onClick={() => setCurrentChart(charts[Math.max(0, chartIndex - 1)].key)}>Prev</button>

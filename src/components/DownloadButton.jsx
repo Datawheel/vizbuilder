@@ -1,6 +1,12 @@
 import React from "react";
-import {useTranslation} from "../toolbox/useTranslation";
-import {Button} from "./Button";
+import {Button} from '@mantine/core';
+import {IconDownload, IconVectorTriangle, IconPhotoDown} from '@tabler/icons-react';
+
+const iconByFormat = {
+  JPG: IconPhotoDown,
+  PNG: IconPhotoDown,
+  SVG: IconVectorTriangle
+}
 
 /**
  * @typedef DownloadButtonProps
@@ -12,18 +18,25 @@ import {Button} from "./Button";
 export const DownloadButton = props => {
   const {onClick} = props;
 
-  const {translate} = useTranslation();
-
   return (
-    <span className="bp3-button-group">
+    <>
       {props.formats.map((format, i) => {
         const formatCaps = format.toUpperCase();
         const evtHandler = onClick ? () => onClick(formatCaps) : null;
-        const text = i === 0
-          ? translate("action_download", {format: formatCaps})
-          : formatCaps;
-        return <Button key={format} onClick={evtHandler} text={text} />;
+        const Icon = iconByFormat[formatCaps] || IconDownload;
+        return (
+          <Button
+            compact
+            key={format}
+            leftIcon={<Icon size={16} />}
+            onClick={evtHandler}
+            size="sm"
+            variant="light"
+          >
+            {formatCaps}
+          </Button>
+        );
       })}
-    </span>
+    </>
   );
 }
