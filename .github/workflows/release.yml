@@ -1,4 +1,4 @@
-name: Create new Github Release
+name: Create new Github Release and publish to NPM
 
 on:
   push:
@@ -6,30 +6,28 @@ on:
       - v*
 
 jobs:
-  tag-release:
+  release:
     name: "New Release from version Tag"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Install nodejs 16
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Build package
-        run: npm run build
+      - run: npm run build
 
-      - name: Create tarball
-        run: npm pack
+      - run: npm pack
 
-      - name: Create release
-        uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@v1
         with:
           artifacts: "*.tgz"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
