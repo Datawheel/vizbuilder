@@ -1,9 +1,10 @@
+import {Box, Button, Group, Stack} from "@mantine/core";
+import {IconArrowsMaximize, IconArrowsMinimize} from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
 import React, {useCallback, useMemo, useRef} from "react";
 import {createChartConfig} from "../toolbox/chartConfigs";
 import {useTranslation} from "../toolbox/useTranslation";
-import {Button} from "./Button";
 import {DownloadButton} from "./DownloadButton";
 import {ErrorBoundary} from "./ErrorBoundary";
 
@@ -27,7 +28,6 @@ export const chartComponents = {
  * @property {[string, string]} currentPeriod The currently selected time period.
  * @property {string[]} [downloadFormats] A list of the currently enabled formats to download. Options are "PNG" and "SVG".
  * @property {boolean} isSingleChart The view has other charts, but the user is enlarging this one.
- * @property {boolean} isUniqueChart The view only has this chart.
  * @property {(measure: OlapClient.Measure) => VizBldr.D3plusConfig} measureConfig A dictionary of custom defined d3plus configs by measure name. Has priority over all other configs.
  * @property {() => void} onToggle A handler for when the user selects a specific chart.
  * @property {VizBldr.VizbuilderProps["showConfidenceInt"]} showConfidenceInt Toggles confidence intervals/margins of error when available.
@@ -39,37 +39,31 @@ export const ChartCard = props => {
   const {
     chart,
     currentChart,
-    isSingleChart,
-    isUniqueChart
+    isSingleChart
   } = props;
 
   const {translate} = useTranslation();
 
-  const nodeRef = useRef();
+  /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+  const nodeRef = useRef(null);
 
   const ChartComponent = chartComponents[chart.chartType];
 
   const config = useMemo(() => createChartConfig(chart, {
     currentChart,
     isSingleChart,
-    isUniqueChart,
     measureConfig: props.measureConfig,
     showConfidenceInt: Boolean(props.showConfidenceInt),
     translate,
     userConfig: props.userConfig || {}
-  }), [isSingleChart, isUniqueChart]);
+  }), [isSingleChart]);
 
   const saveChart = useCallback(format => {
     const chartInstance = nodeRef.current;
     if (chartInstance) {
-      const svgElement = chartInstance.container.querySelector("svg");
+      const svgElement = chartInstance.querySelector("svg");
 
-      const filename = (config.title instanceof Function
-        // If title is a Function, it means that the title is dependent upon the filtered data.
-        // Because d3plus handles this generation internally, we need to generate title again using the viz's
-        // internal '_filteredData' variable as its param
-        ? config.title(chartInstance.viz._filteredData)
-        : config.title)
+      const filename = (config.title instanceof Function ? config.title() : config.title)
         // and replace special characters with underscores
         .replace(/[^\w]/g, "_")
         .replace(/[_]+/g, "_");
@@ -90,26 +84,38 @@ export const ChartCard = props => {
   }, [config]);
 
   const focused = currentChart === chart.key;
-  const buttonIcon = focused ? "cross" : "zoom-in";
+  const ButtonIcon = focused ? IconArrowsMinimize : IconArrowsMaximize;
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
+  const buttonVariant = focused ? "filled" : "light";
+  const height = focused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
+  const buttonPosition = focused || isSingleChart ? "static" : "absolute";
 
   return (
-    <div className="vb-chart-card">
-      <aside className="vb-chart-toolbar">
-        {!isUniqueChart && <Button
-          icon={buttonIcon}
-          minimal
-          onClick={props.onToggle}
-          text={buttonText}
-        />}
-        {props.downloadFormats && <DownloadButton
-          formats={props.downloadFormats}
-          onClick={saveChart}
-        />}
-      </aside>
+    <Box className="vb-chart-card" h={height} miw={200} w="100%" style={{overflow: "hidden"}}>
       <ErrorBoundary>
-        <ChartComponent ref={nodeRef} className="vb-chart-viz" config={config} />
+        <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
+          <Box style={{flex: "1 1 100%"}} className="vb-chart-viz" ref={nodeRef} p="xs">
+            <ChartComponent config={config} />
+          </Box>
+          <Group className="vb-chart-toolbar" position="right" p="xs" spacing="xs" align="center" bottom={0} right={0} style={{position: buttonPosition}}>
+            {(focused || isSingleChart) && props.downloadFormats && <DownloadButton
+              formats={props.downloadFormats}
+              onClick={saveChart}
+            />}
+            {(!isSingleChart || focused) &&
+              <Button
+                compact
+                leftIcon={<ButtonIcon size={16} />}
+                onClick={props.onToggle}
+                size="sm"
+                variant={buttonVariant}
+              >
+                {buttonText}
+              </Button>
+            }
+          </Group>
+        </Stack>
       </ErrorBoundary>
-    </div>
+    </Box>
   );
 };

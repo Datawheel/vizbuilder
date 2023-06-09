@@ -108,6 +108,7 @@ export function shortHash(text) {
   let hash = 5381;
   let index = text.length;
   while (index--) {
+    // eslint-disable-next-line no-extra-parens
     hash = (hash * 33) ^ text.charCodeAt(index);
   }
   return (hash >>> 0).toString(36);

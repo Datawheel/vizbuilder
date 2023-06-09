@@ -3,7 +3,6 @@ import {translationFactory} from "@datawheel/use-translation";
 /** @type {VizBldr.Translation} */
 const LOCALE_EN = {
   action_close: "Close",
-  action_download: "Download {{format}}",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
   action_retry: "Retry",
@@ -20,8 +19,8 @@ const LOCALE_EN = {
   },
   error: {
     detail: "",
-    message: "Error details: \"{{message}}\".",
-    title: "Title: "
+    message: "Details: \"{{message}}\".",
+    title: "Error"
   },
   nonidealstate_msg: "No results",
   sentence_connectors: {

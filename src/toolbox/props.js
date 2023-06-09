@@ -1,5 +1,3 @@
-import debounce from "lodash/debounce";
-
 /**
  * Normalizes the Vizbuilder Component Property "measureConfig", which can
  * accept both a `(measure: OlapClient.Measure) => D3plusConfig` or a
@@ -27,9 +25,3 @@ export function normalizeTopojsonConfig(topojsonConfig) {
   const config = topojsonConfig != null ? topojsonConfig : {};
   return level => config[level.uniqueName] || config[level.fullName] || config[level.name];
 }
-
-export const scrollEnsureHandler =
-  debounce(() => window.dispatchEvent(new CustomEvent("scroll")), 400);
-
-export const resizeEnsureHandler =
-  debounce(() => window.dispatchEvent(new CustomEvent("resize")), 400);

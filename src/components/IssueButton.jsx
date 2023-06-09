@@ -1,5 +1,7 @@
 import React from "react";
 import {useTranslation} from "../toolbox/useTranslation";
+import {Button} from "@mantine/core";
+import {IconBrandGithub} from "@tabler/icons-react";
 
 /**
  * @typedef OwnProps
@@ -16,17 +18,22 @@ export const IssueButton = ({error, message}) => {
 **Error**: ${error}
 ${message ? `**Error details:** ${message}\n` : ""}
 **Detail of the issue:**
-`
+`;
   const issueParams = `title=${encodeURIComponent(`[report/vizbuilder] ${error}`)}&body=${encodeURIComponent(body)}`;
 
   return (
-    <a
-      className="bp3-button bp3-intent-primary"
+    <Button
+      component="a"
       href={`https://github.com/Datawheel/vizbuilder/issues/new?${issueParams}`}
+      leftIcon={<IconBrandGithub size="1rem" />}
       rel="noopener noreferrer"
       role="button"
+      size="xs"
       tabIndex={0}
       target="_blank"
-    >{t("action_fileissue")}</a>
+      variant="subtle"
+    >
+      {t("action_fileissue")}
+    </Button>
   );
 };

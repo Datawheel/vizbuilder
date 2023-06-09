@@ -19,7 +19,7 @@ export const useCharts = props => {
       datacap: props.datacap || 20000,
       getTopojsonConfig: normalizeTopojsonConfig(props.topojsonConfig)
     };
-    const chartLimits = {...DEFAULT_CHART_LIMITS, ...(props.chartLimits || {})};
+    const chartLimits = {...DEFAULT_CHART_LIMITS, ...props.chartLimits || {}};
 
     return flatMap(asArray(props.queries), query => {
       const datagroup = buildDatagroup(query, datagroupProps);

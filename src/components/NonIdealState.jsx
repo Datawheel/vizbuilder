@@ -9,6 +9,6 @@ const NonIdealState = () => {
       {t("nonidealstate_msg")}
     </h1>
   </div>;
-}
+};
 
 export default NonIdealState;

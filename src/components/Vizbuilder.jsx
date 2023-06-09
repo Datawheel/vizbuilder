@@ -1,10 +1,11 @@
-import cls from "classnames";
-import React, {useEffect, useMemo} from "react";
-import {normalizeMeasureConfig, resizeEnsureHandler, scrollEnsureHandler} from "../toolbox/props";
+import cls from "clsx";
+import React, {useMemo} from "react";
+import {normalizeMeasureConfig} from "../toolbox/props";
 import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard} from "./ChartCard";
 import NonIdealState from "./NonIdealState";
+import {Grid, Modal, Paper} from "@mantine/core";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */
 export const Vizbuilder = props => {
@@ -12,55 +13,97 @@ export const Vizbuilder = props => {
     charts,
     currentChart,
     currentPeriod,
-    setCurrentChart,
-    setCurrentPeriod
+    setCurrentChart
   } = useCharts(props);
 
-  const content = useMemo(() => {
-    const isUniqueChart = charts.length === 1;
-    const isSingleChart = currentChart !== "" && charts.length > 1;
-    const measureConfig = normalizeMeasureConfig(props.measureConfig);
+  const isSingleChart = charts.length === 1;
 
-    return charts
-      .filter(chart => chart && (currentChart ? chart.key === currentChart : true))
-      .map(chart =>
-        <ChartCard
-          chart={chart}
-          currentChart={currentChart}
-          currentPeriod={currentPeriod}
-          downloadFormats={props.downloadFormats}
-          isSingleChart={isSingleChart}
-          isUniqueChart={isUniqueChart}
-          key={chart.key}
-          measureConfig={measureConfig}
-          onToggle={() => setCurrentChart(currentChart ? "" : chart.key)}
-          showConfidenceInt={props.showConfidenceInt}
-          userConfig={props.userConfig}
-        />
+  const content = useMemo(() => {
+    const measureConfig = normalizeMeasureConfig(props.measureConfig);
+    const filteredCharts = charts
+      .filter((d, i) => charts.findIndex(c => c.key === d.key) === i); // removes duplicate charts
+
+    const colProps = filteredCharts.length === 1 ? {span: 12} : filteredCharts.length === 2 ? {span: 6} : {sm: 6, lg: 4, xl: 3};
+
+    if (filteredCharts.length > 0) {
+      return (
+        <Grid
+          w="100%"
+          className={cls("vb-charts-wrapper", {unique: filteredCharts.length === 1})}
+        >
+          {filteredCharts.map(chart =>
+            <Grid.Col key={chart.key} {...colProps}>
+              <Paper shadow="xs">
+                <ChartCard
+                  chart={chart}
+                  currentChart={""}
+                  currentPeriod={currentPeriod}
+                  downloadFormats={props.downloadFormats}
+                  isSingleChart={isSingleChart}
+                  key={chart.key}
+                  measureConfig={measureConfig}
+                  onToggle={() => setCurrentChart(chart.key)}
+                  showConfidenceInt={props.showConfidenceInt}
+                  userConfig={props.userConfig}
+                />
+              </Paper>
+            </Grid.Col>
+          )}
+        </Grid>
       );
+    }
+
+    const Notice = props.nonIdealState || NonIdealState;
+    return <Notice />;
   }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
 
-  useEffect(() => {
-    requestAnimationFrame(resizeEnsureHandler);
-  }, [content]);
+  const focusContent = useMemo(() => {
+    const measureConfig = normalizeMeasureConfig(props.measureConfig);
+
+    const chart = charts.find(chart => chart && (currentChart ? chart.key === currentChart : false));
+    if (!chart) return null;
+
+    return (
+      <ChartCard
+        chart={chart}
+        currentChart={currentChart}
+        currentPeriod={currentPeriod}
+        downloadFormats={props.downloadFormats}
+        isSingleChart={true}
+        key={`${chart.key}-focus`}
+        measureConfig={measureConfig}
+        onToggle={() => setCurrentChart("")}
+        showConfidenceInt={props.showConfidenceInt}
+        userConfig={props.userConfig}
+      />
+    );
+
+  }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
 
   return (
     <TranslationProvider
       defaultLocale={props.defaultLocale}
       translations={props.translations}
     >
-      <div
-        className={cls("vb-wrapper", props.className)}
-        onScroll={scrollEnsureHandler}
-      >
-        <div className="vb-toolbar-wrapper">
+      <div className={cls("vb-wrapper", props.className)}>
+        {props.toolbar && <div className="vb-toolbar-wrapper">
           {props.toolbar}
-        </div>
-        <div className={cls("vb-charts-wrapper", {unique: content.length === 1})}>
-          {content.length > 0
-            ? content
-            : props.nonIdealState || <NonIdealState/>}
-        </div>
+        </div>}
+        {content}
+        <Modal
+          centered
+          onClose={() => setCurrentChart("")}
+          opened={currentChart !== ""}
+          padding={0}
+          size="calc(100vw - 3rem)"
+          styles={{
+            content: {maxHeight: "none !important"},
+            inner: {padding: "0 !important"}
+          }}
+          withCloseButton={false}
+        >
+          {focusContent}
+        </Modal>
       </div>
     </TranslationProvider>
   );
