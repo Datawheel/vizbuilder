@@ -1,3 +1,5 @@
+import { ActionIcon, Badge, rem } from "@mantine/core";
+import { IconEdit } from "@tabler/icons-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { QueryEditor } from "./QueryEditor";
 import { useStoredState } from "./useStorage";
@@ -85,22 +87,27 @@ function QueryPicker(props: {
   onEdit: () => void;
   onSelect: () => void;
 }) {
+  const removeButton = (
+    <ActionIcon
+      size="xs"
+      color="blue"
+      radius="xl"
+      variant={props.active ? "filled" : "transparent"}
+      onClick={props.onEdit}
+    >
+      <IconEdit size={rem(16)} />
+    </ActionIcon>
+  );
+
   return (
-    <span style={{
-      display: "inline-flex",
-      borderRadius: "4px",
-      border: "1px solid rgb(227, 227, 227)",
-    }}>
-      <button onClick={props.onSelect} style={{
-        borderRadius: 0,
-        border: "0 none",
-        opacity: props.active ? 1 : 0.7,
-      }}>{props.label}</button>
-      <button onClick={props.onEdit} style={{
-        borderRadius: 0,
-        border: "0 none",
-        opacity: props.active ? 1 : 0.7,
-      }}>&#x270E;</button>
-    </span>
+    <Badge
+      variant={props.active ? "filled" : "outline"}
+      size="lg"
+      pr={3}
+      rightSection={removeButton}
+      onClick={props.onSelect}
+    >
+      {props.label}
+    </Badge>
   )
 }

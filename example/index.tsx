@@ -5,9 +5,11 @@ import {Vizbuilder} from "../src/index";
 import {QueryManager} from "./QueryManager";
 import {useQuery} from "./useQuery";
 import {useQueryParams} from "./useQueryParams";
+import {useDisclosure} from "@mantine/hooks";
+import {Button, Flex} from "@mantine/core";
 
 function Demo() {
-  const [isDebugging, setDebugger] = useState(true);
+  const [isDebugging, setDebugger] = useDisclosure(true);
   const [currentQuery, setCurrentQuery] = useState("");
 
   const Vizwrapper = isDebugging ? Vizdebugger : Vizbuilder;
@@ -17,18 +19,19 @@ function Demo() {
   const [result, error] = useQuery(query);
 
   return (
-    <div style={{
-      display: "flex",
-      flexFlow: "column nowrap",
-      height: "100%",
-    }}>
-      <QueryManager currentQuery={currentQuery} onChange={setCurrentQuery} />
+    <Flex direction="column">
+      <Flex gap="sm" align="center" px="sm">
+        <Button compact uppercase color="indigo" onClick={setDebugger.toggle}>
+          {Vizwrapper.name}
+        </Button>
+        <QueryManager currentQuery={currentQuery} onChange={setCurrentQuery} />
+      </Flex>
       {result && <Vizwrapper
         queries={result}
         downloadFormats={["svg", "png"]}
         allowedChartTypes={["barchart", "barchartyear", "geomap", "lineplot", "stacked", "treemap"]}
       />}
-    </div>
+    </Flex>
   );
 }
 
