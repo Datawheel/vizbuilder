@@ -1,12 +1,12 @@
 import React from "react";
-import {Button} from '@mantine/core';
-import {IconDownload, IconVectorTriangle, IconPhotoDown} from '@tabler/icons-react';
+import {Button} from "@mantine/core";
+import {IconDownload, IconVectorTriangle, IconPhotoDown} from "@tabler/icons-react";
 
 const iconByFormat = {
   JPG: IconPhotoDown,
   PNG: IconPhotoDown,
   SVG: IconVectorTriangle
-}
+};
 
 /**
  * @typedef DownloadButtonProps
@@ -20,7 +20,7 @@ export const DownloadButton = props => {
 
   return (
     <>
-      {props.formats.map((format, i) => {
+      {props.formats.map(format => {
         const formatCaps = format.toUpperCase();
         const evtHandler = onClick ? () => onClick(formatCaps) : null;
         const Icon = iconByFormat[formatCaps] || IconDownload;
@@ -39,4 +39,4 @@ export const DownloadButton = props => {
       })}
     </>
   );
-}
+};

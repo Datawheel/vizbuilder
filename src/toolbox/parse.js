@@ -10,10 +10,12 @@ export function parseDate(dateString) {
   const maybeQuarter = dateString.match(/(\d{2,4})(Q\d)/i);
   if (maybeQuarter) {
     const [, year, quarter] = maybeQuarter;
-    let ye = parseInt(year);
+    let ye = parseInt(year, 10);
     if (ye < 100) {
-      const lastDigits = `${new Date().getFullYear()}`.substr(-2);
-      ye = ye > (parseInt(lastDigits) + 10) ? ye + 1900 : ye + 2000;
+      // If year is presented in two digits,
+      // interprets a number greater than the current year + 15 as 19xx
+      const lastDigits = `${new Date().getFullYear()}`.slice(-2);
+      ye = ye > parseInt(lastDigits, 10) + 15 ? ye + 1900 : ye + 2000;
     }
     const mo = {Q1: 2, Q2: 5, Q3: 8, Q4: 11}[quarter.toUpperCase()];
     return new Date(ye, mo || 0, 1, 0, 0, 0, 0);

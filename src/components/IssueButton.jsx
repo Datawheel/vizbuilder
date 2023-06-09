@@ -18,7 +18,7 @@ export const IssueButton = ({error, message}) => {
 **Error**: ${error}
 ${message ? `**Error details:** ${message}\n` : ""}
 **Detail of the issue:**
-`
+`;
   const issueParams = `title=${encodeURIComponent(`[report/vizbuilder] ${error}`)}&body=${encodeURIComponent(body)}`;
 
   return (

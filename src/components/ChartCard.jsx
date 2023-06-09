@@ -1,10 +1,10 @@
+import {Box, Button, Group, Stack} from "@mantine/core";
+import {IconArrowsMaximize, IconArrowsMinimize} from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
 import React, {useCallback, useMemo, useRef} from "react";
 import {createChartConfig} from "../toolbox/chartConfigs";
 import {useTranslation} from "../toolbox/useTranslation";
-import {Box, Button, Stack, Group} from "@mantine/core";
-import {IconArrowsMaximize, IconArrowsMinimize} from "@tabler/icons-react";
 import {DownloadButton} from "./DownloadButton";
 import {ErrorBoundary} from "./ErrorBoundary";
 
@@ -44,6 +44,7 @@ export const ChartCard = props => {
 
   const {translate} = useTranslation();
 
+  /** @type {React.MutableRefObject<HTMLDivElement | null>} */
   const nodeRef = useRef(null);
 
   const ChartComponent = chartComponents[chart.chartType];
@@ -87,7 +88,7 @@ export const ChartCard = props => {
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
   const buttonVariant = focused ? "filled" : "light";
   const height = focused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
-  const buttonPosition = (focused || isSingleChart) ? "static" : "absolute";
+  const buttonPosition = focused || isSingleChart ? "static" : "absolute";
 
   return (
     <Box className="vb-chart-card" h={height} miw={200} w="100%" style={{overflow: "hidden"}}>
@@ -101,7 +102,7 @@ export const ChartCard = props => {
               formats={props.downloadFormats}
               onClick={saveChart}
             />}
-            {(!isSingleChart || focused) && (
+            {(!isSingleChart || focused) &&
               <Button
                 compact
                 leftIcon={<ButtonIcon size={16} />}
@@ -111,7 +112,7 @@ export const ChartCard = props => {
               >
                 {buttonText}
               </Button>
-            )}
+            }
           </Group>
         </Stack>
       </ErrorBoundary>

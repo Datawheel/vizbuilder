@@ -1,5 +1,3 @@
-import debounce from "lodash/debounce";
-
 /**
  * Normalizes the Vizbuilder Component Property "measureConfig", which can
  * accept both a `(measure: OlapClient.Measure) => D3plusConfig` or a
