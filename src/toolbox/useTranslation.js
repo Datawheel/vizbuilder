@@ -31,7 +31,8 @@ const LOCALE_EN = {
     top_drilldowns: "for Top {{drilldowns}}",
     by_drilldowns: "by {{drilldowns}}",
     over_time: "Over Time",
-    measure_and_modifier: "{{modifier}} {{measure}}"
+    measure_and_modifier: "{{modifier}} {{measure}}",
+    total: "Total"
   }
 };
 

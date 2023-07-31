@@ -11,6 +11,7 @@ import {tooltipGenerator} from "./tooltip";
  * @param {VizBldr.UIParams} uiParams
  */
 export function createChartConfig(chart, uiParams) {
+  const {translate: t} = uiParams;
   const {chartType, dg, measureSet, levels} = chart;
   const {timeDrilldown, locale} = dg;
   const {formatter, measure} = measureSet;
@@ -30,7 +31,7 @@ export function createChartConfig(chart, uiParams) {
       tooltipConfig: tooltipGenerator(chart, uiParams),
 
       total: false,
-      totalFormat: d => `Total: ${formatter(d)}`,
+      totalFormat: d => `${t("title.total")}: ${formatter(d)}`,
 
       yConfig: {
         title: getCaption(measure, locale),

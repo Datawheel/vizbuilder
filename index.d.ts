@@ -112,6 +112,7 @@ declare namespace VizBldr {
       "by_drilldowns": string;
       "over_time": string;
       "measure_and_modifier": string;
+      "total": string;
     }
   }
 
