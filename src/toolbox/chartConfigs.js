@@ -25,14 +25,6 @@ export function createChartConfig(chart, uiParams) {
     {
       legend: false,
 
-      timelineConfig: {
-        brushing: false,
-        padding: 0
-      },
-
-      titleConfig: {
-        padding: 0
-      },
       titlePadding: isEnlarged || isSingleChart,
 
       tooltipConfig: tooltipGenerator(chart, uiParams),
@@ -44,6 +36,7 @@ export function createChartConfig(chart, uiParams) {
         title: getCaption(measure, locale),
         tickFormat: formatter
       },
+
       label: labelFunctionGenerator(...levelNames),
       locale,
 
