@@ -24,7 +24,7 @@ export function createChartConfig(chart, uiParams) {
 
   const config = assign(
     {
-      legend: false,
+      legend: isEnlarged || isSingleChart,
 
       titlePadding: isEnlarged || isSingleChart,
 
