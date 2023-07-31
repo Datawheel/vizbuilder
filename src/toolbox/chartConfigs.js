@@ -116,7 +116,7 @@ const makeConfig = {
         .filter(lvl => lvl.caption in dg.dataset[0])
         .concat(levels)
         .map(lvl => lvl.caption);
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
     else if (levels.length > 1) {
       config.groupBy = levels.map(lvl => lvl.caption);
@@ -188,7 +188,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     return config;
@@ -232,7 +232,7 @@ const makeConfig = {
     }
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     return config;
@@ -357,7 +357,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     // TODO - add ability to control this threshold value
