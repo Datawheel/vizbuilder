@@ -1,4 +1,4 @@
-import cls from "classnames";
+import cls from "clsx";
 import React, {useEffect, useMemo, useState} from "react";
 import {ObjectInspector} from "react-inspector";
 import {normalizeMeasureConfig} from "../toolbox/props";

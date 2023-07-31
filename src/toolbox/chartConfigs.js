@@ -11,6 +11,7 @@ import {tooltipGenerator} from "./tooltip";
  * @param {VizBldr.UIParams} uiParams
  */
 export function createChartConfig(chart, uiParams) {
+  const {translate: t} = uiParams;
   const {chartType, dg, measureSet, levels} = chart;
   const {timeDrilldown, locale} = dg;
   const {formatter, measure} = measureSet;
@@ -23,27 +24,20 @@ export function createChartConfig(chart, uiParams) {
 
   const config = assign(
     {
-      legend: false,
+      legend: isEnlarged || isSingleChart,
 
-      timelineConfig: {
-        brushing: false,
-        padding: 0
-      },
-
-      titleConfig: {
-        padding: 0
-      },
       titlePadding: isEnlarged || isSingleChart,
 
       tooltipConfig: tooltipGenerator(chart, uiParams),
 
       total: false,
-      totalFormat: d => `Total: ${formatter(d)}`,
+      totalFormat: d => `${t("title.total")}: ${formatter(d)}`,
 
       yConfig: {
         title: getCaption(measure, locale),
         tickFormat: formatter
       },
+
       label: labelFunctionGenerator(...levelNames),
       locale,
 
@@ -116,7 +110,7 @@ const makeConfig = {
         .filter(lvl => lvl.caption in dg.dataset[0])
         .concat(levels)
         .map(lvl => lvl.caption);
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
     else if (levels.length > 1) {
       config.groupBy = levels.map(lvl => lvl.caption);
@@ -132,7 +126,7 @@ const makeConfig = {
   /**
    * - chart.dg.timeDrilldown is always defined here, checked on the previous step
    */
-  barchartyear(chart, uiParams) {
+  barchartyear(chart, uiParams, isEnlarged) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
@@ -140,13 +134,14 @@ const makeConfig = {
 
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel
-      ? getColumnId(timeLevel.caption, dg.dataset)
-      : firstLevelName;
+    const timeLevelName = timeLevel ? timeLevel.caption : firstLevelName;
 
     const config = assign(
       {
         discrete: "x",
+        groupPadding: isEnlarged ? 5 : 1,
+        time: timeLevelName,
+        timeline: false,
         x: timeLevelName,
         xConfig: {
           title: timeLevel ? getCaption(timeLevel, dg.locale) : null
@@ -161,9 +156,6 @@ const makeConfig = {
       },
       uiParams.userConfig
     );
-
-    delete config.time;
-    delete config.total;
 
     return config;
   },
@@ -188,7 +180,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     return config;
@@ -232,7 +224,7 @@ const makeConfig = {
     }
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     return config;
@@ -357,7 +349,7 @@ const makeConfig = {
     );
 
     if (timeLevel) {
-      config.time = getColumnId(timeLevel.caption, dg.dataset);
+      config.time = timeLevel.caption;
     }
 
     // TODO - add ability to control this threshold value

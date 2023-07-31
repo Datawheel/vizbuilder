@@ -29,7 +29,17 @@ function Demo() {
       {result && <Vizwrapper
         queries={result}
         downloadFormats={["svg", "png"]}
-        allowedChartTypes={["barchart", "barchartyear", "geomap", "lineplot", "stacked", "treemap"]}
+        allowedChartTypes={[
+          "barchart",
+          "barchartyear",
+          "donut",
+          "geomap",
+          "histogram",
+          "lineplot",
+          "pie",
+          "stacked",
+          "treemap"
+        ]}
       />}
     </Flex>
   );
