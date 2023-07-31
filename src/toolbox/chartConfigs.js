@@ -126,7 +126,7 @@ const makeConfig = {
   /**
    * - chart.dg.timeDrilldown is always defined here, checked on the previous step
    */
-  barchartyear(chart, uiParams) {
+  barchartyear(chart, uiParams, isEnlarged) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
@@ -134,13 +134,14 @@ const makeConfig = {
 
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
-    const timeLevelName = timeLevel
-      ? getColumnId(timeLevel.caption, dg.dataset)
-      : firstLevelName;
+    const timeLevelName = timeLevel ? timeLevel.caption : firstLevelName;
 
     const config = assign(
       {
         discrete: "x",
+        groupPadding: isEnlarged ? 5 : 1,
+        time: timeLevelName,
+        timeline: false,
         x: timeLevelName,
         xConfig: {
           title: timeLevel ? getCaption(timeLevel, dg.locale) : null
@@ -155,9 +156,6 @@ const makeConfig = {
       },
       uiParams.userConfig
     );
-
-    delete config.time;
-    delete config.total;
 
     return config;
   },
