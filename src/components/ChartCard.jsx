@@ -88,16 +88,12 @@ export const ChartCard = props => {
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
   const buttonVariant = focused ? "filled" : "light";
   const height = focused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
-  const buttonPosition = focused || isSingleChart ? "static" : "absolute";
 
   return (
-    <Box className="vb-chart-card" h={height} miw={200} w="100%" style={{overflow: "hidden"}}>
+    <Box className="vb-chart-card" h={height} w="100%" style={{overflow: "hidden"}}>
       <ErrorBoundary>
         <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
-          <Box style={{flex: "1 1 100%"}} className="vb-chart-viz" ref={nodeRef} p="xs">
-            <ChartComponent config={config} />
-          </Box>
-          <Group className="vb-chart-toolbar" position="right" p="xs" spacing="xs" align="center" bottom={0} right={0} style={{position: buttonPosition}}>
+          <Group className="vb-chart-toolbar" position="right" p="xs" spacing="xs" align="center">
             {(focused || isSingleChart) && props.downloadFormats && <DownloadButton
               formats={props.downloadFormats}
               onClick={saveChart}
@@ -114,6 +110,9 @@ export const ChartCard = props => {
               </Button>
             }
           </Group>
+          <Box style={{flex: "1 1 auto"}} className="vb-chart-viz" ref={nodeRef} pb="xs" px="xs">
+            <ChartComponent config={config} />
+          </Box>
         </Stack>
       </ErrorBoundary>
     </Box>
