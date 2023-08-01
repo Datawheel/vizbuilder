@@ -1,4 +1,4 @@
-import {abbreviateList} from "./strings";
+import {abbreviateList, getCaption} from "./strings";
 
 /**
  * Generates the parameters for the tooltip shown for the current datagroup.
@@ -7,6 +7,7 @@ import {abbreviateList} from "./strings";
  */
 export function tooltipGenerator(chart, {translate: t}) {
   const {dg, measureSet} = chart;
+  const {locale} = dg;
   const {measure, collection, source, moe, uci, lci, formatter} = measureSet;
 
   const measureName = measure.name;
@@ -50,20 +51,20 @@ export function tooltipGenerator(chart, {translate: t}) {
     if (shouldShow.lci && shouldShow.uci) {
       output.push([
         t("chart_labels.ci"),
-        d => `${formatter(d[lciName] * 1 || 0)} - ${formatter(d[uciName] * 1 || 0)}`
+        d => `${formatter(d[lciName] * 1 || 0, locale)} - ${formatter(d[uciName] * 1 || 0, locale)}`
       ]);
     }
     else if (shouldShow.moe) {
       output.push([
         t("chart_labels.moe"),
-        d => `± ${formatter(d[moeName] * 1 || 0)}`
+        d => `± ${formatter(d[moeName] * 1 || 0, locale)}`
       ]);
     }
-  
+
     if (shouldShow.src) {
       output.push([t("chart_labels.source"), d => `${d[sourceName]}`]);
     }
-  
+
     if (shouldShow.clt) {
       output.push([t("chart_labels.collection"), d => `${d[collectionName]}`]);
     }
@@ -71,12 +72,13 @@ export function tooltipGenerator(chart, {translate: t}) {
     // if there is a time drilldown, it will not be included in the drilldown
     // levels and needs to be specified in tooltip body
     if (chart.dg.timeDrilldown) {
-      const timeLvlName = chart.dg.timeDrilldown.caption;
-      output.push([timeLvlName, input[timeLvlName]]);
+      const timeLvlName = getCaption(chart.dg.timeDrilldown, locale);
+      const timeLvlCaption = chart.dg.timeDrilldown.caption;
+      output.push([timeLvlName, input[timeLvlCaption]]);
     }
 
     // add measure value at end
-    output.push([measureName, formatter(input[measureName])]);
+    output.push([getCaption(measure, locale), formatter(input[measureName], locale)]);
 
     return output;
   };
