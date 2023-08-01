@@ -1,8 +1,7 @@
 import {assign} from "d3plus-common";
 import includes from "lodash/includes";
-import {relativeStdDev} from "./math";
 import {sorterByCustomKey} from "./sort";
-import {getCaption, getColumnId} from "./strings";
+import {getCaption} from "./strings";
 import {chartTitleGenerator} from "./title";
 import {tooltipGenerator} from "./tooltip";
 
@@ -15,7 +14,8 @@ export function createChartConfig(chart, uiParams) {
   const {chartType, dg, measureSet, levels} = chart;
   const {timeDrilldown, locale} = dg;
   const {formatter, measure} = measureSet;
-  const {isSingleChart, isUniqueChart} = uiParams;
+  const {isSingleChart, isUniqueChart, userConfig} = uiParams;
+  const d3plusLocale = userConfig.locale || locale;
 
   const levelNames = levels.map(lvl => lvl.caption);
   const measureName = measure.name;
@@ -31,21 +31,22 @@ export function createChartConfig(chart, uiParams) {
       tooltipConfig: tooltipGenerator(chart, uiParams),
 
       total: false,
-      totalFormat: d => `${t("title.total")}: ${formatter(d)}`,
+      totalFormat: d => `${t("title.total")}: ${formatter(d, d3plusLocale)}`,
 
       yConfig: {
         title: getCaption(measure, locale),
-        tickFormat: formatter
+        tickFormat: d => formatter(d, d3plusLocale)
       },
 
       label: labelFunctionGenerator(...levelNames),
-      locale,
+      locale: d3plusLocale,
 
       sum: measureName,
       value: measureName,
       zoom: isEnlarged || isSingleChart
     },
-    makeConfig[chartType](chart, uiParams, isEnlarged)
+    makeConfig[chartType](chart, uiParams, isEnlarged),
+    userConfig
   );
 
   if (
@@ -75,33 +76,31 @@ const makeConfig = {
   /** */
   barchart(chart, uiParams, isEnlarged) {
     const {levels, dg} = chart;
-    const {timeDrilldown: timeLevel} = dg;
+    const {locale, timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
+    const d3plusLocale = uiParams.userConfig.locale || locale;
 
     const firstLevel = levels[0];
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
 
-    const config = assign(
-      {
-        groupBy: [firstLevelName],
-        groupPadding: isEnlarged ? 5 : 1,
-        discrete: "y",
-        x: measureName,
-        xConfig: {
-          title: getCaption(measure, dg.locale),
-          tickFormat: formatter
-        },
-        y: firstLevelName,
-        yConfig: {
-          title: getCaption(firstLevel, dg.locale),
-          ticks: []
-        },
-        stacked: measure.aggregatorType === "SUM" && firstLevel.depth > 1,
-        ySort: sorterByCustomKey(firstLevelName, dg.members[firstLevelName])
+    const config = {
+      groupBy: [firstLevelName],
+      groupPadding: isEnlarged ? 5 : 1,
+      discrete: "y",
+      x: measureName,
+      xConfig: {
+        title: getCaption(measure, locale),
+        tickFormat: d => formatter(d, d3plusLocale)
       },
-      uiParams.userConfig
-    );
+      y: firstLevelName,
+      yConfig: {
+        title: getCaption(firstLevel, locale),
+        ticks: []
+      },
+      stacked: measure.aggregatorType === "SUM" && firstLevel.depth > 1,
+      ySort: sorterByCustomKey(firstLevelName, dg.members[firstLevelName])
+    };
 
     if (timeLevel) {
       const hierarchy = timeLevel.hierarchy;
@@ -128,56 +127,45 @@ const makeConfig = {
    */
   barchartyear(chart, uiParams, isEnlarged) {
     const {levels, dg} = chart;
-    const {timeDrilldown: timeLevel} = dg;
+    const {locale, timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
+    const d3plusLocale = uiParams.userConfig.locale || locale;
     const firstLevel = levels[0];
 
     const firstLevelName = firstLevel.caption;
     const measureName = measure.name;
     const timeLevelName = timeLevel ? timeLevel.caption : firstLevelName;
 
-    const config = assign(
-      {
-        discrete: "x",
-        groupPadding: isEnlarged ? 5 : 1,
-        time: timeLevelName,
-        timeline: false,
-        x: timeLevelName,
-        xConfig: {
-          title: timeLevel ? getCaption(timeLevel, dg.locale) : null
-        },
-        y: measureName,
-        yConfig: {
-          title: getCaption(measure, dg.locale),
-          tickFormat: formatter
-        },
-        stacked: true,
-        groupBy: [firstLevelName]
+    const config = {
+      discrete: "x",
+      groupPadding: isEnlarged ? 5 : 1,
+      time: timeLevelName,
+      timeline: false,
+      x: timeLevelName,
+      xConfig: {
+        title: timeLevel ? getCaption(timeLevel, locale) : null
       },
-      uiParams.userConfig
-    );
+      y: measureName,
+      yConfig: {
+        title: getCaption(measure, locale),
+        tickFormat: d => formatter(d, d3plusLocale)
+      },
+      stacked: true,
+      groupBy: [firstLevelName]
+    };
 
     return config;
   },
 
   /**
    */
-  donut(chart, uiParams) {
+  donut(chart) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
-    const {formatter, measure} = chart.measureSet;
 
-    const config = assign(
-      {
-        y: measure.name,
-        yConfig: {
-          title: getCaption(measure, dg.locale),
-          tickFormat: formatter
-        },
-        groupBy: levels.map(lvl => lvl.caption)
-      },
-      uiParams.userConfig
-    );
+    const config = {
+      groupBy: levels.map(lvl => lvl.caption)
+    };
 
     if (timeLevel) {
       config.time = timeLevel.caption;
@@ -190,8 +178,9 @@ const makeConfig = {
    */
   geomap(chart, uiParams) {
     const {levels, dg} = chart;
-    const {cuts, timeDrilldown: timeLevel, geoDrilldown: geoLevel} = dg;
+    const {cuts, locale, timeDrilldown: timeLevel, geoDrilldown: geoLevel} = dg;
     const {formatter, measure} = chart.measureSet;
+    const d3plusLocale = uiParams.userConfig.locale || locale;
 
     const measureName = measure.name;
     const geoLevelName = geoLevel ? geoLevel.caption : levels[0].caption;
@@ -206,7 +195,7 @@ const makeConfig = {
         colorScale: measureName,
         colorScaleConfig: {
           axisConfig: {
-            tickFormat: formatter
+            tickFormat: d => formatter(d, d3plusLocale)
           },
           scale: "jenks"
         },
@@ -214,8 +203,7 @@ const makeConfig = {
         groupBy: [groupByParam],
         zoomScroll: false
       },
-      dg.topojsonConfig,
-      uiParams.userConfig
+      dg.topojsonConfig
     );
 
     const geoCutMembers = cuts.get(geoLevelName);
@@ -242,9 +230,10 @@ const makeConfig = {
    */
   lineplot(chart, uiParams) {
     const {levels, dg} = chart;
-    const {timeDrilldown: timeLevel} = dg;
+    const {locale, timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
     const {userConfig, showConfidenceInt} = uiParams;
+    const d3plusLocale = userConfig.locale || locale;
 
     const levelName = levels[0]?.caption;
     const measureName = measure.name;
@@ -252,32 +241,24 @@ const makeConfig = {
     // group by a static string if there are no other dimensions besides time
     const groupBy = levels?.length ? levels.map(lvl => lvl.caption) : () => "ALL";
 
-    const config = assign(
-      {
-        confidence: false,
-        discrete: "x",
-        groupBy,
-        x: timeLevelName,
-        xConfig: {
-          title: timeLevel ? getCaption(timeLevel, dg.locale) : undefined
-        },
-        y: measureName,
-        yConfig: {
-          scale: "linear",
-          tickFormat: formatter,
-          title: measureName
-        },
-        time: timeLevelName,
-        timeline: false,
-        total: false
+    const config = {
+      confidence: false,
+      discrete: "x",
+      groupBy,
+      x: timeLevelName,
+      xConfig: {
+        title: timeLevel ? getCaption(timeLevel, dg.locale) : undefined
       },
-      userConfig
-    );
-
-    if (config.yConfig && relativeStdDev(dg.dataset, measureName) > 1) {
-      config.yConfig.scale = "log";
-      config.yConfig.title += " (Log)";
-    }
+      y: measureName,
+      yConfig: {
+        scale: "auto",
+        tickFormat: d => formatter(d, d3plusLocale),
+        title: getCaption(measure, locale)
+      },
+      time: timeLevelName,
+      timeline: false,
+      total: false
+    };
 
     if (chart.isTopTen) {
       config.yConfig.title = `Top ${dg.membersCount[levelName]} items, ${config.yConfig.title}`;
@@ -328,7 +309,7 @@ const makeConfig = {
 
   /**
    */
-  treemap(chart, uiParams) {
+  treemap(chart) {
     const {levels, dg} = chart;
     const {timeDrilldown: timeLevel} = dg;
 
@@ -338,15 +319,12 @@ const makeConfig = {
     const hierarchyLevels = firstLevel.hierarchy.levels;
     const ddIndex = hierarchyLevels.indexOf(firstLevel);
 
-    const config = assign(
-      {
-        groupBy: hierarchyLevels
-          .slice(0, ddIndex + 1)
-          .concat(otherLevels)
-          .map(lvl => lvl.caption)
-      },
-      uiParams.userConfig
-    );
+    const config = {
+      groupBy: hierarchyLevels
+        .slice(0, ddIndex + 1)
+        .concat(otherLevels)
+        .map(lvl => lvl.caption)
+    };
 
     if (timeLevel) {
       config.time = timeLevel.caption;
