@@ -31,7 +31,7 @@ declare namespace VizBldr {
     userConfig?: D3plusConfig;
   }
 
-  type Formatter = (value: number) => string;
+  type Formatter = (value: number, locale: string) => string;
 
   type D3plusConfig = {[key: string]: any};
 

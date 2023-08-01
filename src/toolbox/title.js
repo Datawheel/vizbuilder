@@ -101,7 +101,9 @@ export function chartTitleGenerator(chart, uiParams) {
 
   // for charts with a time dimension...
   if (dg.timeDrilldown) {
-    const timeLevelName = dg.timeDrilldown.caption;
+    const timeLevelCaption = dg.timeDrilldown.caption;
+    const timeLevelName = getCaption(dg.timeDrilldown, locale);
+
     const timeLevelId = getColumnId(timeLevelName, dg.dataset);
     // if only one time exists, simply specify period
     if (dg.membersCount[dg.timeDrilldown.caption] === 1) {
@@ -111,7 +113,7 @@ export function chartTitleGenerator(chart, uiParams) {
     else if (chart.isTimeline) {
       // add function to add current period to title (because it should be the only period being shown)
       titleFn = data => {
-        const {minTime, maxTime} = findTimeRange(data, timeLevelId, timeLevelName);
+        const {minTime, maxTime} = findTimeRange(data, timeLevelId, timeLevelCaption);
         return `${title} (${timeLevelName}: ${periodToString(minTime, maxTime !== minTime && maxTime)})`;
       };
     }

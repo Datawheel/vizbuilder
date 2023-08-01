@@ -59,19 +59,6 @@ export function mean(values) {
 }
 
 /**
- * Calculate the Relative Standard Deviation
- * This means it should have a numeric value, and a valid operator.
- * @param {any[]} data An array to check
- * @param {string} measureName Name of the measure
- */
-export function relativeStdDev(data, measureName) {
-  const dataPoints = data.map(d => d[measureName]);
-  return dataPoints.length > 0
-    ? Math.sqrt(variance(dataPoints)) / mean(dataPoints)
-    : NaN;
-}
-
-/**
  * @param {number[]} values
  * @returns {number}
  */
