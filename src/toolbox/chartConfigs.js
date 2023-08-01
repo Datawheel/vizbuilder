@@ -51,6 +51,8 @@ export function createChartConfig(chart, uiParams) {
     userConfig
   );
 
+  if (!isEnlarged && !isSingleChart) config.colorScalePosition = false;
+
   if (
     !includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
     includes(["SUM", "UNKNOWN"], measure.aggregatorType)
