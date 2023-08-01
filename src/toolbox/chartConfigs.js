@@ -26,6 +26,8 @@ export function createChartConfig(chart, uiParams) {
     {
       legend: isEnlarged || isSingleChart,
 
+      timePersist: isEnlarged || isSingleChart,
+
       titlePadding: isEnlarged || isSingleChart,
 
       tooltipConfig: tooltipGenerator(chart, uiParams),
