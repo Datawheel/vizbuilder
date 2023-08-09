@@ -1,7 +1,7 @@
 import { Client, Cube, TesseractDataSource } from "@datawheel/olap-client";
 import { useEffect, useState } from "react";
 
-const ds = new TesseractDataSource("/tesseract/");
+const ds = new TesseractDataSource("https://api.datasaudi.datawheel.us/tesseract/");
 export const client = new Client(ds);
 
 export function useOlapSchema() {

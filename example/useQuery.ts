@@ -14,6 +14,7 @@ export function useQuery(query: QueryParams) {
     client.getCube(query.cube)
       .then(cube => {
         const q = cube.query.setFormat(Format.jsonrecords);
+        q.setLocale("ar");
         query.measures.forEach(measure => {
           q.addMeasure(measure);
         });
