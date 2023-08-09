@@ -23,7 +23,10 @@ export const Vizbuilder = props => {
     const filteredCharts = charts
       .filter((d, i) => charts.findIndex(c => c.key === d.key) === i); // removes duplicate charts
 
-    const colProps = filteredCharts.length === 1 ? {span: 12} : filteredCharts.length === 2 ? {span: 6} : {sm: 6, lg: 4, xl: 3};
+    const colProps = filteredCharts.length === 1 ? {span: 12}
+      : filteredCharts.length === 2 ? {lg: 6}
+      : filteredCharts.length === 3 ? {lg: 6, xl: 4}
+      : {lg: 6, xl: 4, xxl: 3};
 
     if (filteredCharts.length > 0) {
       return (
