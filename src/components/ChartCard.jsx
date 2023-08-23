@@ -87,7 +87,7 @@ export const ChartCard = props => {
   const ButtonIcon = focused ? IconArrowsMinimize : IconArrowsMaximize;
   const buttonText = focused ? translate("action_close") : translate("action_enlarge");
   const buttonVariant = focused ? "filled" : "light";
-  const height = focused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
+  const height = focused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 375;
 
   return (
     <Box className="vb-chart-card" h={height} w="100%" style={{overflow: "hidden"}}>
