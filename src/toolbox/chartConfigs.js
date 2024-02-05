@@ -22,17 +22,13 @@ export function createChartConfig(chart, uiParams) {
 
   const isEnlarged = uiParams.currentChart === chart.key || isUniqueChart;
 
+  const bigMode = isEnlarged || isSingleChart;
+
   const config = assign(
     {
-      legend: isEnlarged || isSingleChart,
-
-      timePersist: isEnlarged || isSingleChart,
-
-      titlePadding: isEnlarged || isSingleChart,
 
       tooltipConfig: tooltipGenerator(chart, uiParams),
 
-      total: false,
       totalFormat: d => `${t("title.total")}: ${formatter(d, d3plusLocale)}`,
 
       yConfig: {
@@ -44,41 +40,77 @@ export function createChartConfig(chart, uiParams) {
       locale: d3plusLocale,
 
       sum: measureName,
-      value: measureName,
-      zoom: isEnlarged || isSingleChart
+      value: measureName
     },
-    makeConfig[chartType](chart, uiParams, isEnlarged),
+    makeConfig[chartType](chart, uiParams, bigMode),
     userConfig
   );
-
-  if (!isEnlarged && !isSingleChart) config.colorScalePosition = false;
-
-  if (
-    !includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
-    includes(["SUM", "UNKNOWN"], measure.aggregatorType)
-  ) {
-    config.total = isEnlarged ? measureName : false;
-  }
-
-  if (timeDrilldown && config.time && chart.isTimeline) {
-    config.timeline = isEnlarged;
-  }
 
   if (config.title === undefined) {
     config.title = chartTitleGenerator(chart, uiParams);
   }
 
+  if (
+    !includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
+    includes(["SUM", "UNKNOWN"], measure.aggregatorType)
+  ) {
+    config.total = bigMode ? measureName : false;
+  }
+
+  if (timeDrilldown && config.time && chart.isTimeline) {
+    config.timeline = true;
+  }
+
   assign(config, uiParams.measureConfig(measure) || {});
   config.data = dg.dataset;
+
+  // non-overridable config options that cleans up visualizations
+  // when displayed in small tiles (mostly hiding things)
+  if (!bigMode) {
+
+    const hiddenAxis = {
+      barConfig: {
+        stroke: "transparent"
+      },
+      padding: 0,
+      tickFormat: () => false,
+      tickSize: 0,
+      shapeConfig: {
+        fill: "transparent",
+        height: 0,
+        label: false,
+        stroke: "transparent",
+        r: 0,
+        width: 0
+      },
+      title: false
+    };
+
+    assign(config, {
+      colorScalePosition: false,
+      legend: false,
+
+      timeline: false,
+      timePersist: false,
+
+      subtitlePadding: false,
+      titlePadding: false,
+      total: false,
+      xConfig: hiddenAxis,
+      yConfig: hiddenAxis,
+
+      zoom: false
+    });
+  }
 
   return config;
 }
 
-/** @type {Record<VizBldr.ChartType, (chart: VizBldr.Struct.Chart, uiParams: VizBldr.UIParams, isEnlarged: Boolean) => any>} */
+/** @type {Record<VizBldr.ChartType, (chart: VizBldr.Struct.Chart, uiParams: VizBldr.UIParams, bigMode: Boolean) => any>} */
 const makeConfig = {
 
   /** */
-  barchart(chart, uiParams, isEnlarged) {
+  barchart(chart, uiParams, bigMode) {
     const {levels, dg} = chart;
     const {locale, timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
@@ -90,7 +122,7 @@ const makeConfig = {
 
     const config = {
       groupBy: [firstLevelName],
-      groupPadding: isEnlarged ? 5 : 1,
+      groupPadding: bigMode ? 5 : 1,
       discrete: "y",
       x: measureName,
       xConfig: {
@@ -129,7 +161,7 @@ const makeConfig = {
   /**
    * - chart.dg.timeDrilldown is always defined here, checked on the previous step
    */
-  barchartyear(chart, uiParams, isEnlarged) {
+  barchartyear(chart, uiParams, bigMode) {
     const {levels, dg} = chart;
     const {locale, timeDrilldown: timeLevel} = dg;
     const {formatter, measure} = chart.measureSet;
@@ -142,7 +174,7 @@ const makeConfig = {
 
     const config = {
       discrete: "x",
-      groupPadding: isEnlarged ? 5 : 1,
+      groupPadding: bigMode ? 5 : 1,
       time: timeLevelName,
       timeline: false,
       x: timeLevelName,
@@ -224,8 +256,8 @@ const makeConfig = {
 
   /**
    */
-  histogram(chart, uiParams, isEnlarged) {
-    const config = makeConfig.barchart(chart, uiParams, isEnlarged);
+  histogram(chart, uiParams, bigMode) {
+    const config = makeConfig.barchart(chart, uiParams, bigMode);
     config.groupPadding = 0;
     return config;
   },
@@ -289,17 +321,17 @@ const makeConfig = {
 
   /**
    */
-  pie(chart, uiParams, isEnlarged) {
-    return makeConfig.donut(chart, uiParams, isEnlarged);
+  pie(chart, uiParams, bigMode) {
+    return makeConfig.donut(chart, uiParams, bigMode);
   },
 
   /**
    */
-  stacked(chart, uiParams, isEnlarged) {
+  stacked(chart, uiParams, bigMode) {
     const {levels} = chart;
     const {measure} = chart.measureSet;
 
-    const config = makeConfig.lineplot(chart, uiParams, isEnlarged);
+    const config = makeConfig.lineplot(chart, uiParams, bigMode);
     config.yConfig = {
       scale: "linear",
       title: getCaption(measure, chart.dg.locale)
