@@ -224,8 +224,8 @@ const makeConfig = {
 
   /**
    */
-  histogram(chart, uiParams) {
-    const config = makeConfig.barchart(chart, uiParams);
+  histogram(chart, uiParams, isEnlarged) {
+    const config = makeConfig.barchart(chart, uiParams, isEnlarged);
     config.groupPadding = 0;
     return config;
   },
@@ -289,17 +289,17 @@ const makeConfig = {
 
   /**
    */
-  pie(chart, uiParams) {
-    return makeConfig.donut(chart, uiParams);
+  pie(chart, uiParams, isEnlarged) {
+    return makeConfig.donut(chart, uiParams, isEnlarged);
   },
 
   /**
    */
-  stacked(chart, uiParams) {
+  stacked(chart, uiParams, isEnlarged) {
     const {levels} = chart;
     const {measure} = chart.measureSet;
 
-    const config = makeConfig.lineplot(chart, uiParams);
+    const config = makeConfig.lineplot(chart, uiParams, isEnlarged);
     config.yConfig = {
       scale: "linear",
       title: getCaption(measure, chart.dg.locale)
