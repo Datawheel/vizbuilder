@@ -57,7 +57,7 @@ export function createChartConfig(chart, uiParams) {
     !includes(["Percentage", "Rate"], measure.annotations.units_of_measurement) &&
     includes(["SUM", "UNKNOWN"], measure.aggregatorType)
   ) {
-    config.total = measureName;
+    config.total = isEnlarged ? measureName : false;
   }
 
   if (timeDrilldown && config.time && chart.isTimeline) {
