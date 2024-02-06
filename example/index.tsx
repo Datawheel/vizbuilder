@@ -85,14 +85,19 @@ function Demo() {
   const [result, error] = useQuery(query);
 
   return (
-    <Flex direction="row">
+    <Flex direction="row" h="100vh">
       <Flex direction="column" gap="sm" align="center" p="sm" w={300} miw={300}>
         <Button compact uppercase color="indigo" onClick={setDebugger.toggle}>
           {Vizwrapper.name}
         </Button>
         <QueryManager currentQuery={currentQuery} onChange={setCurrentQuery} />
       </Flex>
-      <div id="viz-scroller" style={{overflowY: "scroll", height: "100vh"}}>
+      <div id="viz-scroller" style={{
+        overflowY: "scroll",
+        flex: "1 0 auto",
+        padding: "0.75rem",
+        boxSizing: "border-box"
+      }}>
         <D3plusContext.Provider value={d3plusConfig}>
           {result && <Vizwrapper
             queries={result}
