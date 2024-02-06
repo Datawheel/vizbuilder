@@ -7,6 +7,11 @@ import {useQuery} from "./useQuery";
 import {useQueryParams} from "./useQueryParams";
 import {useDisclosure} from "@mantine/hooks";
 import {Button, Flex} from "@mantine/core";
+import {D3plusContext} from "d3plus-react";
+
+const d3plusConfig = {
+  colorScalePosition: "bottom"
+};
 
 const topojsonArray = [
   {
@@ -80,34 +85,44 @@ function Demo() {
   const [result, error] = useQuery(query);
 
   return (
-    <Flex direction="column">
-      <Flex gap="sm" align="center" px="sm">
+    <Flex direction="row" h="100vh">
+      <Flex direction="column" gap="sm" align="center" p="sm" w={300} miw={300}>
         <Button compact uppercase color="indigo" onClick={setDebugger.toggle}>
           {Vizwrapper.name}
         </Button>
         <QueryManager currentQuery={currentQuery} onChange={setCurrentQuery} />
       </Flex>
-      {result && <Vizwrapper
-        queries={result}
-        downloadFormats={["svg", "png"]}
-        defaultLocale="ar"
-        allowedChartTypes={[
-          "barchart",
-          "barchartyear",
-          "donut",
-          "geomap",
-          "histogram",
-          "lineplot",
-          "pie",
-          "stacked",
-          "treemap"
-        ]}
-        topojsonConfig={topojsonConfig}
-        translations={translations}
-        userConfig={{
-          locale: "ar-SA"
-        }}
-      />}
+      <div id="viz-scroller" style={{
+        overflowY: "scroll",
+        flex: "1 0 auto",
+        padding: "0.75rem",
+        boxSizing: "border-box"
+      }}>
+        <D3plusContext.Provider value={d3plusConfig}>
+          {result && <Vizwrapper
+            queries={result}
+            downloadFormats={["svg", "png"]}
+            defaultLocale="ar"
+            allowedChartTypes={[
+              "barchart",
+              "barchartyear",
+              "donut",
+              "geomap",
+              "histogram",
+              "lineplot",
+              "pie",
+              "stacked",
+              "treemap"
+            ]}
+            topojsonConfig={topojsonConfig}
+            translations={translations}
+            userConfig={{
+              locale: "ar-SA",
+              scrollContainer: "#viz-scroller",
+            }}
+          />}
+        </D3plusContext.Provider>
+      </div>
     </Flex>
   );
 }

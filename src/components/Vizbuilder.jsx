@@ -5,7 +5,8 @@ import {useCharts} from "../toolbox/useCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard} from "./ChartCard";
 import NonIdealState from "./NonIdealState";
-import {Grid, Modal, Paper} from "@mantine/core";
+import {Grid, Modal, Paper, useMantineTheme} from "@mantine/core";
+import {useMediaQuery} from "@mantine/hooks";
 
 /** @type {React.FC<VizBldr.VizbuilderProps>} */
 export const Vizbuilder = props => {
@@ -18,24 +19,30 @@ export const Vizbuilder = props => {
 
   const isSingleChart = charts.length === 1;
 
+  const theme = useMantineTheme();
+  const screenIsXL = useMediaQuery(`(min-width: ${theme.breakpoints.xl})`);
+  const screenIsLG = useMediaQuery(`(min-width: ${theme.breakpoints.lg})`);
+  const screenIsMD = useMediaQuery(`(min-width: ${theme.breakpoints.md})`);
+
   const content = useMemo(() => {
     const measureConfig = normalizeMeasureConfig(props.measureConfig);
     const filteredCharts = charts
       .filter((d, i) => charts.findIndex(c => c.key === d.key) === i); // removes duplicate charts
 
-    const colProps = filteredCharts.length === 1 ? {span: 12}
-      : filteredCharts.length === 2 ? {lg: 6}
-      : filteredCharts.length === 3 ? {lg: 6, xl: 4}
-      : {lg: 6, xl: 4, xxl: 3};
+    const columns = filteredCharts.length === 1 ? 1
+      : filteredCharts.length === 2 ? screenIsMD ? 2 : 1
+      : filteredCharts.length === 3 ? screenIsLG ? 3 : screenIsMD ? 2 : 1
+      : screenIsXL ? 4 : screenIsLG ? 3 : screenIsMD ? 2 : 1;
 
     if (filteredCharts.length > 0) {
       return (
         <Grid
+          columns={columns}
           w="100%"
           className={cls("vb-charts-wrapper", {unique: filteredCharts.length === 1})}
         >
           {filteredCharts.map(chart =>
-            <Grid.Col key={chart.key} {...colProps}>
+            <Grid.Col key={chart.key} span={1}>
               <Paper shadow="xs">
                 <ChartCard
                   chart={chart}
@@ -58,7 +65,7 @@ export const Vizbuilder = props => {
 
     const Notice = props.nonIdealState || NonIdealState;
     return <Notice />;
-  }, [currentChart, currentPeriod, charts, props.showConfidenceInt]);
+  }, [currentChart, currentPeriod, charts, props.showConfidenceInt, screenIsXL, screenIsLG, screenIsMD]);
 
   const focusContent = useMemo(() => {
     const measureConfig = normalizeMeasureConfig(props.measureConfig);

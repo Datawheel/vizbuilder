@@ -1,4 +1,4 @@
-import { ActionIcon, Badge, rem } from "@mantine/core";
+import { ActionIcon, Badge, Flex, rem } from "@mantine/core";
 import { IconEdit } from "@tabler/icons-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { QueryEditor } from "./QueryEditor";
@@ -40,16 +40,10 @@ export const QueryManager = (props: {
   ), [currentQuery, queries]);
 
   return (
-    <div className="query-manager">
-      <div style={{
-        display: "flex",
-        gap: "0.5rem",
-        padding: "0.5rem",
-      }}>
-        <button onClick={createHandler}>New query</button>
-        <button onClick={clearHandler}>Clear</button>
-        {queryPickers}
-      </div>
+    <Flex direction="column" w="100%" gap="sm" className="query-manager">
+      <button onClick={createHandler}>New query</button>
+      {queryPickers}
+      <button onClick={clearHandler}>Clear</button>
       <dialog open={currentEdit != null}>
         <QueryEditor id={currentEdit || ""} onClose={closeHandler} />
       </dialog>
@@ -77,7 +71,7 @@ dialog textarea {
   box-sizing: border-box;
 }
 `}</style>
-    </div>
+    </Flex>
   );
 };
 
