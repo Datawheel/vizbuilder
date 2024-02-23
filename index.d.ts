@@ -82,7 +82,6 @@ declare namespace VizBldr {
 
   interface Translation extends I18N.TranslationDict {
     "action_close": string;
-    "action_download": string;
     "action_enlarge": string;
     "action_retry": string;
     "action_fileissue": string;
@@ -102,11 +101,11 @@ declare namespace VizBldr {
       "message": string;
       "title": string;
     };
-    "nonidealstate_msg"?: string;
     "sentence_connectors": {
       "and": string;
     };
     "title": {
+      "nonidealstate": string;
       "of_selected_cut_members": string;
       "top_drilldowns": string;
       "by_drilldowns": string;

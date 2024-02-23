@@ -1,7 +1,7 @@
 import {translationFactory} from "@datawheel/use-translation";
 
 /** @type {VizBldr.Translation} */
-const LOCALE_EN = {
+export const LOCALE_EN = {
   action_close: "Close",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
@@ -22,11 +22,11 @@ const LOCALE_EN = {
     message: "Details: \"{{message}}\".",
     title: "Error"
   },
-  nonidealstate_msg: "No results",
   sentence_connectors: {
     and: "and"
   },
   title: {
+    nonidealstate: "No results",
     of_selected_cut_members: "of Selected {{members}} Members",
     top_drilldowns: "for Top {{drilldowns}}",
     by_drilldowns: "by {{drilldowns}}",

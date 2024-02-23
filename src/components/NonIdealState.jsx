@@ -6,7 +6,7 @@ const NonIdealState = () => {
 
   return <div className="vizbuilder-nonidealstate">
     <h1 className="vizbuilder-nonidealstate-header">
-      {t("nonidealstate_msg")}
+      {t("title.nonidealstate")}
     </h1>
   </div>;
 };
