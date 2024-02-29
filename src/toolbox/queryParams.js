@@ -3,14 +3,14 @@ import {isCutItem} from "./validation";
 
 /**
  * @param {OlapClient.Query} query
- * @param {((measure: OlapClient.Measure | string) => VizBldr.Formatter) | Record<string, VizBldr.Formatter>} [formatters]
- * @returns {VizBldr.QueryParams}
+ * @param {((measure: OlapClient.Measure | string) => Vizbuilder.Formatter) | Record<string, Vizbuilder.Formatter>} [formatters]
+ * @returns {Vizbuilder.QueryParams}
  */
 export function buildQueryParams(query, formatters = {}) {
 
   /**
    * @param {OlapClient.Measure | string} measure
-   * @returns {VizBldr.Formatter}
+   * @returns {Vizbuilder.Formatter}
    */
   const getFormatter = typeof formatters === "function"
     ? formatters

@@ -6,8 +6,9 @@ import {chartTitleGenerator} from "./title";
 import {tooltipGenerator} from "./tooltip";
 
 /**
- * @param {VizBldr.Struct.Chart} chart
- * @param {VizBldr.UIParams} uiParams
+ * @param {Vizbuilder.Chart} chart
+ * @param {Vizbuilder.UIParams} uiParams
+ * @returns {Vizbuilder.D3plusConfig}
  */
 export function createChartConfig(chart, uiParams) {
   const {translate: t} = uiParams;
@@ -106,7 +107,7 @@ export function createChartConfig(chart, uiParams) {
   return config;
 }
 
-/** @type {Record<VizBldr.ChartType, (chart: VizBldr.Struct.Chart, uiParams: VizBldr.UIParams, bigMode: Boolean) => any>} */
+/** @type {Record<Vizbuilder.ChartType, (chart: Vizbuilder.Chart, uiParams: Vizbuilder.UIParams, bigMode: Boolean) => any>} */
 const makeConfig = {
 
   /** */

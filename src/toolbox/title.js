@@ -22,8 +22,8 @@ import {getCaption, getColumnId} from "./strings";
  * Chart with cuts applied _on levels not included in drilldowns/levels_:
  * _MEASURE_NAME of Selected CUT_LEVEL_NAME Members by DRILLDOWN_1_
  *
- * @param {VizBldr.Struct.Chart} chart
- * @param {VizBldr.UIParams} uiParams
+ * @param {Vizbuilder.Chart} chart
+ * @param {Vizbuilder.UIParams} uiParams
  */
 export function chartTitleGenerator(chart, uiParams) {
   const {dg, measureSet} = chart;
@@ -146,14 +146,14 @@ function arrayToSentence(strings, translate) {
  * Returns a string giving a few qualifying words (if necessary) to add to a measure in the case
  * that a measure does not have a self-evident aggregation method (like sum)
  * @param {OlapClient.AggregatorType} aggregationType
- * @param {VizBldr.UIParams["translate"]} translate - translation function
+ * @param {Vizbuilder.UIParams["translate"]} translate - translation function
  */
 function getAggregationTypeQualifier(aggregationType, translate) {
   const qualifier =
     aggregationType &&
     typeof aggregationType === "string" &&
     translate(`aggregators.${aggregationType.toLowerCase()}`);
-  return qualifier && !qualifier.startsWith("aggregators.") ? qualifier : "";
+  return qualifier && !qualifier.includes("aggregators.") ? qualifier : "";
 }
 
 /**

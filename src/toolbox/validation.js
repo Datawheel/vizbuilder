@@ -13,7 +13,7 @@ export function areKindaNumeric(list, tolerance = 0.8) {
 
 /**
  * @param {any} obj
- * @returns {obj is VizBldr.Struct.CutItem}
+ * @returns {obj is Vizbuilder.CutItem}
  */
 export function isCutItem(obj) {
   return obj && obj.hasOwnProperty("level") && obj.hasOwnProperty("members");

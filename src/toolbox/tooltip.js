@@ -2,8 +2,8 @@ import {abbreviateList, getCaption} from "./strings";
 
 /**
  * Generates the parameters for the tooltip shown for the current datagroup.
- * @param {VizBldr.Struct.Chart} chart
- * @param {VizBldr.UIParams} uiParams
+ * @param {Vizbuilder.Chart} chart
+ * @param {Vizbuilder.UIParams} uiParams
  */
 export function tooltipGenerator(chart, {translate: t}) {
   const {dg, measureSet} = chart;

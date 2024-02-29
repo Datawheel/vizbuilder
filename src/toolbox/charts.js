@@ -12,7 +12,7 @@ import {
 import {shortHash} from "./math";
 import {dataIsSignConsistent, isGeographicLevel, isTimeLevel} from "./validation";
 
-/** @type {Record<string, VizBldr.ChartType>} */
+/** @type {Record<string, Vizbuilder.ChartType>} */
 export const CT = {
   BARCHART: "barchart",
   BARCHARTYEAR: "barchartyear",
@@ -32,21 +32,21 @@ const TIME_NATIVE_CHART_TYPES = [
 
 /**
  * Returns a combined list of all drilldowns that are NOT of a time type
- * @param {VizBldr.Struct.Datagroup} dg
+ * @param {Vizbuilder.Datagroup} dg
  * @returns {OlapClient.Level[]} List of combined non-time levels
  */
 const getNonTimeDrilldowns = dg => dg.drilldowns.filter(lvl => !isTimeLevel(lvl));
 
 /**
  * Returns a combined list of all drilldowns that are NOT of a geographical type
- * @param {VizBldr.Struct.Datagroup} dg
+ * @param {Vizbuilder.Datagroup} dg
  * @returns {OlapClient.Level[]} List of combined non-geo levels
  */
 const getNonGeoDrilldowns = dg => dg.drilldowns.filter(lvl => !isGeographicLevel(lvl));
 
 /**
  *
- * @param {VizBldr.Struct.Datagroup} dg
+ * @param {Vizbuilder.Datagroup} dg
  * @param {OlapClient.Level[]} levels
  * @returns {number}
  */
@@ -56,8 +56,8 @@ const getNumberGroupsFromLevels = (dg, levels) => levels.reduce((acc, lvl) => ac
  * Generates a unique key based on the parameters set for a chart.
  * @param {any[]} dataset
  * @param {OlapClient.Level[]} levels
- * @param {VizBldr.Struct.MeasureSet} measureSet
- * @param {VizBldr.ChartType} chartType
+ * @param {Vizbuilder.MeasureSet} measureSet
+ * @param {Vizbuilder.ChartType} chartType
  */
 const keyMaker = (dataset, levels, measureSet, chartType) =>
   shortHash(
@@ -70,10 +70,10 @@ const keyMaker = (dataset, levels, measureSet, chartType) =>
 /**
  * Creates zero or more chart config objects for a given ChartType based on what the data looks like
  *    and what the specified chart type allows
- * @param {VizBldr.Struct.Datagroup} dg
- * @param {VizBldr.ChartType} chartType
- * @param {VizBldr.ChartLimits} chartLimits
- * @returns {VizBldr.Struct.Chart[]}
+ * @param {Vizbuilder.Datagroup} dg
+ * @param {Vizbuilder.ChartType} chartType
+ * @param {Vizbuilder.ChartLimits} chartLimits
+ * @returns {Vizbuilder.Chart[]}
  */
 export function chartRemixer(dg, chartType, chartLimits) {
   const newCharts = remixerForChartType.hasOwnProperty(chartType)
@@ -84,9 +84,9 @@ export function chartRemixer(dg, chartType, chartLimits) {
 
 /**
  * Default Chart builder that creates a chart for each combination of measure and drilldown combination
- * @param {VizBldr.ChartType} chartType
- * @param {VizBldr.Struct.Datagroup} dg
- * @returns {VizBldr.Struct.Chart[]}
+ * @param {Vizbuilder.ChartType} chartType
+ * @param {Vizbuilder.Datagroup} dg
+ * @returns {Vizbuilder.Chart[]}
  */
 function defaultChart(chartType, dg) {
   const kValues = range(1, dg.stdDrilldowns.length + 1);
@@ -109,7 +109,7 @@ function defaultChart(chartType, dg) {
 
 /**
  * Map of ChartType -> function for building valid Chart config arrays
- * @type {Record<string, (dg: VizBldr.Struct.Datagroup, chartLimits: VizBldr.ChartLimits) => VizBldr.Struct.Chart[]>}
+ * @type {Record<string, (dg: Vizbuilder.Datagroup, chartLimits: Vizbuilder.ChartLimits) => Vizbuilder.Chart[]>}
  */
 const remixerForChartType = {
 
@@ -146,14 +146,14 @@ const remixerForChartType = {
       const chartProps = {chartType, dg, measureSet, members, isTimeline};
       const kValues = range(1, validDrilldowns.length + 1);
 
-      /** @type {VizBldr.Struct.Chart[]} */
+      /** @type {Vizbuilder.Chart[]} */
       return flatMap(kValues, k =>
         Array.from(permutationIterator(validDrilldowns, k), levels => {
 
           /** Disable if too many bars would make the chart unreadable */
           if (getNumberGroupsFromLevels(dg, levels) > chartLimits.BARCHART_MAX_BARS) return null;
 
-          /** @type {VizBldr.Struct.Chart} */
+          /** @type {Vizbuilder.Chart} */
           const output = {
             ...chartProps,
             levels,

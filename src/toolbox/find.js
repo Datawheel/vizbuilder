@@ -12,8 +12,8 @@ export function findFirstNumber(string, elseValue) {
 
 /**
  * @param {OlapClient.Cube} cube
- * @param {VizBldr.Struct.MeasureItem} item
- * @returns {VizBldr.Struct.MeasureSet | undefined}
+ * @param {Vizbuilder.MeasureItem} item
+ * @returns {Vizbuilder.MeasureSet | undefined}
  */
 export function findMeasuresInCube({measuresByName}, item) {
   const measure = measuresByName[item.measure];

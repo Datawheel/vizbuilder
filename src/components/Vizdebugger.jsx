@@ -1,21 +1,23 @@
 import cls from "clsx";
 import React, {useEffect, useMemo, useState} from "react";
 import {ObjectInspector} from "react-inspector";
-import {normalizeMeasureConfig} from "../toolbox/props";
-import {useCharts} from "../toolbox/useCharts";
+import {asArray} from "../toolbox/array";
+import {generateCharts, measureConfigAccessor} from "../toolbox/generateCharts";
 import {TranslationProvider} from "../toolbox/useTranslation";
 import {ChartCard} from "./ChartCard";
 
-/** @type {React.FC<VizBldr.VizbuilderProps>} */
+/** @type {React.FC<Vizbuilder.VizbuilderProps>} */
 export const Vizdebugger = props => {
-  const {
-    charts,
-    currentChart,
-    currentPeriod,
-    setCurrentChart
-  } = useCharts(props);
+  const [currentChart, setCurrentChart] = useState("");
   const [isUniqueChart, setUniqueChart] = useState(false);
   const [isSingleChart, setSingleChart] = useState(false);
+
+  const charts = useMemo(() => generateCharts(asArray(props.queries), {
+    chartLimits: props.chartLimits,
+    chartTypes: props.chartTypes,
+    datacap: props.datacap,
+    topojsonConfig: props.topojsonConfig
+  }), [props.queries, props.chartLimits]);
 
   useEffect(() => {
     if (charts.length > 0) {
@@ -43,16 +45,14 @@ export const Vizdebugger = props => {
     if (!chart) {
       return <div>Chart with key {currentChart} not found.</div>;
     }
-    const measureConfig = normalizeMeasureConfig(props.measureConfig);
+    const measureConfig = measureConfigAccessor(props.measureConfig || {});
 
     return (
       <ChartCard
         chart={chart}
         currentChart={isSingleChart || isUniqueChart ? currentChart : ""}
-        currentPeriod={currentPeriod}
         downloadFormats={props.downloadFormats}
         isSingleChart={isSingleChart}
-        isUniqueChart={isUniqueChart}
         key={chart.key}
         measureConfig={measureConfig}
         onToggle={() => null}
@@ -60,7 +60,7 @@ export const Vizdebugger = props => {
         userConfig={props.userConfig}
       />
     );
-  }, [currentPeriod, chart, isSingleChart, isUniqueChart, props.showConfidenceInt]);
+  }, [chart, isSingleChart, isUniqueChart, props.showConfidenceInt]);
 
   return (
     <TranslationProvider

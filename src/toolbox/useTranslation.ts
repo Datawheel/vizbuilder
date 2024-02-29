@@ -1,7 +1,6 @@
 import {translationFactory} from "@datawheel/use-translation";
 
-/** @type {VizBldr.Translation} */
-export const LOCALE_EN = {
+export const defaultTranslation: Vizbuilder.Translation = {
   action_close: "Close",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
@@ -9,7 +8,8 @@ export const LOCALE_EN = {
   aggregators: {
     avg: "Average",
     max: "Max",
-    min: "Min"
+    min: "Min",
+    sum: ""
   },
   chart_labels: {
     ci: "Confidence Interval",
@@ -40,7 +40,4 @@ export const {
   useTranslation,
   TranslationConsumer,
   TranslationProvider
-} = translationFactory({
-  defaultLocale: "en",
-  defaultTranslation: LOCALE_EN
-});
+} = translationFactory({defaultLocale: "en", defaultTranslation});

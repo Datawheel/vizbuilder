@@ -6,11 +6,11 @@ import {findMeasuresInCube} from "./find";
 import {isGeographicLevel, isTimeLevel} from "./validation";
 
 /**
- * @param {VizBldr.QueryResult} qr
+ * @param {Vizbuilder.QueryResult} qr
  * @param {object} props
  * @param {number} props.datacap
- * @param {(level: OlapClient.Level) => VizBldr.D3plusConfig} props.getTopojsonConfig
- * @returns {VizBldr.Struct.Datagroup}
+ * @param {(level: OlapClient.Level) => Vizbuilder.D3plusConfig} props.getTopojsonConfig
+ * @returns {Vizbuilder.Datagroup}
  */
 export function buildDatagroup(qr, props) {
   const {dataset, params} = qr;
