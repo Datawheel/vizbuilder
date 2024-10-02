@@ -1,89 +1,106 @@
-import React, { useCallback, useMemo } from "react";
-import { useOlapSchema } from "./useOlapSchema";
-import { useQueryParams } from "./useQueryParams";
+import {Select} from "@mantine/core";
+import React, {useCallback, useMemo} from "react";
+import type {QueryParams} from "../src/structs";
+import {emptyQueryParams, useTesseract} from "./TesseractProvider";
 
 export function QueryEditor(props: {
-  id: string;
+  query: QueryParams;
+  onChange: (params: Partial<QueryParams> & {key: string}) => void;
   onClose: () => void;
 }) {
-  const {onClose} = props;
+  const {query} = props;
 
-  const [cubes, isLoading, error] = useOlapSchema();
+  const {cubes} = useTesseract();
 
-  const [query, setQueryProp] = useQueryParams(props.id);
+  const cubeOptions = useMemo(
+    () =>
+      Object.keys(cubes).map(value => {
+        const cube = cubes[value];
+        return {value, label: cube.caption, cube};
+      }),
+    [cubes],
+  );
 
   const options = useMemo(() => {
     const cube = cubes[query.cube];
     return {
       cubes: Object.keys(cubes),
       dimensions: cube ? cube.dimensions : [],
-      measures: cube ? cube.measures : []
+      measures: cube ? cube.measures : [],
     };
   }, [cubes, query.cube]);
 
-  const submitHandler: React.ChangeEventHandler<HTMLSelectElement> = useCallback(evt => {
-    const {target} = evt;
-    if (target.name === "drilldowns" || target.name === "measures") {
-      const value = Array.from(target.selectedOptions, item => item.textContent || "");
-      setQueryProp(target.name, value);
-    }
-    else if (target.name === "cube") {
-      setQueryProp(target.name, target.value);
-    }
-  }, [setQueryProp]);
-
-  const closeHandler: React.MouseEventHandler<HTMLButtonElement> = useCallback((evt) => {
-    evt.preventDefault();
-    onClose();
-  }, [onClose]);
-
-  if (isLoading) {
-    return <progress />;
-  }
-
-  if (error) {
-    return (
-      <p>{`Error: ${error}`}</p>
-    );
-  }
+  const submitHandler: React.ChangeEventHandler<HTMLSelectElement> = useCallback(
+    evt => {
+      const {target} = evt;
+      if (target.name === "drilldowns" || target.name === "measures") {
+        const value = Array.from(target.selectedOptions, item => item.textContent || "");
+        setQueryProp(target.name, value);
+      } else if (target.name === "cube") {
+        setQueryProp(target.name, target.value);
+      }
+    },
+    [setQueryProp],
+  );
 
   return (
     <form className="query-builder">
-      <button onClick={closeHandler}>Close</button>
+      <button type="button" onClick={props.onClose}>
+        Close
+      </button>
       <fieldset id="query-info">
-        <legend>{`Query ${props.id}`}</legend>
+        <legend>{`Query ${query.key}`}</legend>
         <ol>
           <li>
-            <label>Cube</label>
-            <select name="cube" onChange={submitHandler} value={query.cube || ""}>
-              <option value="">[Unset]</option>
-              {options.cubes.map(item => <option key={item}>{item}</option>)}
-            </select>
+            <Select
+              label="Cube"
+              data={cubeOptions}
+              value={query.cube}
+              onChange={cube => {
+                if (cube && query.cube !== cube) {
+                  props.onChange({...emptyQueryParams(), key: query.key, cube});
+                }
+              }}
+            />
           </li>
           <li>
             <label>Measures</label>
-            <select multiple name="measures" onChange={submitHandler} value={query.measures}>
-              {options.measures.map(item =>
-                <option key={item.name} title={item.name}>{item.name}</option>
-              )}
+            <select
+              multiple
+              name="measures"
+              onChange={submitHandler}
+              value={query.measures}
+            >
+              {options.measures.map(item => (
+                <option key={item.name} title={item.name}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </li>
           <li>
             <label>Levels</label>
-            <select multiple name="drilldowns" onChange={submitHandler} value={query.drilldowns}>
+            <select
+              multiple
+              name="drilldowns"
+              onChange={submitHandler}
+              value={query.drilldowns}
+            >
               {options.dimensions.flatMap(dim =>
-                dim.hierarchies.flatMap(hie =>
+                dim.hierarchies.flatMap(hie => (
                   <optgroup
                     key={hie.fullName}
                     label={hie.fullName}
                     title={hie.name}
                     disabled={query.drilldowns.some(name => name.includes(dim.name))}
                   >
-                    {hie.levels.map(lvl =>
-                      <option key={lvl.uniqueName} title={lvl.fullName}>{lvl.uniqueName}</option>
-                    )}
+                    {hie.levels.map(lvl => (
+                      <option key={lvl.uniqueName} title={lvl.fullName}>
+                        {lvl.uniqueName}
+                      </option>
+                    ))}
                   </optgroup>
-                )
+                )),
               )}
             </select>
           </li>
@@ -114,4 +131,4 @@ form.query-builder select[multiple] {
 `}</style>
     </form>
   );
-};
+}

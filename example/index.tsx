@@ -1,105 +1,111 @@
-import React, {useState} from "react";
-import ReactDOM from "react-dom";
-import {Vizdebugger} from "../src/components/Vizdebugger";
-import {Vizbuilder} from "../src/index";
-import {QueryManager} from "./QueryManager";
-import {useQuery} from "./useQuery";
-import {useQueryParams} from "./useQueryParams";
-import {useDisclosure} from "@mantine/hooks";
-import {Button, Flex} from "@mantine/core";
+import {Box, Button, Flex, Header, Loader, MantineProvider} from "@mantine/core";
+import {useToggle} from "@mantine/hooks";
 import {D3plusContext} from "d3plus-react";
-
-const d3plusConfig = {
-  colorScalePosition: "bottom"
-};
+import React from "react";
+import {createRoot} from "react-dom/client";
+import {Vizbuilder} from "../src/index";
+import {QueriesProvider, useQueries} from "./QueriesProvider";
+import {QueryManager} from "./QueryManager";
+import {TesseractProvider, useTesseractData} from "./TesseractProvider";
+import {Vizdebugger} from "./Vizdebugger";
 
 const topojsonArray = [
   {
     id: "Province",
     name: "مقاطعة",
     topojson: "/topojson/SA_regions.json",
-    topojsonId: (d) => d.properties.id,
+    topojsonId: d => d.properties.id,
   },
   {
     id: "Destination Country",
     name: "دولة",
     topojson: "/topojson/world-50m.json",
-    topojsonId: (d) => d.id,
+    topojsonId: d => d.id,
     projection: "geoMiller",
   },
   {
     id: "Source Country",
     name: "دولة",
     topojson: "/topojson/world-50m.json",
-    topojsonId: (d) => d.id,
+    topojsonId: d => d.id,
     projection: "geoMiller",
   },
 ];
-const topojsonConfig = topojsonArray.reduce((acc, item) => ({...acc, [item.id]: item}), {});
+const topojsonConfig = topojsonArray.reduce(
+  (acc, item) => ({...acc, [item.id]: item}),
+  {},
+);
 
 const translations = {
-  "ar": {
-    "action_close": "يغلق",
-    "action_enlarge": "تكبير",
-    "action_fileissue": "قدم مشكلة",
-    "action_retry": "أعد المحاولة",
-    "aggregators": {
-      "avg": "متوسط",
-      "max": "أقصى",
-      "min": "الحد الأدنى"
+  ar: {
+    action_close: "يغلق",
+    action_enlarge: "تكبير",
+    action_fileissue: "قدم مشكلة",
+    action_retry: "أعد المحاولة",
+    aggregators: {
+      avg: "متوسط",
+      max: "أقصى",
+      min: "الحد الأدنى",
     },
-    "chart_labels": {
-      "ci": "فاصل الثقة",
-      "moe": "هامش الخطأ",
-      "source": "مصدر",
-      "collection": "مجموعة"
+    chart_labels: {
+      ci: "فاصل الثقة",
+      moe: "هامش الخطأ",
+      source: "مصدر",
+      collection: "مجموعة",
     },
-    "error": {
-      "detail": "",
-      "message": "التفاصيل: \"{{message}}\".",
-      "title": "خطأ"
+    error: {
+      detail: "",
+      message: 'التفاصيل: "{{message}}".',
+      title: "خطأ",
     },
-    "nonidealstate_msg": "لا نتائج",
-    "sentence_connectors": {
-      "and": "و"
+    nonidealstate_msg: "لا نتائج",
+    sentence_connectors: {
+      and: "و",
     },
-    "title": {
-      "of_selected_cut_members": "من أعضاء {{members}} المختارين",
-      "top_drilldowns": "لأفضل {{members}}",
-      "by_drilldowns": "بواسطة {{drilldowns}}",
-      "over_time": "متأخر , بعد فوات الوقت",
-      "measure_and_modifier": "{{modifier}} {{measure}}",
-      "total": "مجموع"
-    }
-  }
-}
+    title: {
+      of_selected_cut_members: "من أعضاء {{members}} المختارين",
+      top_drilldowns: "لأفضل {{members}}",
+      by_drilldowns: "بواسطة {{drilldowns}}",
+      over_time: "متأخر , بعد فوات الوقت",
+      measure_and_modifier: "{{modifier}} {{measure}}",
+      total: "مجموع",
+    },
+  },
+};
 
-function Demo() {
-  const [isDebugging, setDebugger] = useDisclosure(true);
-  const [currentQuery, setCurrentQuery] = useState("");
+const container = document.getElementById("app");
+container && mount(container);
 
-  const Vizwrapper = isDebugging ? Vizdebugger : Vizbuilder;
+function App() {
+  const [Vizwrapper, toggleVizwrapper] = useToggle([Vizdebugger, Vizbuilder]);
 
-  const [query] = useQueryParams(currentQuery);
-  console.log(query);
-  const [result, error] = useQuery(query);
+  const {currentQuery} = useQueries();
+
+  const {result, isLoading, error} = useTesseractData(currentQuery);
 
   return (
-    <Flex direction="row" h="100vh">
-      <Flex direction="column" gap="sm" align="center" p="sm" w={300} miw={300}>
-        <Button compact uppercase color="indigo" onClick={setDebugger.toggle}>
-          {Vizwrapper.name}
-        </Button>
-        <QueryManager currentQuery={currentQuery} onChange={setCurrentQuery} />
-      </Flex>
-      <div id="viz-scroller" style={{
-        overflowY: "scroll",
-        flex: "1 0 auto",
-        padding: "0.75rem",
-        boxSizing: "border-box"
-      }}>
-        <D3plusContext.Provider value={d3plusConfig}>
-          {result && <Vizwrapper
+    <Box h="100vh">
+      <Header height={51} p="xs" withBorder>
+        <Flex direction="row" gap="xs" align="center" h={30}>
+          <Button compact uppercase color="indigo" onClick={() => toggleVizwrapper()}>
+            {Vizwrapper.name}
+          </Button>
+          <QueryManager />
+          {isLoading && <Loader variant="bars"/>}
+        </Flex>
+      </Header>
+
+      <div
+        id="viz-scroller"
+        style={{
+          overflowY: "scroll",
+          flex: "1 0 auto",
+          padding: "0.75rem",
+          boxSizing: "border-box",
+        }}
+      >
+        {result && (
+          <Vizwrapper
             queries={result}
             downloadFormats={["svg", "png"]}
             defaultLocale="ar"
@@ -112,7 +118,7 @@ function Demo() {
               "lineplot",
               "pie",
               "stacked",
-              "treemap"
+              "treemap",
             ]}
             topojsonConfig={topojsonConfig}
             translations={translations}
@@ -120,14 +126,39 @@ function Demo() {
               locale: "ar-SA",
               scrollContainer: "#viz-scroller",
             }}
-          />}
-        </D3plusContext.Provider>
+          />
+        )}
       </div>
-    </Flex>
+    </Box>
   );
 }
 
-ReactDOM.render(
-  React.createElement(Demo),
-  document.getElementById("app")
-);
+function mount(container) {
+  const root = createRoot(container);
+  root.render(
+    <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
+      <QueriesProvider>
+        <MantineProvider>
+          <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
+            <App />
+          </D3plusContext.Provider>
+        </MantineProvider>
+      </QueriesProvider>
+    </TesseractProvider>,
+  );
+}
+
+function secondFormatter(value: number) {
+  const days = Math.floor(value / 86400);
+  const hours = Math.floor(value / 3600) % 24;
+  const mins = Math.floor(value / 60) % 60;
+  const secs = Math.floor(value) % 60;
+  return [
+    days > 0 ? `${days}d` : "",
+    days > 0 || hours > 0 ? `${hours}h` : "",
+    days > 0 || hours > 0 || mins > 0 ? `${mins}m` : "",
+    `${Math.floor(secs) !== secs ? secs.toFixed(3) : secs}s`,
+  ]
+    .filter(Boolean)
+    .join("");
+}

@@ -1,26 +1,59 @@
-import { Modal, SimpleGrid } from "@mantine/core";
+import {Modal, SimpleGrid} from "@mantine/core";
 import cls from "clsx";
-import React, { useMemo, useState } from "react";
-import { VizbuilderProps } from "../..";
-import { asArray } from "../toolbox/array";
-import { generateCharts, measureConfigAccessor } from "../toolbox/generateCharts";
-import { TranslationProvider } from "../toolbox/useTranslation";
-import { ChartCard } from "./ChartCard";
-import NonIdealState from "./NonIdealState";
+import React, {useMemo, useState} from "react";
+import type {ChartLimits} from "../constants";
+import type {TesseractLevel, TesseractMeasure} from "../schema";
+import type {ChartType, D3plusConfig, QueryResult} from "../structs";
+import {asArray} from "../toolbox/array";
+import {generateCharts, normalizeAccessor} from "../toolbox/generateCharts";
+import {type Translation, TranslationProvider} from "../toolbox/translation";
+import {ChartCard} from "./ChartCard";
+import {NonIdealState} from "./NonIdealState";
+
+interface VizbuilderConfig {
+  chartLimits: ChartLimits;
+  chartTypes: ChartType[];
+  datacap: number;
+  locale: string;
+  measureConfig:
+    | Record<string, D3plusConfig>
+    | ((measure: TesseractMeasure) => D3plusConfig);
+  showConfidenceInt: boolean;
+  topojsonConfig:
+    | Record<string, D3plusConfig>
+    | ((level: TesseractLevel) => D3plusConfig);
+  userConfig: D3plusConfig;
+}
+
+export interface VizbuilderProps extends Partial<VizbuilderConfig> {
+  className?: string;
+  downloadFormats?: string[];
+  defaultLocale: string;
+  nonIdealState?: React.ComponentType;
+  queries: QueryResult | QueryResult[];
+  toolbar?: React.ReactNode;
+  translations?: Record<string, Translation>;
+}
 
 /** */
 export function Vizbuilder(props: VizbuilderProps) {
   const [currentChart, setCurrentChart] = useState("");
 
-  const getMeasureConfig = useMemo(() =>
-    measureConfigAccessor(props.measureConfig || {}), [props.measureConfig]);
+  const getMeasureConfig = useMemo(
+    () => normalizeAccessor(props.measureConfig || {}),
+    [props.measureConfig],
+  );
 
-  const charts = useMemo(() => generateCharts(asArray(props.queries), {
-    chartLimits: props.chartLimits,
-    chartTypes: props.chartTypes,
-    datacap: props.datacap,
-    topojsonConfig: props.topojsonConfig
-  }), [props.queries]);
+  const charts = useMemo(
+    () =>
+      generateCharts(asArray(props.queries), {
+        chartLimits: props.chartLimits,
+        chartTypes: props.chartTypes,
+        datacap: props.datacap,
+        topojsonConfig: props.topojsonConfig,
+      }),
+    [props.queries],
+  );
 
   const content = useMemo(() => {
     const isSingleChart = charts.length === 1;
@@ -31,12 +64,14 @@ export function Vizbuilder(props: VizbuilderProps) {
       return (
         <SimpleGrid
           breakpoints={[
-            {minWidth: "xs", cols: 1}, {minWidth: "md", cols: 2},
-            {minWidth: "lg", cols: 3}, {minWidth: "xl", cols: 4}
+            {minWidth: "xs", cols: 1},
+            {minWidth: "md", cols: 2},
+            {minWidth: "lg", cols: 3},
+            {minWidth: "xl", cols: 4},
           ]}
           className={cls({unique: filteredCharts.length === 1})}
         >
-          {filteredCharts.map(chart =>
+          {filteredCharts.map(chart => (
             <ChartCard
               chart={chart}
               currentChart={""}
@@ -48,7 +83,7 @@ export function Vizbuilder(props: VizbuilderProps) {
               showConfidenceInt={props.showConfidenceInt}
               userConfig={props.userConfig}
             />
-          )}
+          ))}
         </SimpleGrid>
       );
     }
@@ -74,7 +109,6 @@ export function Vizbuilder(props: VizbuilderProps) {
         userConfig={props.userConfig}
       />
     );
-
   }, [currentChart, charts, props.showConfidenceInt]);
 
   return (
@@ -83,9 +117,7 @@ export function Vizbuilder(props: VizbuilderProps) {
       translations={props.translations}
     >
       <div className={cls("vb-wrapper", props.className)}>
-        {props.toolbar && <div className="vb-toolbar-wrapper">
-          {props.toolbar}
-        </div>}
+        {props.toolbar && <div className="vb-toolbar-wrapper">{props.toolbar}</div>}
         {content}
         <Modal
           centered
@@ -95,7 +127,7 @@ export function Vizbuilder(props: VizbuilderProps) {
           size="calc(100vw - 3rem)"
           styles={{
             content: {maxHeight: "none !important"},
-            inner: {padding: "0 !important"}
+            inner: {padding: "0 !important"},
           }}
           withCloseButton={false}
         >

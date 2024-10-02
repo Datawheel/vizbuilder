@@ -1,16 +1,25 @@
 import {Box, Button, Group, Paper, Stack} from "@mantine/core";
-import {IconArrowsMaximize, IconArrowsMinimize, IconDownload, IconPhotoDown, IconVectorTriangle} from "@tabler/icons-react";
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconDownload,
+  IconPhotoDown,
+  IconVectorTriangle,
+} from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
 import React, {useMemo, useRef} from "react";
+import type {TesseractMeasure} from "../schema";
+import type {ChartType, D3plusConfig} from "../structs";
 import {asArray} from "../toolbox/array";
 import {createChartConfig} from "../toolbox/chartConfigs";
-import {useTranslation} from "../toolbox/useTranslation";
+import type {Chart} from "../toolbox/charts";
+import {useTranslation} from "../toolbox/translation";
 import {ErrorBoundary} from "./ErrorBoundary";
 
-type D3plusComponent = React.ComponentType<{config: Vizbuilder.D3plusConfig}>;
+type D3plusComponent = React.ComponentType<{config: D3plusConfig}>;
 
-export const chartComponents: Record<Vizbuilder.ChartType, D3plusComponent> = {
+export const chartComponents: Record<ChartType, D3plusComponent> = {
   barchart: BarChart,
   barchartyear: BarChart,
   donut: Donut,
@@ -19,19 +28,19 @@ export const chartComponents: Record<Vizbuilder.ChartType, D3plusComponent> = {
   lineplot: LinePlot,
   pie: Pie,
   stacked: StackedArea,
-  treemap: Treemap
+  treemap: Treemap,
 };
 
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,
-  svg: IconVectorTriangle
+  svg: IconVectorTriangle,
 };
 
 /** */
 export function ChartCard(props: {
   /** The information needed to build a specific chart configuration. */
-  chart: Vizbuilder.Chart;
+  chart: Chart;
   /** The key of the chart currently focused by the user. */
   currentChart: string;
   /** A list of the currently enabled formats to download. Options are "PNG" and "SVG". */
@@ -42,7 +51,7 @@ export function ChartCard(props: {
    * An accessor that generates custom defined d3plus configs by measure name.
    * Has priority over all other configs.
    */
-  measureConfig: (measure: OlapClient.Measure) => Vizbuilder.D3plusConfig;
+  measureConfig: (measure: TesseractMeasure) => D3plusConfig;
   /** A handler for when the user selects a specific chart. */
   onToggle: () => void;
   /** Toggles confidence intervals/margins of error when available. */
@@ -52,7 +61,7 @@ export function ChartCard(props: {
    * Has priority over the individually generated configs per chart,
    * but can be overridden by internal working configurations.
    */
-  userConfig: Vizbuilder.D3plusConfig;
+  userConfig: D3plusConfig;
 }) {
   const {chart, currentChart, isSingleChart} = props;
   const isFocused = currentChart === chart.key;
@@ -63,15 +72,19 @@ export function ChartCard(props: {
 
   const ChartComponent = chartComponents[chart.chartType];
 
-  const config = useMemo(() => createChartConfig(chart, {
-    currentChart,
-    isSingleChart,
-    isUniqueChart: isSingleChart,
-    measureConfig: props.measureConfig,
-    showConfidenceInt: Boolean(props.showConfidenceInt),
-    translate,
-    userConfig: props.userConfig || {}
-  }), [isSingleChart]);
+  const config = useMemo(
+    () =>
+      createChartConfig(chart, {
+        currentChart,
+        isSingleChart,
+        isUniqueChart: isSingleChart,
+        measureConfig: props.measureConfig,
+        showConfidenceInt: Boolean(props.showConfidenceInt),
+        translate,
+        userConfig: props.userConfig || {},
+      }),
+    [isSingleChart],
+  );
 
   const downloadButtons = useMemo(() => {
     if (!isFocused && !isSingleChart) return [];
@@ -91,11 +104,13 @@ export function ChartCard(props: {
           leftIcon={<Icon size={16} />}
           onClick={() => {
             const {current: boxElement} = nodeRef;
-            const svgElement = boxElement && boxElement.querySelector("svg");
+            const svgElement = boxElement?.querySelector("svg");
             if (svgElement) {
-              saveElement(svgElement, {filename, type: formatLower}, {
-                background: getBackground(svgElement)
-              });
+              saveElement(
+                svgElement,
+                {filename, type: formatLower},
+                {background: getBackground(svgElement)},
+              );
             }
           }}
           size="sm"
@@ -141,7 +156,7 @@ export function ChartCard(props: {
       </ErrorBoundary>
     </Paper>
   );
-};
+}
 
 const getBackground = node => {
   if (node.nodeType !== Node.ELEMENT_NODE) return "white";

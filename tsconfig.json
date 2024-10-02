@@ -3,13 +3,14 @@
     "allowSyntheticDefaultImports": true,
     "checkJs": true,
     "jsx": "react",
+    "lib": ["DOM", "ES2016"],
     "moduleResolution": "node",
+    "outDir": "dist",
     "strictNullChecks": true,
-    "target": "es2015"
+    "target": "ES2016"
   },
   "include": [
     "example",
     "src",
-    "**/*.d.ts",
   ]
 }

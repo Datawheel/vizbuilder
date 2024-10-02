@@ -1,13 +1,11 @@
 {
   "name": "@datawheel/vizbuilder",
   "version": "0.5.0",
-  "description": "A React component that visualizes multiple kinds of charts according to the data from a olap-client query.",
-  "main": "./dist/index.cjs.js",
-  "module": "./dist/index.esm.js",
+  "description": "A React component that generates multiple kinds of charts from a tesseract-olap dataset.",
   "readme": "README.md",
-  "types": "index.d.ts",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "require": "./dist/index.cjs.js",
       "import": "./dist/index.esm.js",
       "default": "./dist/index.esm.js"
@@ -29,8 +27,6 @@
     "d3",
     "d3plus",
     "datawheel",
-    "mondrian-rest",
-    "olap-client",
     "tesseract-olap"
   ],
   "author": "Francisco Abarzua <francisco@datawheel.us>",
@@ -41,7 +37,6 @@
     "url": "https://github.com/Datawheel/vizbuilder.git"
   },
   "dependencies": {
-    "@datawheel/olap-client": "^2.0.0-beta.3",
     "@datawheel/use-translation": "^0.2.0",
     "@mantine/core": "^6.0.0",
     "@tabler/icons-react": "^2.22.0",
@@ -57,22 +52,13 @@
     "react-dom": "^16.12.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@datawheel/eslint-config": "^1.0.3",
-    "@vitejs/plugin-react": "^3.1.0",
-    "eslint": "^7.25.0",
-    "eslint-plugin-react": "^7.23.2",
-    "query-string": "^7.1.1",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "react-inspector": "^5.1.1",
-    "tsup": "^6.6.3",
-    "vite": "^4.1.4"
-  },
-  "eslintConfig": {
-    "extends": "@datawheel",
-    "ignorePatterns": [
-      "**/dist/*",
-      "**/node_modules/*"
-    ]
+    "@emotion/react": "^11.13.3",
+    "@types/react": "^18.0.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-inspector": "^6.0.2",
+    "tsup": "^8.3.0",
+    "vite": "^5.4.8"
   }
 }

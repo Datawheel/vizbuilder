@@ -1,51 +1,67 @@
-import { ActionIcon, Badge, Flex, rem } from "@mantine/core";
-import { IconEdit } from "@tabler/icons-react";
-import React, { useCallback, useMemo, useState } from "react";
-import { QueryEditor } from "./QueryEditor";
-import { useStoredState } from "./useStorage";
+import {ActionIcon, Badge, Flex, rem} from "@mantine/core";
+import {IconEdit} from "@tabler/icons-react";
+import React, {useCallback, useMemo, useState} from "react";
+import type {QueryParams} from "../src/structs";
+import {useQueries} from "./QueriesProvider";
+import {QueryEditor} from "./QueryEditor";
 
-export const QueryManager = (props: {
-  currentQuery: string;
-  onChange: (nextQuery: string) => void;
-}) => {
-  const {currentQuery, onChange} = props;
+export function QueryManager(props: {}) {
+  const {currentQuery, createQuery, queries, setCurrentQuery, clearQueries, updateQuery} =
+    useQueries();
 
-  const [currentEdit, setCurrentEdit] = useState<null | string>(null);
-  const [queries, setQueries] = useStoredState<string[]>("queries", []);
-
-  const createHandler = useCallback(() => {
-    const newKey = Math.random().toString(16).slice(2, 10);
-    setQueries([...queries, newKey]);
-    setCurrentEdit(newKey);
-  }, [queries]);
-
-  const clearHandler = useCallback(() => {
-    setQueries([]);
-  }, []);
+  const [currentEdit, setCurrentEdit] = useState<QueryParams | null>(null);
 
   const closeHandler = useCallback(() => {
-    if (!currentEdit) return;
-    setCurrentEdit(null);
-    onChange(currentEdit);
-  }, [currentEdit, onChange]);
+    if (currentEdit) {
+      setCurrentQuery(currentEdit.key);
+      setCurrentEdit(null);
+    }
+  }, [currentEdit, setCurrentQuery]);
 
-  const queryPickers = useMemo(() => queries.map(item =>
-    <QueryPicker
-      key={item}
-      active={item === currentQuery}
-      onSelect={() => onChange(item)}
-      onEdit={() => setCurrentEdit(item)}
-      label={item}
-    />
-  ), [currentQuery, queries]);
+  const queryPickers = useMemo(
+    () =>
+      queries.map(item => (
+        <Badge
+          key={item.key}
+          variant={item === currentQuery ? "filled" : "outline"}
+          size="lg"
+          pr={3}
+          rightSection={
+            <ActionIcon
+              size="xs"
+              color="blue"
+              radius="xl"
+              variant={item === currentQuery ? "filled" : "transparent"}
+              onClick={() => setCurrentEdit(item)}
+            >
+              <IconEdit size={rem(16)} />
+            </ActionIcon>
+          }
+          onClick={() => setCurrentQuery(item.key)}
+        >
+          {item.key}
+        </Badge>
+      )),
+    [currentQuery, queries, setCurrentQuery],
+  );
 
   return (
-    <Flex direction="column" w="100%" gap="sm" className="query-manager">
-      <button onClick={createHandler}>New query</button>
+    <Flex direction="row" w="100%" gap="sm" className="query-manager">
+      <button type="button" onClick={createQuery}>
+        New query
+      </button>
       {queryPickers}
-      <button onClick={clearHandler}>Clear</button>
+      <button type="button" onClick={clearQueries}>
+        Clear
+      </button>
       <dialog open={currentEdit != null}>
-        <QueryEditor id={currentEdit || ""} onClose={closeHandler} />
+        {currentEdit && (
+          <QueryEditor
+            query={currentEdit}
+            onChange={updateQuery}
+            onClose={closeHandler}
+          />
+        )}
       </dialog>
       <style>{`
 dialog {
@@ -73,35 +89,4 @@ dialog textarea {
 `}</style>
     </Flex>
   );
-};
-
-function QueryPicker(props: {
-  active: boolean;
-  label: string;
-  onEdit: () => void;
-  onSelect: () => void;
-}) {
-  const removeButton = (
-    <ActionIcon
-      size="xs"
-      color="blue"
-      radius="xl"
-      variant={props.active ? "filled" : "transparent"}
-      onClick={props.onEdit}
-    >
-      <IconEdit size={rem(16)} />
-    </ActionIcon>
-  );
-
-  return (
-    <Badge
-      variant={props.active ? "filled" : "outline"}
-      size="lg"
-      pr={3}
-      rightSection={removeButton}
-      onClick={props.onSelect}
-    >
-      {props.label}
-    </Badge>
-  )
 }
