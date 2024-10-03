@@ -1,5 +1,5 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
-import type {Comparison, TesseractCube, TesseractMeasure} from "./schema";
+import type {TesseractCube, TesseractMeasure} from "./schema";
 
 export type Formatter = (value: number, locale?: string) => string;
 
@@ -45,56 +45,36 @@ export interface QueryParams {
   measures: MeasureItem[];
 }
 
-export interface CutItem {
-  dimension?: string;
-  hierarchy?: string;
-  level: string;
-  members: string[];
-  exclude?: boolean;
-}
-
-export interface DrilldownItem {
-  dimension?: string;
-  hierarchy?: string;
-  level: string;
-  properties?: string[];
-  caption?: string;
-}
-
-export interface FilterItem {
+export interface MeasureColumn {
+  type: "measure";
   measure: string;
-  constraint1: [Comparison, number];
-  constraint2?: [Comparison, number];
-  formatter?: Formatter;
-  joint?: "and" | "or" | undefined;
-}
-
-export interface MeasureItem {
-  collection?: string;
-  formatter?: Formatter;
-  lci?: string;
-  measure: string;
-  moe?: string;
+  filter: FilterConstraint[];
   source?: string;
+  collection?: string;
+  moe?: string;
+  lci?: string;
   uci?: string;
 }
 
-export interface FilterSet {
-  /** The measure set directly by the user. */
-  measure: TesseractMeasure;
-
-  /** A formatting function to display values. */
-  formatter: Formatter;
-
-  /** Main constraint for the filter */
-  constraint1: [Comparison, number];
-
-  /** Additional constraint for the filter, associated to the same measure. */
-  constraint2?: [Comparison, number];
-
-  /** The joint condition for the constraints, only valid when both are defined. */
-  joint?: "and" | "or";
+export interface LevelColumn {
+  type: "level";
+  dimension: string;
+  hierarchy: string;
+  level: string;
+  members: {key: string; caption?: string}[];
+  include: string[];
+  exclude: string[];
 }
+
+export interface PropertyColumn {
+  type: "property";
+  dimension: string;
+  hierarchy: string;
+  level: string;
+  property: string;
+}
+
+export type Column = MeasureColumn | LevelColumn | PropertyColumn;
 
 export interface MeasureSet {
   /** The measure set directly by the user. */

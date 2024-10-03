@@ -53,7 +53,6 @@ export function TesseractProvider(props: {
       cubes: {} as Record<string, TesseractCube>,
     },
   });
-  console.log(schema);
 
   const fetchSchema = useCallback((): Promise<TesseractSchema> => {
     const url = new URL(`cubes?locale=${schema.locale}`, serverURL);
@@ -66,8 +65,8 @@ export function TesseractProvider(props: {
       url.search = new URLSearchParams({
         cube: params.cube,
         locale: schema.locale,
-        drilldowns: params.drilldowns.join(","),
-        measures: params.measures.join(","),
+        drilldowns: params.drilldowns.map(i => i.level).join(","),
+        measures: params.measures.map(i => i.measure).join(","),
       }).toString();
       return fetch(url, serverConfig).then(response => response.json());
     },

@@ -3,7 +3,7 @@
     "allowSyntheticDefaultImports": true,
     "checkJs": true,
     "jsx": "react",
-    "lib": ["DOM", "ES2016"],
+    "lib": ["DOM", "ES2019"],
     "moduleResolution": "node",
     "outDir": "dist",
     "strictNullChecks": true,

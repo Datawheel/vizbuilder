@@ -1,12 +1,12 @@
-import {Select} from "@mantine/core";
-import React, {useCallback, useMemo} from "react";
-import type {QueryParams} from "../src/structs";
+import {MultiSelect, Select} from "@mantine/core";
+import React, {useCallback, useMemo, useRef, useState} from "react";
+import type {TesseractDimension} from "../src/schema";
+import type {DrilldownItem, QueryParams} from "../src/structs";
 import {emptyQueryParams, useTesseract} from "./TesseractProvider";
 
 export function QueryEditor(props: {
   query: QueryParams;
   onChange: (params: Partial<QueryParams> & {key: string}) => void;
-  onClose: () => void;
 }) {
   const {query} = props;
 
@@ -21,91 +21,56 @@ export function QueryEditor(props: {
     [cubes],
   );
 
-  const options = useMemo(() => {
-    const cube = cubes[query.cube];
-    return {
-      cubes: Object.keys(cubes),
-      dimensions: cube ? cube.dimensions : [],
-      measures: cube ? cube.measures : [],
-    };
-  }, [cubes, query.cube]);
+  const cube = cubes[query.cube] || Object.values(cubes)[0];
 
-  const submitHandler: React.ChangeEventHandler<HTMLSelectElement> = useCallback(
-    evt => {
-      const {target} = evt;
-      if (target.name === "drilldowns" || target.name === "measures") {
-        const value = Array.from(target.selectedOptions, item => item.textContent || "");
-        setQueryProp(target.name, value);
-      } else if (target.name === "cube") {
-        setQueryProp(target.name, target.value);
-      }
-    },
-    [setQueryProp],
+  const measureOptions = useMemo(
+    () => cube.measures.map(measure => ({label: measure.caption, value: measure.name})),
+    [cube],
   );
 
   return (
     <form className="query-builder">
-      <button type="button" onClick={props.onClose}>
-        Close
-      </button>
-      <fieldset id="query-info">
-        <legend>{`Query ${query.key}`}</legend>
-        <ol>
-          <li>
-            <Select
-              label="Cube"
-              data={cubeOptions}
-              value={query.cube}
-              onChange={cube => {
-                if (cube && query.cube !== cube) {
-                  props.onChange({...emptyQueryParams(), key: query.key, cube});
-                }
-              }}
-            />
-          </li>
-          <li>
-            <label>Measures</label>
-            <select
-              multiple
-              name="measures"
-              onChange={submitHandler}
-              value={query.measures}
-            >
-              {options.measures.map(item => (
-                <option key={item.name} title={item.name}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </li>
-          <li>
-            <label>Levels</label>
-            <select
-              multiple
-              name="drilldowns"
-              onChange={submitHandler}
-              value={query.drilldowns}
-            >
-              {options.dimensions.flatMap(dim =>
-                dim.hierarchies.flatMap(hie => (
-                  <optgroup
-                    key={hie.fullName}
-                    label={hie.fullName}
-                    title={hie.name}
-                    disabled={query.drilldowns.some(name => name.includes(dim.name))}
-                  >
-                    {hie.levels.map(lvl => (
-                      <option key={lvl.uniqueName} title={lvl.fullName}>
-                        {lvl.uniqueName}
-                      </option>
-                    ))}
-                  </optgroup>
-                )),
-              )}
-            </select>
-          </li>
-        </ol>
-      </fieldset>
+      <ol>
+        <li>
+          <Select
+            label="Cube"
+            data={cubeOptions}
+            value={query.cube || ""}
+            searchable
+            onChange={cube => {
+              if (!cube) {
+                console.error("No cube selected");
+              } else if (query.cube === cube) {
+                console.log("Same cube selected");
+              } else {
+                props.onChange({...emptyQueryParams(), key: query.key, cube});
+              }
+            }}
+          />
+        </li>
+        <li>
+          <MultiSelect
+            label="Measures"
+            data={measureOptions}
+            value={query.measures.map(i => i.measure)}
+            onChange={values => {
+              props.onChange({
+                key: query.key,
+                measures: values.map(item => ({measure: item})),
+              });
+            }}
+          />
+        </li>
+        <li>
+          <SelectLevels
+            dimensions={cube.dimensions}
+            onChange={value => {
+              console.log(value);
+              props.onChange({key: query.key, drilldowns: value});
+            }}
+          />
+        </li>
+      </ol>
       <style>{`
 form.query-builder ol {
   list-style: none;
@@ -115,20 +80,75 @@ form.query-builder li {
   margin-bottom: 0.5rem;
   line-height: 1.5rem;
 }
-form.query-builder label {
-  display: inline-block;
-  vertical-align: top;
-  width: 100px;
-}
-form.query-builder input,
-form.query-builder select {
-  display: inline-block;
-  width: 200px;
-}
-form.query-builder select[multiple] {
-  height: 300px;
-}
 `}</style>
     </form>
+  );
+}
+
+function SelectLevels(props: {
+  dimensions: TesseractDimension[];
+  onChange: (value: DrilldownItem[]) => void;
+}) {
+  const {dimensions, onChange} = props;
+
+  const [value, setValue] = useState<string[]>([]);
+
+  const hierarchyMap = useRef({});
+
+  const options = useMemo(
+    () =>
+      dimensions.flatMap(dimension => {
+        return dimension.hierarchies.flatMap(hierarchy => {
+          return hierarchy.levels.map(level => ({
+            value: level.name,
+            label: level.caption,
+            group:
+              dimension.caption === hierarchy.caption
+                ? dimension.caption
+                : `${dimension.caption} > ${hierarchy.caption}`,
+            dimension,
+            hierarchy,
+            level,
+          }));
+        });
+      }),
+    [dimensions],
+  );
+
+  const changeHandler = useCallback(
+    (values: string[]) => {
+      const optionMap = Object.fromEntries(options.map(i => [i.value, i]));
+      const fullValues = values.map(item => optionMap[item]);
+
+      const mismatch = fullValues.filter(item => {
+        const ref = hierarchyMap.current[item.dimension.name];
+        return ref && ref !== item.hierarchy.name;
+      });
+      const mismatchMap = Object.fromEntries(
+        mismatch.map(item => [item.dimension.name, item.hierarchy.name]),
+      );
+
+      const filteredValues = fullValues.filter(item => {
+        const ref = mismatchMap[item.dimension.name];
+        return !ref || ref === item.hierarchy.name;
+      });
+
+      Object.assign(hierarchyMap.current, mismatchMap);
+      setValue(filteredValues.map(item => item.value));
+      onChange(
+        filteredValues.map(item => ({
+          caption: item.level.caption,
+          dimension: item.dimension.name,
+          hierarchy: item.hierarchy.name,
+          level: item.level.name,
+          properties: [],
+        })),
+      );
+    },
+    [onChange, options],
+  );
+
+  return (
+    <MultiSelect label="Levels" data={options} value={value} onChange={changeHandler} />
   );
 }

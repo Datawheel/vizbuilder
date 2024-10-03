@@ -1,4 +1,4 @@
-import {ActionIcon, Badge, Flex, rem} from "@mantine/core";
+import {ActionIcon, Badge, Flex, Modal} from "@mantine/core";
 import {IconEdit} from "@tabler/icons-react";
 import React, {useCallback, useMemo, useState} from "react";
 import type {QueryParams} from "../src/structs";
@@ -34,7 +34,7 @@ export function QueryManager(props: {}) {
               variant={item === currentQuery ? "filled" : "transparent"}
               onClick={() => setCurrentEdit(item)}
             >
-              <IconEdit size={rem(16)} />
+              <IconEdit size="xs" />
             </ActionIcon>
           }
           onClick={() => setCurrentQuery(item.key)}
@@ -54,39 +54,13 @@ export function QueryManager(props: {}) {
       <button type="button" onClick={clearQueries}>
         Clear
       </button>
-      <dialog open={currentEdit != null}>
-        {currentEdit && (
-          <QueryEditor
-            query={currentEdit}
-            onChange={updateQuery}
-            onClose={closeHandler}
-          />
-        )}
-      </dialog>
-      <style>{`
-dialog {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  margin: auto;
-  box-shadow: 0 0 1em rgba(0, 0, 0, 0.4);
-  border-width: 1px;
-  border-radius: 3px;
-}
-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(0.2);
-}
-
-dialog textarea {
-  display: block;
-  width: 50vw;
-  height: 50vh;
-  box-sizing: border-box;
-}
-`}</style>
+      <Modal
+        opened={currentEdit != null}
+        onClose={closeHandler}
+        title={`Edit query: ${currentEdit?.key}`}
+      >
+        {currentEdit && <QueryEditor query={currentEdit} onChange={updateQuery} />}
+      </Modal>
     </Flex>
   );
 }
