@@ -2,9 +2,16 @@ import flatMap from "lodash/flatMap";
 import groupBy from "lodash/groupBy";
 import sortBy from "lodash/sortBy";
 import type {ChartLimits} from "../constants";
-import type {Aggregator} from "../schema";
-import {getLast} from "../toolbox/array";
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
+} from "../schema";
+import type {ChartType} from "../structs";
+import {filterMap} from "../toolbox/array";
 import type {Datagroup} from "../toolbox/datagroup";
+import {shortHash} from "../toolbox/math";
 import {hasProperty} from "../toolbox/validation";
 
 export interface LinePlot {
@@ -13,20 +20,20 @@ export interface LinePlot {
   dataset: Record<string, unknown>[];
   locale: string;
   values: {
-    name: string;
-    caption: string;
-    aggregator: Aggregator;
+    measure: TesseractMeasure;
     minValue: number;
     maxValue: number;
   };
   series: {
-    name: string;
-    caption: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
     members: string[] | number[] | boolean[];
   };
   time: {
-    name: string;
-    caption: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
     members: string[] | number[];
   };
 }
@@ -37,53 +44,72 @@ export interface LinePlot {
  * - time drilldown with at least LINE_POINT_MIN members
  * - std drilldowns
  */
-export function buildLineplot(dg: Datagroup, chartLimits: ChartLimits): LinePlot[] {
+export function buildLineplot(
+  dg: Datagroup,
+  {LINEPLOT_LINE_MAX, LINEPLOT_LINE_POINT_MIN}: ChartLimits,
+): LinePlot[] {
   const {dataset, timeHierarchy} = dg;
+  const chartType: ChartType = "lineplot";
 
   // Bail if no time dimension present
   if (!timeHierarchy) return [];
 
-  // Bail if there's not enough members to draw a line (only points)
-  if (
-    timeHierarchy.members[getLast(timeHierarchy.levels).name].length <
-    chartLimits.LINEPLOT_LINE_POINT_MIN
-  ) {
-    return [];
-  }
+  // Keep time levels with enough time points to draw a line
+  const timeLevels = timeHierarchy.levels.filter(
+    level => timeHierarchy.members[level.name].length > LINEPLOT_LINE_POINT_MIN,
+  );
+  if (timeLevels.length === 0) return [];
 
   // Pick only hierarchies from a non-time dimension
-  const qualiAxes = [
-    ...Object.values(dg.geoHierarchies),
-    ...Object.values(dg.stdHierarchies),
-  ].filter(
-    axis =>
-      axis.members[getLast(axis.levels).name].length <= chartLimits.LINEPLOT_LINE_MAX,
-  );
+  const nonTimeHierarchies = {...dg.geoHierarchies, ...dg.stdHierarchies};
+  const qualiAxes = Object.values(nonTimeHierarchies);
 
-  // if there are non-time drilldowns with a valid number of members...
-  const validDrilldowns =
-    otherDrilldownsUnderMemberLimit.length > 0
-      ? otherDrilldownsUnderMemberLimit // use this list
-      : otherDrilldowns.length > 0 // but if there are non-time drilldowns but none are under the line threshold
-        ? [] // show nothing
-        : [false]; // finally, if there is only a time dimension, show a single line chart
+  // Pick only levels with member counts under the limit
+  const nonTimeLevels = qualiAxes.flatMap(axis =>
+    filterMap(axis.levels, level => {
+      const members = axis.members[level.name];
+      return members.length > 1 && members.length <= LINEPLOT_LINE_MAX
+        ? ([axis.hierarchy.name, level] as const)
+        : null;
+    }),
+  );
 
   return dg.measureColumns
     .filter(axis => !axis.parentMeasure)
-    .flatMap(quantiAxis =>
-      validDrilldowns.map(level => {
-        const levels = level ? [level] : [];
-        return {
-          chartType: CT.LINEPLOT,
-          dg,
-          isMap: false,
-          isTimeline: false, // time level is plotted on an axis in line plot
-          key: keyMaker(dg.dataset, levels, quantiAxis, CT.LINEPLOT),
-          levels,
-          measureSet: quantiAxis,
-        };
-      }),
-    );
+    .flatMap(quantiAxis => {
+      const {measure, range} = quantiAxis;
+
+      return timeLevels.flatMap(timeLevel => {
+        const keyChain = [chartType];
+
+        return nonTimeLevels.flatMap<LinePlot>(([hierarchyName, level]) => {
+          const axis = nonTimeHierarchies[hierarchyName];
+          return {
+            key: shortHash(keyChain.concat().join("|")),
+            type: chartType,
+            dataset,
+            locale: dg.locale,
+            values: {
+              measure,
+              minValue: range[0],
+              maxValue: range[1],
+            },
+            series: {
+              dimension: axis.dimension,
+              hierarchy: axis.hierarchy,
+              level,
+              members: axis.members[level.name],
+            },
+            time: {
+              dimension: timeHierarchy.dimension,
+              hierarchy: timeHierarchy.hierarchy,
+              level: timeLevel,
+              members: timeHierarchy.members[timeLevel.name],
+            },
+          };
+        });
+      });
+    });
 }
 
 export function getTopTenByPeriod<T>(

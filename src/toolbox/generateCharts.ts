@@ -1,6 +1,6 @@
 import flatMap from "lodash/flatMap";
 import {type BarChart, buildBarcharts} from "../charts/barchart";
-import type {LinePlot} from "../charts/lineplot";
+import {type LinePlot, buildLineplot} from "../charts/lineplot";
 import {chartComponents} from "../components/ChartCard";
 import {type ChartLimits, DEFAULT_CHART_LIMITS} from "../constants";
 import type {TesseractLevel} from "../schema";
@@ -12,6 +12,7 @@ export type Chart = BarChart | LinePlot;
 
 const chartBuilders = {
   barchart: buildBarcharts,
+  lineplot: buildLineplot,
 };
 
 /** */
