@@ -4,6 +4,9 @@ import {getLast} from "../toolbox/array";
 import type {Datagroup} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
 
+// TODO: add criteria
+// bail if sum measure && sum of all values for each series is the same
+
 // TODO: encode stacked bars in the config
 export interface BarChart {
   key: string;
@@ -75,7 +78,7 @@ export function buildHorizontalBarcharts(
       .flatMap(quantiAxis => {
         const {measure, range} = quantiAxis;
 
-        if (dimensionCount > 1 && measure.aggregator !== Aggregator.sum) return [];
+        if (dimensionCount > 1 && measure.aggregator !== Aggregator.SUM) return [];
 
         return qualiAxes.flatMap(qualiAxis => {
           const {hierarchy} = qualiAxis;

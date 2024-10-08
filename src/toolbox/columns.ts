@@ -1,10 +1,11 @@
-import type {
-  TesseractCube,
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-  TesseractProperty,
+import {
+  type TesseractCube,
+  type TesseractDimension,
+  type TesseractHierarchy,
+  type TesseractLevel,
+  type TesseractMeasure,
+  type TesseractProperty,
+  getAnnotation,
 } from "../schema";
 import {yieldLevels, yieldMeasures, yieldProperties} from "./tesseract";
 
@@ -98,24 +99,10 @@ export function getColumnEntity(column: Column) {
   throw new Error("Invalid column object");
 }
 
-/** */
-export function getAnnotation(
-  column: Column,
-  annotation: string,
-  locale = "en",
-): string | undefined {
-  const ann = getColumnEntity(column).annotations;
-  return (
-    ann[`${annotation}_${locale}`] ||
-    ann[`${annotation}_${locale.slice(0, 2)}`] ||
-    ann[annotation]
-  );
-}
-
 /**
  * Retrieves the localized caption from a Column.
  */
 export function getCaption(column: Column, locale = "en"): string {
   const item = getColumnEntity(column);
-  return getAnnotation(column, "caption", locale) || item.caption || item.name;
+  return getAnnotation(item, "caption", locale) || item.caption || item.name;
 }

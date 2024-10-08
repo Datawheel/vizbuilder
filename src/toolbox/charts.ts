@@ -7,7 +7,7 @@ import {Aggregator, DimensionType, type TesseractLevel} from "../schema";
 import type {ChartType} from "../structs";
 import {getPermutations} from "./array";
 import type {Datagroup} from "./datagroup";
-import {yieldPermutations} from "./iterator"
+import {yieldPermutations} from "./iterator";
 import {shortHash} from "./math";
 import {yieldLevels} from "./tesseract";
 import {dataIsSignConsistent, hasProperty} from "./validation";
@@ -62,7 +62,10 @@ function getNonTimeDrilldowns(dg: Datagroup): TesseractLevel[] {
 }
 
 /** */
-export function getNumberGroupsFromLevels(dg: Datagroup, levels: TesseractLevel[]): number {
+export function getNumberGroupsFromLevels(
+  dg: Datagroup,
+  levels: TesseractLevel[],
+): number {
   return levels.reduce((acc, lvl) => acc * dg.membersCount[lvl.caption], 1);
 }
 
@@ -237,7 +240,7 @@ const remixerForChartType: Record<ChartType, ChartBuilder> = {
     const allowedMeasures = dg.measureSets.filter(
       // measure aggregation type is of valid type
       measureSet =>
-        [Aggregator.sum, Aggregator.count].includes(measureSet.measure.aggregator),
+        [Aggregator.SUM, Aggregator.COUNT].includes(measureSet.measure.aggregator),
     );
     // and filter drilldowns to make sure we only consider ones with multiple members
     const multipleMemberLevels = getNonTimeDrilldowns(dg).filter(
