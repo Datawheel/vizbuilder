@@ -14,7 +14,7 @@ import {Vizbuilder} from "../src/index";
 import {TranslationProvider} from "../src/toolbox/translation";
 import {QueriesProvider, useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
-import {TesseractProvider, useTesseractData} from "./TesseractProvider";
+import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
 import {Vizdebugger} from "./Vizdebugger";
 
 const topojsonArray = [
@@ -91,6 +91,8 @@ function App() {
 
   const {currentQuery} = useQueries();
 
+  const {availableDataLocale, dataLocale, setDataLocale} = useTesseract();
+
   const {dataset, isLoading, error} = useTesseractData(currentQuery);
 
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
@@ -113,6 +115,12 @@ function App() {
               Error
             </Badge>
           )}
+          <SegmentedControl
+            tt="uppercase"
+            data={availableDataLocale}
+            value={dataLocale}
+            onChange={setDataLocale}
+          />
         </Flex>
       </Header>
 

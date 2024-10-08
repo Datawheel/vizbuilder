@@ -1,7 +1,7 @@
 import {MultiSelect, Select, Stack} from "@mantine/core";
-import React, {useCallback, useMemo, useRef, useState} from "react";
+import React, {useCallback, useMemo, useRef} from "react";
 import type {TesseractDimension, TesseractMeasure} from "../src/schema";
-import {type RequestParams, emptyRequestParams } from "./QueriesProvider";
+import {type RequestParams, emptyRequestParams} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
 
 export function QueryEditor(props: {
@@ -46,7 +46,7 @@ export function QueryEditor(props: {
         options={cube.measures}
         value={params.measures}
         onChange={value => {
-          props.onChange({key: params.key, measures: value});
+          props.onChange({key: params.key, measures: value.sort()});
         }}
       />
 
@@ -54,7 +54,7 @@ export function QueryEditor(props: {
         options={cube.dimensions}
         value={params.drilldowns}
         onChange={value => {
-          props.onChange({key: params.key, drilldowns: value});
+          props.onChange({key: params.key, drilldowns: value.sort()});
         }}
       />
     </Stack>
@@ -73,7 +73,14 @@ function SelectMeasures(props: {
     [measures],
   );
 
-  return <MultiSelect label="Measures" data={options} value={props.value} onChange={onChange} />;
+  return (
+    <MultiSelect
+      label="Measures"
+      data={options}
+      value={props.value}
+      onChange={onChange}
+    />
+  );
 }
 
 function SelectLevels(props: {
@@ -130,6 +137,11 @@ function SelectLevels(props: {
   );
 
   return (
-    <MultiSelect label="Levels" data={options} value={props.value} onChange={changeHandler} />
+    <MultiSelect
+      label="Levels"
+      data={options}
+      value={props.value}
+      onChange={changeHandler}
+    />
   );
 }

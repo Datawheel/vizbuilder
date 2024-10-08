@@ -81,18 +81,18 @@ export function TesseractProvider(props: {
 
   useEffect(() => {
     fetchSchema().then(
-      schema => {
+      data => {
         setSchema({
-          cubes: fromPairs(schema.cubes.map(cube => [cube.name, cube])),
-          availableLocale: schema.locales,
-          locale: schema.default_locale,
+          cubes: fromPairs(data.cubes.map(cube => [cube.name, cube])),
+          availableLocale: data.locales,
+          locale: schema.locale || data.default_locale,
         });
       },
       err => {
         setError(err.message);
       },
     );
-  }, [fetchSchema, setSchema]);
+  }, [fetchSchema, setSchema, schema.locale]);
 
   return (
     <TesseractContext.Provider value={value}>{props.children}</TesseractContext.Provider>
