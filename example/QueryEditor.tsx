@@ -1,14 +1,14 @@
-import {MultiSelect, Select} from "@mantine/core";
+import {MultiSelect, Select, Stack} from "@mantine/core";
 import React, {useCallback, useMemo, useRef, useState} from "react";
-import type {TesseractDimension} from "../src/schema";
-import type {DrilldownItem, QueryParams} from "../src/structs";
-import {emptyQueryParams, useTesseract} from "./TesseractProvider";
+import type {TesseractDimension, TesseractMeasure} from "../src/schema";
+import {type RequestParams, emptyRequestParams } from "./QueriesProvider";
+import {useTesseract} from "./TesseractProvider";
 
 export function QueryEditor(props: {
-  query: QueryParams;
-  onChange: (params: Partial<QueryParams> & {key: string}) => void;
+  params: RequestParams;
+  onChange: (params: Partial<RequestParams> & {key: string}) => void;
 }) {
-  const {query} = props;
+  const {params} = props;
 
   const {cubes} = useTesseract();
 
@@ -21,77 +21,67 @@ export function QueryEditor(props: {
     [cubes],
   );
 
-  const cube = cubes[query.cube] || Object.values(cubes)[0];
-
-  const measureOptions = useMemo(
-    () => cube.measures.map(measure => ({label: measure.caption, value: measure.name})),
-    [cube],
-  );
+  const cube = cubes[params.cube] || Object.values(cubes)[0];
 
   return (
-    <form className="query-builder">
-      <ol>
-        <li>
-          <Select
-            label="Cube"
-            data={cubeOptions}
-            value={query.cube || ""}
-            searchable
-            onChange={cube => {
-              if (!cube) {
-                console.error("No cube selected");
-              } else if (query.cube === cube) {
-                console.log("Same cube selected");
-              } else {
-                props.onChange({...emptyQueryParams(), key: query.key, cube});
-              }
-            }}
-          />
-        </li>
-        <li>
-          <MultiSelect
-            label="Measures"
-            data={measureOptions}
-            value={query.measures.map(i => i.measure)}
-            onChange={values => {
-              props.onChange({
-                key: query.key,
-                measures: values.map(item => ({measure: item})),
-              });
-            }}
-          />
-        </li>
-        <li>
-          <SelectLevels
-            dimensions={cube.dimensions}
-            onChange={value => {
-              console.log(value);
-              props.onChange({key: query.key, drilldowns: value});
-            }}
-          />
-        </li>
-      </ol>
-      <style>{`
-form.query-builder ol {
-  list-style: none;
-  padding: 0;
-}
-form.query-builder li {
-  margin-bottom: 0.5rem;
-  line-height: 1.5rem;
-}
-`}</style>
-    </form>
+    <Stack>
+      <Select
+        label="Cube"
+        data={cubeOptions}
+        value={params.cube || ""}
+        searchable
+        onChange={cube => {
+          if (!cube) {
+            console.error("No cube selected");
+          } else if (params.cube === cube) {
+            console.log("Same cube selected");
+          } else {
+            console.log("New cube selected", cube);
+            props.onChange({...emptyRequestParams(), key: params.key, cube});
+          }
+        }}
+      />
+
+      <SelectMeasures
+        options={cube.measures}
+        value={params.measures}
+        onChange={value => {
+          props.onChange({key: params.key, measures: value});
+        }}
+      />
+
+      <SelectLevels
+        options={cube.dimensions}
+        value={params.drilldowns}
+        onChange={value => {
+          props.onChange({key: params.key, drilldowns: value});
+        }}
+      />
+    </Stack>
   );
+}
+
+function SelectMeasures(props: {
+  onChange: (value: string[]) => void;
+  options: TesseractMeasure[];
+  value: string[];
+}) {
+  const {options: measures, onChange} = props;
+
+  const options = useMemo(
+    () => measures.map(measure => ({label: measure.caption, value: measure.name})),
+    [measures],
+  );
+
+  return <MultiSelect label="Measures" data={options} value={props.value} onChange={onChange} />;
 }
 
 function SelectLevels(props: {
-  dimensions: TesseractDimension[];
-  onChange: (value: DrilldownItem[]) => void;
+  onChange: (value: string[]) => void;
+  options: TesseractDimension[];
+  value: string[];
 }) {
-  const {dimensions, onChange} = props;
-
-  const [value, setValue] = useState<string[]>([]);
+  const {options: dimensions, onChange} = props;
 
   const hierarchyMap = useRef({});
 
@@ -134,21 +124,12 @@ function SelectLevels(props: {
       });
 
       Object.assign(hierarchyMap.current, mismatchMap);
-      setValue(filteredValues.map(item => item.value));
-      onChange(
-        filteredValues.map(item => ({
-          caption: item.level.caption,
-          dimension: item.dimension.name,
-          hierarchy: item.hierarchy.name,
-          level: item.level.name,
-          properties: [],
-        })),
-      );
+      onChange(filteredValues.map(item => item.value));
     },
     [onChange, options],
   );
 
   return (
-    <MultiSelect label="Levels" data={options} value={value} onChange={changeHandler} />
+    <MultiSelect label="Levels" data={options} value={props.value} onChange={changeHandler} />
   );
 }

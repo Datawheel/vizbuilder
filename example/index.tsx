@@ -1,9 +1,17 @@
-import {Box, Button, Flex, Header, Loader, MantineProvider} from "@mantine/core";
-import {useToggle} from "@mantine/hooks";
+import {
+  Badge,
+  Box,
+  Flex,
+  Header,
+  Loader,
+  MantineProvider,
+  SegmentedControl,
+} from "@mantine/core";
 import {D3plusContext} from "d3plus-react";
-import React from "react";
+import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Vizbuilder} from "../src/index";
+import {TranslationProvider} from "../src/toolbox/translation";
 import {QueriesProvider, useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseractData} from "./TesseractProvider";
@@ -76,22 +84,35 @@ const translations = {
 const container = document.getElementById("app");
 container && mount(container);
 
+const modeOptions = ["Vizdebugger", "Vizbuilder"].map(i => ({value: i, label: i}));
+
 function App() {
-  const [Vizwrapper, toggleVizwrapper] = useToggle([Vizdebugger, Vizbuilder]);
+  const [mode, setMode] = useState("Vizdebugger");
 
   const {currentQuery} = useQueries();
 
-  const {result, isLoading, error} = useTesseractData(currentQuery);
+  const {dataset, isLoading, error} = useTesseractData(currentQuery);
+
+  const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
   return (
     <Box h="100vh">
       <Header height={51} p="xs" withBorder>
         <Flex direction="row" gap="xs" align="center" h={30}>
-          <Button compact uppercase color="indigo" onClick={() => toggleVizwrapper()}>
-            {Vizwrapper.name}
-          </Button>
+          <SegmentedControl
+            radius="lg"
+            color="blue"
+            data={modeOptions}
+            value={mode}
+            onChange={setMode}
+          />
           <QueryManager />
-          {isLoading && <Loader variant="bars"/>}
+          {isLoading && <Loader variant="bars" />}
+          {error && (
+            <Badge color="red" variant="filled" title={error}>
+              Error
+            </Badge>
+          )}
         </Flex>
       </Header>
 
@@ -104,30 +125,28 @@ function App() {
           boxSizing: "border-box",
         }}
       >
-        {result && (
-          <Vizwrapper
-            queries={result}
-            downloadFormats={["svg", "png"]}
-            defaultLocale="ar"
-            allowedChartTypes={[
-              "barchart",
-              "barchartyear",
-              "donut",
-              "geomap",
-              "histogram",
-              "lineplot",
-              "pie",
-              "stacked",
-              "treemap",
-            ]}
-            topojsonConfig={topojsonConfig}
-            translations={translations}
-            userConfig={{
-              locale: "ar-SA",
-              scrollContainer: "#viz-scroller",
-            }}
-          />
-        )}
+        <Vizwrapper
+          datasets={dataset || []}
+          downloadFormats={["svg", "png"]}
+          defaultLocale="ar"
+          allowedChartTypes={[
+            "barchart",
+            "barchartyear",
+            "donut",
+            "geomap",
+            "histogram",
+            "lineplot",
+            "pie",
+            "stacked",
+            "treemap",
+          ]}
+          topojsonConfig={topojsonConfig}
+          translations={translations}
+          userConfig={{
+            locale: "ar-SA",
+            scrollContainer: "#viz-scroller",
+          }}
+        />
       </div>
     </Box>
   );
@@ -139,9 +158,11 @@ function mount(container) {
     <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
       <QueriesProvider>
         <MantineProvider>
-          <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
-            <App />
-          </D3plusContext.Provider>
+          <TranslationProvider defaultLocale="ar" translations={translations}>
+            <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
+              <App />
+            </D3plusContext.Provider>
+          </TranslationProvider>
         </MantineProvider>
       </QueriesProvider>
     </TesseractProvider>,

@@ -60,9 +60,9 @@ export enum Comparison {
 }
 
 export enum DimensionType {
-  geo = "geo",
-  standard = "standard",
-  time = "time",
+  GEO = "geo",
+  STANDARD = "standard",
+  TIME = "time",
 }
 
 export enum Format {

@@ -3,8 +3,8 @@ import cls from "clsx";
 import React, {useMemo, useState} from "react";
 import type {ChartLimits} from "../constants";
 import type {TesseractLevel, TesseractMeasure} from "../schema";
-import type {ChartType, D3plusConfig, QueryResult} from "../structs";
-import {asArray} from "../toolbox/array";
+import type {ChartType, D3plusConfig, Dataset} from "../structs";
+import {castArray} from "../toolbox/array";
 import {generateCharts, normalizeAccessor} from "../toolbox/generateCharts";
 import {type Translation, TranslationProvider} from "../toolbox/translation";
 import {ChartCard} from "./ChartCard";
@@ -28,11 +28,9 @@ interface VizbuilderConfig {
 export interface VizbuilderProps extends Partial<VizbuilderConfig> {
   className?: string;
   downloadFormats?: string[];
-  defaultLocale: string;
   nonIdealState?: React.ComponentType;
-  queries: QueryResult | QueryResult[];
+  datasets: Dataset | Dataset[];
   toolbar?: React.ReactNode;
-  translations?: Record<string, Translation>;
 }
 
 /** */
@@ -46,7 +44,7 @@ export function Vizbuilder(props: VizbuilderProps) {
 
   const charts = useMemo(
     () =>
-      generateCharts(asArray(props.queries), {
+      generateCharts(castArray(props.queries), {
         chartLimits: props.chartLimits,
         chartTypes: props.chartTypes,
         datacap: props.datacap,
@@ -60,36 +58,33 @@ export function Vizbuilder(props: VizbuilderProps) {
     const chartMap = new Map(charts.map(item => [item.key, item]));
     const filteredCharts = [...chartMap.values()];
 
-    if (filteredCharts.length > 0) {
-      return (
-        <SimpleGrid
-          breakpoints={[
-            {minWidth: "xs", cols: 1},
-            {minWidth: "md", cols: 2},
-            {minWidth: "lg", cols: 3},
-            {minWidth: "xl", cols: 4},
-          ]}
-          className={cls({unique: filteredCharts.length === 1})}
-        >
-          {filteredCharts.map(chart => (
-            <ChartCard
-              chart={chart}
-              currentChart={""}
-              downloadFormats={props.downloadFormats}
-              isSingleChart={isSingleChart}
-              key={chart.key}
-              measureConfig={getMeasureConfig}
-              onToggle={() => setCurrentChart(chart.key)}
-              showConfidenceInt={props.showConfidenceInt}
-              userConfig={props.userConfig}
-            />
-          ))}
-        </SimpleGrid>
-      );
-    }
+    if (filteredCharts.length === 0) return;
 
-    const Notice = props.nonIdealState || NonIdealState;
-    return <Notice />;
+    return (
+      <SimpleGrid
+        breakpoints={[
+          {minWidth: "xs", cols: 1},
+          {minWidth: "md", cols: 2},
+          {minWidth: "lg", cols: 3},
+          {minWidth: "xl", cols: 4},
+        ]}
+        className={cls({unique: filteredCharts.length === 1})}
+      >
+        {filteredCharts.map(chart => (
+          <ChartCard
+            chart={chart}
+            currentChart={""}
+            downloadFormats={props.downloadFormats}
+            isSingleChart={isSingleChart}
+            key={chart.key}
+            measureConfig={getMeasureConfig}
+            onToggle={() => setCurrentChart(chart.key)}
+            showConfidenceInt={props.showConfidenceInt}
+            userConfig={props.userConfig}
+          />
+        ))}
+      </SimpleGrid>
+    );
   }, [currentChart, charts, props.showConfidenceInt]);
 
   const focusContent = useMemo(() => {
@@ -111,29 +106,26 @@ export function Vizbuilder(props: VizbuilderProps) {
     );
   }, [currentChart, charts, props.showConfidenceInt]);
 
+  const Notice = props.nonIdealState || NonIdealState;
+
   return (
-    <TranslationProvider
-      defaultLocale={props.defaultLocale}
-      translations={props.translations}
-    >
-      <div className={cls("vb-wrapper", props.className)}>
-        {props.toolbar && <div className="vb-toolbar-wrapper">{props.toolbar}</div>}
-        {content}
-        <Modal
-          centered
-          onClose={() => setCurrentChart("")}
-          opened={currentChart !== ""}
-          padding={0}
-          size="calc(100vw - 3rem)"
-          styles={{
-            content: {maxHeight: "none !important"},
-            inner: {padding: "0 !important"},
-          }}
-          withCloseButton={false}
-        >
-          {focusContent}
-        </Modal>
-      </div>
-    </TranslationProvider>
+    <div className={cls("vb-wrapper", props.className)}>
+      {props.toolbar && <div className="vb-toolbar-wrapper">{props.toolbar}</div>}
+      {content || <Notice />}
+      <Modal
+        centered
+        onClose={() => setCurrentChart("")}
+        opened={currentChart !== ""}
+        padding={0}
+        size="calc(100vw - 3rem)"
+        styles={{
+          content: {maxHeight: "none !important"},
+          inner: {padding: "0 !important"},
+        }}
+        withCloseButton={false}
+      >
+        {focusContent}
+      </Modal>
+    </div>
   );
 }

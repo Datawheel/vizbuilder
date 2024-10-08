@@ -1,32 +1,8 @@
-import type {
-  Annotations,
-  TesseractCube,
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-} from "../schema";
+import type {TesseractCube, TesseractDimension, TesseractMeasure} from "../schema";
 
-/**
- * Retrieves the localized caption from a TesseractEntity object.
- */
-export function getCaption(
-  item: {annotations: Annotations; caption?: string; name: string},
-  locale = "en",
-): string {
-  const ann = item.annotations;
-  return (
-    ann[`caption_${locale}`] ||
-    ann[`caption_${locale.slice(0, 2)}`] ||
-    ann.caption ||
-    item.caption ||
-    item.name
-  );
-}
-
-export function yieldAllMeasures(
+export function yieldMeasures(
   cube: TesseractCube,
-): IterableIterator<TesseractMeasure> {
+): IterableIterator<[TesseractMeasure, TesseractMeasure | undefined], undefined> {
   let measureIndex = 0;
   let attachedIndex = 0;
   let inAttached = false;
@@ -38,7 +14,7 @@ export function yieldAllMeasures(
         const measure = cube.measures[measureIndex];
         if (attachedIndex < measure.attached.length) {
           return {
-            value: measure.attached[attachedIndex++],
+            value: [measure.attached[attachedIndex++], measure],
             done: false,
           };
         }
@@ -51,7 +27,7 @@ export function yieldAllMeasures(
       // If we're iterating over measures
       if (measureIndex < cube.measures.length) {
         inAttached = true; // Switch to attached measures
-        return {value: cube.measures[measureIndex], done: false};
+        return {value: [cube.measures[measureIndex], undefined], done: false};
       }
 
       return {done: true}; // Done when all measures and attached are iterated
@@ -62,48 +38,68 @@ export function yieldAllMeasures(
   };
 }
 
-export function yieldDimensionHierarchyLevels(
+export function yieldDimensions(
   cube: TesseractCube,
-): IterableIterator<[TesseractDimension, TesseractHierarchy, TesseractLevel]> {
+): IterableIterator<[TesseractDimension]> {
   let i = 0;
-  let j = 0;
-  let k = 0;
-
   return {
     next() {
       if (i < cube.dimensions.length) {
-        const dimension = cube.dimensions[i];
-
-        if (j < dimension.hierarchies.length) {
-          const hierarchy = dimension.hierarchies[j];
-
-          if (k < hierarchy.levels.length) {
-            const level = hierarchy.levels[k++];
-            return {value: [dimension, hierarchy, level], done: false};
-          }
-          k = 0; // Reset k for next hierarchy
-          j++; // Move to the next hierarchy
-        } else {
-          j = 0; // Reset j for the next dimension
-          i++; // Move to the next dimension
-        }
-
-        return this.next(); // Continue to the next valid item
+        const dimension = cube.dimensions[i++];
+        return {value: [dimension], done: false};
       }
+      return {value: undefined, done: true};
+    },
+    [Symbol.iterator]() {
+      return this.next();
+    },
+  };
+}
 
-      return {done: true};
+export function yieldHierarchies(cube: TesseractCube) {
+  return createGenerator(
+    () => yieldDimensions(cube),
+    item => item[0].hierarchies,
+  );
+}
+
+export function yieldLevels(cube: TesseractCube) {
+  return createGenerator(
+    () => yieldHierarchies(cube),
+    item => item[0].levels,
+  );
+}
+
+export function yieldProperties(cube: TesseractCube) {
+  return createGenerator(
+    () => yieldLevels(cube),
+    item => item[0].properties,
+  );
+}
+
+function createGenerator<T extends unknown[], U>(
+  baseIterator: () => IterableIterator<T>,
+  extractItems: (item: T) => U[],
+): IterableIterator<[U, ...T], undefined> {
+  const iterator = baseIterator();
+  let currentItem = iterator.next();
+  let index = 0;
+
+  return {
+    next() {
+      while (!currentItem.done) {
+        const item = currentItem.value;
+        const items = extractItems(item);
+        if (index < items.length) {
+          return {value: [items[index++], ...item], done: false};
+        }
+        index = 0; // Reset for the next base item
+        currentItem = iterator.next(); // Move to the next base item
+      }
+      return {value: undefined, done: true};
     },
     [Symbol.iterator]() {
       return this;
     },
   };
-}
-
-export function mapLevelToDimType(cube: TesseractCube) {
-  return Object.fromEntries(
-    Array.from(yieldDimensionHierarchyLevels(cube), triad => [
-      triad[2].name,
-      triad[0].type,
-    ]),
-  );
 }

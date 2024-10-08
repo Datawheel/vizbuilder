@@ -1,14 +1,22 @@
 import flatMap from "lodash/flatMap";
+import {type BarChart, buildBarcharts} from "../charts/barchart";
+import type {LinePlot} from "../charts/lineplot";
 import {chartComponents} from "../components/ChartCard";
 import {type ChartLimits, DEFAULT_CHART_LIMITS} from "../constants";
 import type {TesseractLevel} from "../schema";
-import type {ChartType, D3plusConfig, QueryResult} from "../structs";
-import {type Chart, chartRemixer} from "./charts";
+import type {ChartType, D3plusConfig, Dataset} from "../structs";
+import {filterMap} from "./array";
 import {buildDatagroup} from "./datagroup";
+
+export type Chart = BarChart | LinePlot;
+
+const chartBuilders = {
+  barchart: buildBarcharts,
+};
 
 /** */
 export function generateCharts(
-  queries: QueryResult[],
+  datasets: Dataset[],
   options: {
     chartLimits?: ChartLimits;
     chartTypes?: ChartType[];
@@ -18,6 +26,8 @@ export function generateCharts(
       | ((level: TesseractLevel) => D3plusConfig);
   },
 ): Chart[] {
+  console.group("generateCharts(", datasets, options, ")");
+
   const chartLimits = {...DEFAULT_CHART_LIMITS, ...options.chartLimits};
   const chartTypes = options.chartTypes || (Object.keys(chartComponents) as ChartType[]);
   const datagroupProps = {
@@ -25,12 +35,20 @@ export function generateCharts(
     getTopojsonConfig: normalizeAccessor(options.topojsonConfig || {}),
   };
 
-  return flatMap(queries, query => {
-    const datagroup = buildDatagroup(query, datagroupProps);
-    return flatMap(chartTypes, chartType =>
-      chartRemixer(datagroup, chartType, chartLimits),
-    );
-  });
+  try {
+    return flatMap(datasets, dataset => {
+      const datagroup = buildDatagroup(dataset);
+      return filterMap(chartTypes, chartType => {
+        const builder = chartBuilders[chartType];
+        return builder ? builder(datagroup, chartLimits) : null;
+      });
+    });
+  } catch (err) {
+    console.error(err);
+    return [];
+  } finally {
+    console.groupEnd();
+  }
 }
 
 /**

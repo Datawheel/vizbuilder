@@ -1,16 +1,30 @@
 import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash";
 import React, {createContext, useContext, useMemo, useState} from "react";
-import type {QueryParams} from "../src/structs";
-import {emptyQueryParams} from "./TesseractProvider";
+
+export interface RequestParams {
+  key: string;
+  cube: string;
+  drilldowns: string[];
+  measures: string[];
+}
+
+export function emptyRequestParams(): RequestParams {
+  return {
+    key: Math.random().toString(16).slice(2, 10),
+    cube: "",
+    drilldowns: [],
+    measures: [],
+  };
+}
 
 interface QueriesContextValue {
-  readonly queries: QueryParams[];
-  readonly currentQuery?: QueryParams;
+  readonly queries: RequestParams[];
+  readonly currentQuery?: RequestParams;
   setCurrentQuery(key: string): void;
   clearQueries(): void;
   createQuery(): void;
-  updateQuery(params: Partial<QueryParams> & {key: string}): void;
+  updateQuery(params: Partial<RequestParams> & {key: string}): void;
   deleteQuery(key: string): void;
 }
 
@@ -23,10 +37,10 @@ export function QueriesProvider(props: {
   const [items, setItems] = useLocalStorage({
     key: "queries",
     getInitialValueInEffect: false,
-    defaultValue: [emptyQueryParams()],
+    defaultValue: [emptyRequestParams()],
   });
 
-  const value = useMemo(() => {
+  const value = useMemo((): QueriesContextValue => {
     return {
       queries: items,
       currentQuery: items[clamp(index, 0, items.length - 1)],
@@ -35,15 +49,15 @@ export function QueriesProvider(props: {
         if (index > -1) setIndex(index);
       },
       clearQueries() {
-        setItems([emptyQueryParams()]);
+        setItems([emptyRequestParams()]);
         setIndex(0);
       },
       createQuery() {
-        const obj = emptyQueryParams();
+        const obj = emptyRequestParams();
         setItems([...items, obj]);
         setIndex(items.length);
       },
-      updateQuery(params: Partial<QueryParams> & {key: string}) {
+      updateQuery(params: Partial<RequestParams> & {key: string}) {
         const index = items.findIndex(item => item.key === params.key);
         if (index > -1) {
           const obj = {...items[index], ...params};

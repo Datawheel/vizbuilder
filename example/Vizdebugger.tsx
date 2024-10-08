@@ -3,11 +3,32 @@ import React, {useEffect, useMemo, useState} from "react";
 import {ObjectInspector} from "react-inspector";
 import type {VizbuilderProps} from "../src";
 import {ChartCard} from "../src/components/ChartCard";
-import {asArray} from "../src/toolbox/array";
+import {castArray} from "../src/toolbox/array";
 import {generateCharts, normalizeAccessor} from "../src/toolbox/generateCharts";
-import {TranslationProvider} from "../src/toolbox/translation";
 
 export function Vizdebugger(props: VizbuilderProps) {
+  const {chartLimits, chartTypes, datasets, datacap, topojsonConfig} = props;
+
+  const charts = useMemo(
+    () =>
+      generateCharts(castArray(datasets), {
+        chartLimits: chartLimits,
+        chartTypes: chartTypes,
+        datacap: datacap,
+        topojsonConfig: topojsonConfig,
+      }),
+    [datasets, chartLimits, chartTypes, datacap, topojsonConfig],
+  );
+
+  return (
+    <div>
+      <ObjectInspector data={props} expandLevel={1} />
+      <ObjectInspector data={charts} expandLevel={3} />
+    </div>
+  );
+}
+
+export function VizdebuggerOG(props: VizbuilderProps) {
   const {chartLimits, chartTypes} = props;
 
   const [currentChart, setCurrentChart] = useState("");
@@ -16,13 +37,13 @@ export function Vizdebugger(props: VizbuilderProps) {
 
   const charts = useMemo(
     () =>
-      generateCharts(asArray(props.queries), {
+      generateCharts(castArray(props.datasets), {
         chartLimits: chartLimits,
         chartTypes: chartTypes,
         datacap: props.datacap,
         topojsonConfig: props.topojsonConfig,
       }),
-    [props.queries, chartLimits, chartTypes, props.datacap, props.topojsonConfig],
+    [props.datasets, chartLimits, chartTypes, props.datacap, props.topojsonConfig],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies:
@@ -80,43 +101,38 @@ export function Vizdebugger(props: VizbuilderProps) {
   ]);
 
   return (
-    <TranslationProvider
-      defaultLocale={props.defaultLocale}
-      translations={props.translations}
-    >
-      <div className={cls("vb-wrapper debugger", props.className)}>
-        <div className="vb-toolbar-wrapper">
-          {props.toolbar}
-          <button
-            type="button"
-            onClick={() => setCurrentChart(charts[Math.max(0, chartIndex - 1)].key)}
-          >
-            Prev
-          </button>
-          <span>{currentChart}</span>
-          <button
-            type="button"
-            onClick={() =>
-              setCurrentChart(charts[Math.min(chartIndex + 1, charts.length - 1)].key)
-            }
-          >
-            Next
-          </button>
-          <label>
-            <input type="checkbox" onChange={() => setUniqueChart(!isUniqueChart)} />
-            <span>Unique</span>
-          </label>
-          <label>
-            <input type="checkbox" onChange={() => setSingleChart(!isSingleChart)} />
-            <span>Single</span>
-          </label>
-        </div>
-        <div className="vb-charts-wrapper unique">{content}</div>
-        <div className="vb-props-wrapper">
-          <ObjectInspector data={props.queries} />
-          <ObjectInspector data={charts[chartIndex]} />
-        </div>
+    <div className={cls("vb-wrapper debugger", props.className)}>
+      <div className="vb-toolbar-wrapper">
+        {props.toolbar}
+        <button
+          type="button"
+          onClick={() => setCurrentChart(charts[Math.max(0, chartIndex - 1)].key)}
+        >
+          Prev
+        </button>
+        <span>{currentChart}</span>
+        <button
+          type="button"
+          onClick={() =>
+            setCurrentChart(charts[Math.min(chartIndex + 1, charts.length - 1)].key)
+          }
+        >
+          Next
+        </button>
+        <label>
+          <input type="checkbox" onChange={() => setUniqueChart(!isUniqueChart)} />
+          <span>Unique</span>
+        </label>
+        <label>
+          <input type="checkbox" onChange={() => setSingleChart(!isSingleChart)} />
+          <span>Single</span>
+        </label>
       </div>
-    </TranslationProvider>
+      <div className="vb-charts-wrapper unique">{content}</div>
+      <div className="vb-props-wrapper">
+        <ObjectInspector data={props.datasets} />
+        <ObjectInspector data={charts[chartIndex]} />
+      </div>
+    </div>
   );
 }

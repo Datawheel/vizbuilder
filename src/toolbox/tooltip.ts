@@ -1,7 +1,7 @@
 import type {UIParams} from "../structs";
 import type {Chart} from "./charts";
+import { getCaption } from "./columns";
 import {abbreviateList} from "./strings";
-import {getCaption} from "./tesseract";
 
 /**
  * Generates the parameters for the tooltip shown for the current datagroup.

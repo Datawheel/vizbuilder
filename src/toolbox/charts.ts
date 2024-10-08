@@ -4,11 +4,12 @@ import includes from "lodash/includes";
 import range from "lodash/range";
 import type {ChartLimits} from "../constants";
 import {Aggregator, DimensionType, type TesseractLevel} from "../schema";
-import type {ChartType, MeasureSet} from "../structs";
-import {getPermutations, permutationIterator} from "./array";
+import type {ChartType} from "../structs";
+import {getPermutations} from "./array";
 import type {Datagroup} from "./datagroup";
+import {yieldPermutations} from "./iterator"
 import {shortHash} from "./math";
-import {mapLevelToDimType} from "./tesseract";
+import {yieldLevels} from "./tesseract";
 import {dataIsSignConsistent, hasProperty} from "./validation";
 
 export interface Chart {
@@ -38,7 +39,6 @@ export interface Chart {
 
 export const CT: Record<string, ChartType> = {
   BARCHART: "barchart",
-  BARCHARTYEAR: "barchartyear",
   DONUT: "donut",
   GEOMAP: "geomap",
   HISTOGRAM: "histogram",
@@ -55,12 +55,14 @@ const TIME_NATIVE_CHART_TYPES = [CT.BARCHARTYEAR, CT.LINEPLOT, CT.STACKED];
  * Returns a combined list of all drilldowns that are NOT of a time type
  */
 function getNonTimeDrilldowns(dg: Datagroup): TesseractLevel[] {
-  const dimTypeMap = mapLevelToDimType(dg.cube);
-  return dg.drilldowns.filter(lvl => dimTypeMap[lvl.name] === DimensionType.time);
+  const dimTypeMap = Object.fromEntries(
+    Array.from(yieldLevels(dg.cube), triad => [triad[0].name, triad[2].type]),
+  );
+  return dg.drilldowns.filter(lvl => dimTypeMap[lvl.name] === DimensionType.TIME);
 }
 
 /** */
-function getNumberGroupsFromLevels(dg: Datagroup, levels: TesseractLevel[]): number {
+export function getNumberGroupsFromLevels(dg: Datagroup, levels: TesseractLevel[]): number {
   return levels.reduce((acc, lvl) => acc * dg.membersCount[lvl.caption], 1);
 }
 
@@ -99,16 +101,18 @@ export function chartRemixer(
  * Default Chart builder that creates a chart for each combination of measure and drilldown combination
  */
 function defaultChart(chartType: ChartType, dg: Datagroup): Chart[] {
-  const dimTypeMap = mapLevelToDimType(dg.cube);
+  const dimTypeMap = Object.fromEntries(
+    Array.from(yieldLevels(dg.cube), triad => [triad[0].name, triad[2].type]),
+  );
   const kValues = range(1, dg.stdDrilldowns.length + 1);
 
   return flatMap(dg.measureSets, measureSet =>
     flatMap(kValues, k =>
       // get different combinations of non-time (discrete) drilldowns
-      Array.from(permutationIterator(getNonTimeDrilldowns(dg), k), levels => ({
+      Array.from(yieldPermutations(getNonTimeDrilldowns(dg), k), levels => ({
         chartType,
         dg,
-        isMap: levels.some(lvl => dimTypeMap[lvl.name] === DimensionType.geo),
+        isMap: levels.some(lvl => dimTypeMap[lvl.name] === DimensionType.GEO),
         // timeline is only possible if time drilldown is present and the chartType does not include a time axis already
         isTimeline: !!dg.timeDrilldown && !TIME_NATIVE_CHART_TYPES.includes(chartType),
         key: keyMaker(dg.dataset, levels, measureSet, chartType),
@@ -162,7 +166,7 @@ const remixerForChartType: Record<ChartType, ChartBuilder> = {
       const kValues = range(1, validDrilldowns.length + 1);
 
       return flatMap(kValues, (k): Chart[] =>
-        Array.from(permutationIterator(validDrilldowns, k), levels => {
+        Array.from(yieldPermutations(validDrilldowns, k), levels => {
           /** Disable if too many bars would make the chart unreadable */
           if (getNumberGroupsFromLevels(dg, levels) > chartLimits.BARCHART_MAX_BARS)
             return [];
@@ -243,7 +247,7 @@ const remixerForChartType: Record<ChartType, ChartBuilder> = {
     const kValues = range(1, multipleMemberLevels.length + 1);
     return flatMap(allowedMeasures, measureSet =>
       flatMap(kValues, k =>
-        Array.from(permutationIterator(multipleMemberLevels, k), levels => {
+        Array.from(yieldPermutations(multipleMemberLevels, k), levels => {
           /* DISABLE if there are too many shapes / data groups */
           if (getNumberGroupsFromLevels(dg, levels) > chartLimits.DONUT_SHAPE_MAX)
             return null;

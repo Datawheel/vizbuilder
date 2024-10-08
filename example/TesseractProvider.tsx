@@ -9,26 +9,16 @@ import React, {
   useState,
 } from "react";
 import type {TesseractCube, TesseractDataResponse, TesseractSchema} from "../src/schema";
-import type {QueryParams, QueryResult} from "../src/structs";
-
-export function emptyQueryParams(): QueryParams {
-  return {
-    key: Math.random().toString(16).slice(2, 10),
-    cube: "",
-    locale: "en",
-    drilldowns: [],
-    measures: [],
-    cuts: [],
-    filters: [],
-  };
-}
+import type {Dataset} from "../src/structs";
+import {buildColumn} from "../src/toolbox/columns";
+import type {RequestParams} from "./QueriesProvider";
 
 interface TesseractContextValue {
   readonly error: string;
   readonly cubes: Record<string, TesseractCube>;
   readonly dataLocale: string;
   readonly availableDataLocale: string[];
-  fetchData(params: QueryParams): Promise<TesseractDataResponse>;
+  fetchData(params: RequestParams): Promise<TesseractDataResponse>;
   fetchSchema(): Promise<TesseractSchema>;
   setDataLocale(locale: string): void;
 }
@@ -60,20 +50,20 @@ export function TesseractProvider(props: {
   }, [serverConfig, serverURL, schema.locale]);
 
   const fetchData = useCallback(
-    (params: QueryParams): Promise<TesseractDataResponse> => {
+    (params: RequestParams): Promise<TesseractDataResponse> => {
       const url = new URL("data.jsonrecords", serverURL);
       url.search = new URLSearchParams({
         cube: params.cube,
         locale: schema.locale,
-        drilldowns: params.drilldowns.map(i => i.level).join(","),
-        measures: params.measures.map(i => i.measure).join(","),
+        drilldowns: params.drilldowns.join(","),
+        measures: params.measures.join(","),
       }).toString();
       return fetch(url, serverConfig).then(response => response.json());
     },
     [serverConfig, serverURL, schema.locale],
   );
 
-  const value = useMemo(() => {
+  const value = useMemo((): TesseractContextValue => {
     return {
       error,
       cubes: schema.cubes,
@@ -117,34 +107,37 @@ export function useTesseract() {
   return value;
 }
 
-export function useTesseractData(query: QueryParams | undefined) {
-  const {fetchData, cubes} = useTesseract();
+export function useTesseractData(query: RequestParams | undefined) {
+  const {cubes, fetchData, dataLocale} = useTesseract();
 
   const [state, setState] = useState({
     error: "",
     isLoading: false,
-    result: undefined as QueryResult | undefined,
+    dataset: undefined as Dataset | undefined,
   });
 
   useEffect(() => {
     const cube = query ? cubes[query.cube] : undefined;
-    if (!query || !cube) return;
+    if (!query || !cube || !query.drilldowns.length || !query.measures.length) return;
 
-    setState({error: "", isLoading: true, result: undefined});
+    setState({error: "", isLoading: true, dataset: undefined});
 
     fetchData(query).then(
       result => {
+        const columns = Object.fromEntries(
+          result.columns.map(name => [name, buildColumn(cube, name)]),
+        );
         setState({
           error: "",
           isLoading: false,
-          result: {cube, dataset: result.data, params: query},
+          dataset: {columns, data: result.data, locale: dataLocale},
         });
       },
       err => {
-        setState({error: err.message, isLoading: false, result: undefined});
+        setState({error: err.message, isLoading: false, dataset: undefined});
       },
     );
-  }, [cubes, fetchData, query]);
+  }, [cubes, fetchData, query, dataLocale]);
 
   return state;
 }

@@ -3,9 +3,9 @@ import type {Aggregator} from "../schema";
 import type {UIParams} from "../structs";
 import {filterMap} from "./array";
 import type {Chart} from "./charts";
+import { getCaption } from "./columns";
 import {findTimeRange} from "./find";
 import {getColumnId} from "./strings";
-import {getCaption} from "./tesseract";
 
 /**
  * Returns a common title string from a list of parameters.

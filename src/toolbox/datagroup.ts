@@ -1,120 +1,153 @@
-import {formatAbbreviate} from "d3plus-format";
-import maxBy from "lodash/maxBy";
-import {DimensionType, type TesseractCube, type TesseractLevel} from "../schema";
-import type {
-  D3plusConfig,
-  FilterSet,
-  MeasureSet,
-  QueryParams,
-  QueryResult,
-} from "../structs";
-import {buildMemberMap} from "./array";
-import {findMeasuresInCube} from "./find";
-import {yieldAllMeasures, yieldDimensionHierarchyLevels} from "./tesseract";
+import groupBy from "lodash/groupBy";
+import mapValues from "lodash/mapValues";
+import max from "lodash/max";
+import min from "lodash/min";
+import {
+  DimensionType,
+  type TesseractDimension,
+  type TesseractHierarchy,
+  type TesseractLevel,
+  type TesseractMeasure,
+  type TesseractProperty,
+} from "../schema";
+import type {Dataset} from "../structs";
+import type {Column, LevelColumn} from "./columns";
 
 export interface Datagroup {
-  cube: TesseractCube;
-  cuts: Map<string, string[]>;
-  cutLevels: Map<string, TesseractLevel>;
-  datacap: number;
+  columns: Record<string, Column>;
   dataset: Record<string, unknown>[];
-  drilldowns: TesseractLevel[];
-  filters: FilterSet[];
-  geoDrilldown: TesseractLevel | undefined;
   locale: string;
-  maxPeriod: number | undefined;
-  measureSets: MeasureSet[];
-  members: Record<string, number[]> | Record<string, string[]>;
-  membersCount: Record<string, number>;
-  params: QueryParams;
-  stdDrilldowns: TesseractLevel[];
-  timeDrilldown: TesseractLevel | undefined;
-  topojsonConfig: D3plusConfig | undefined;
+
+  measureColumns: {
+    measure: TesseractMeasure;
+    parentMeasure?: TesseractMeasure;
+    range: [number, number];
+  }[];
+
+  // We assume a unique time hierarchy in the data
+  timeHierarchy?: {
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    levels: TesseractLevel[];
+    hasID: Record<string, boolean>;
+    members: Record<string, number[]>;
+  };
+
+  geoHierarchies: {
+    // Keys are Hierarchy names
+    [K: string]: {
+      dimension: TesseractDimension;
+      hierarchy: TesseractHierarchy;
+      levels: TesseractLevel[];
+      hasID: Record<string, boolean>;
+      members: Record<string, number[]>;
+    };
+  };
+
+  stdHierarchies: {
+    // Keys are Hierarchy names
+    [K: string]: {
+      dimension: TesseractDimension;
+      hierarchy: TesseractHierarchy;
+      levels: TesseractLevel[];
+      hasID: Record<string, boolean>;
+      members: Record<string, number[]>;
+    };
+  };
+
+  propertyColumns: {
+    // Keys are Level names
+    [K: string]: {
+      dimension: TesseractDimension;
+      hierarchy: TesseractHierarchy;
+      level: TesseractLevel;
+      properties: TesseractProperty[];
+    };
+  };
 }
 
 /** */
-export function buildDatagroup(
-  qr: QueryResult,
-  props: {
-    datacap: number;
-    getTopojsonConfig: (level: TesseractLevel) => D3plusConfig;
-  },
-): Datagroup {
-  const {cube, dataset, params} = qr;
-  const {datacap, getTopojsonConfig} = props;
+export function buildDatagroup(ds: Dataset): Datagroup {
+  const {columns, data, locale} = ds;
 
-  const measureMap = Object.fromEntries(
-    Array.from(yieldAllMeasures(cube), item => [item.name, item])
-  )
-  const levelMap = Object.fromEntries(
-    Array.from(yieldDimensionHierarchyLevels(cube), item => [item[2].name, item]),
+  const columnList = Object.values(columns);
+
+  const measureColumns = columnList.filter(column => column.type === "measure");
+  const levelColumns = columnList
+    .filter(column => column.type === "level")
+    .filter(column => !column.isID);
+  const propertyColumns = columnList.filter(column => column.type === "property");
+
+  const levelHasID = Object.fromEntries(
+    levelColumns.map(column => [column.name, `${column.name} ID` in columns]),
   );
 
-  const measureSets = [];
-  for (const item of params.measures) {
-    const measureSet = findMeasuresInCube(cube, item);
-    measureSet && measureSets.push(measureSet);
-  }
+  const timeColumns = levelColumns
+    .filter(column => column.dimension.type === DimensionType.TIME)
+    .sort((a, b) => a.level.depth - b.level.depth);
 
-  const drilldowns = params.drilldowns.map(dd => levelMap[dd.level][2]);
-  const cuts = new Map(
-    params.cuts.map(ct => {
-      const level = levelMap[ct.level][2];
-      return [level.caption, ct.members];
-    }),
-  );
-  const cutLevels = new Map(
-    params.cuts.map(ct => {
-      const level = levelMap[ct.level][2];
-      return [level.caption, level];
-    }),
-  );
+  const geoColumns = levelColumns
+    .filter(column => column.dimension.type === DimensionType.GEO)
+    .sort((a, b) => a.level.depth - b.level.depth);
 
-  const timeDrilldown = drilldowns.find(
-    dd => levelMap[dd.name][0].type === DimensionType.time,
-  );
-
-  const timeDrilldownName = timeDrilldown?.caption;
-  const maxPeriod = timeDrilldownName
-    ? maxBy(dataset, item => item[timeDrilldownName])?.[timeDrilldownName]
-    : undefined;
-
-  const geoDrilldown = drilldowns.find(
-    dd => levelMap[dd.name][0].type === DimensionType.geo,
-  );
-
-  const topojsonConfig = geoDrilldown ? getTopojsonConfig(geoDrilldown) : undefined;
-
-  const stdDrilldowns = drilldowns.filter(
-    dd => levelMap[dd.name][0].type === DimensionType.standard,
-  );
-
-  const drilldownNames = drilldowns.map(lvl => lvl.caption);
-  const {members, membersCount} = buildMemberMap(dataset, drilldownNames);
-
-  const filters = params.filters.map(item => ({
-    ...item,
-    formatter: item.formatter || formatAbbreviate,
-    measure: measureMap[item.measure],
-  }));
+  const stdColumns = levelColumns
+    .filter(column => column.dimension.type === DimensionType.STANDARD)
+    .sort((a, b) => a.level.depth - b.level.depth);
 
   return {
-    cube,
-    datacap,
-    dataset,
-    drilldowns,
-    geoDrilldown,
-    timeDrilldown,
-    stdDrilldowns,
-    measureSets,
-    filters,
-    cuts,
-    cutLevels,
-    locale: params.locale,
-    maxPeriod,
-    params,
-    membersCount,
-    members,
-    topojsonConfig,
+    columns,
+    dataset: data,
+    locale,
+    measureColumns: measureColumns.map(column => {
+      const members = getUniqueMembers<number>(data, column.name);
+      return {
+        measure: column.measure,
+        parentMeasure: column.parentMeasure,
+        range: [min(members) ?? Number.NaN, max(members) ?? Number.NaN],
+      };
+    }),
+    timeHierarchy: timeColumns.length ? adaptLevelList(timeColumns) : undefined,
+    geoHierarchies: mapValues(
+      groupBy(geoColumns, column => column.hierarchy.name),
+      adaptLevelList,
+    ),
+    stdHierarchies: mapValues(
+      groupBy(stdColumns, column => column.hierarchy.name),
+      adaptLevelList,
+    ),
+    propertyColumns: mapValues(
+      groupBy(propertyColumns, column => column.level.name),
+      columns => ({
+        dimension: columns[0].dimension,
+        hierarchy: columns[0].hierarchy,
+        level: columns[0].level,
+        properties: columns.map(column => column.property),
+        members: Object.fromEntries(
+          columns.map(column => {
+            return [column.name, getUniqueMembers<string>(data, column.name).sort()];
+          }),
+        ),
+      }),
+    ),
   };
+
+  function adaptLevelList(columns: LevelColumn[]) {
+    return {
+      dimension: columns[0].dimension,
+      hierarchy: columns[0].hierarchy,
+      levels: columns.map(column => column.level),
+      hasID: Object.fromEntries(
+        columns.map(column => [column.name, levelHasID[column.name]]),
+      ),
+      members: Object.fromEntries(
+        columns.map(column => {
+          return [column.name, getUniqueMembers<number>(data, column.name).sort()];
+        }),
+      ),
+    };
+  }
+}
+
+function getUniqueMembers<T>(dataset: Record<string, unknown>[], column: string) {
+  return [...new Set(dataset.map(row => row[column]))] as T[];
 }

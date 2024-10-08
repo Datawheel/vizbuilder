@@ -11,7 +11,7 @@ import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3pl
 import React, {useMemo, useRef} from "react";
 import type {TesseractMeasure} from "../schema";
 import type {ChartType, D3plusConfig} from "../structs";
-import {asArray} from "../toolbox/array";
+import {castArray} from "../toolbox/array";
 import {createChartConfig} from "../toolbox/chartConfigs";
 import type {Chart} from "../toolbox/charts";
 import {useTranslation} from "../toolbox/translation";
@@ -21,7 +21,6 @@ type D3plusComponent = React.ComponentType<{config: D3plusConfig}>;
 
 export const chartComponents: Record<ChartType, D3plusComponent> = {
   barchart: BarChart,
-  barchartyear: BarChart,
   donut: Donut,
   geomap: Geomap,
   histogram: BarChart,
@@ -94,7 +93,7 @@ export function ChartCard(props: {
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
 
-    return asArray(props.downloadFormats).map(format => {
+    return castArray(props.downloadFormats).map(format => {
       const formatLower = format.toLowerCase();
       const Icon = iconByFormat[formatLower] || IconDownload;
       return (
