@@ -28,8 +28,10 @@ export function filterMap<T, U>(
 /**
  * Returns an array of permutations taking 2 elements from the supplied array.
  */
-export function getPermutations<T>(set: T[], result: T[][] = []) {
+export function getPermutations<T>(set: T[]) {
   if (set.length === 0) return [];
+
+  const result: T[][] = [];
 
   const permute = (arr, m = []) => {
     if (arr.length === 0) {

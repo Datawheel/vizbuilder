@@ -1,7 +1,7 @@
 /**
  * Yields partial permutations taking k elements from the supplied list.
  */
-export function yieldPermutations<T>(
+export function yieldSubsets<T>(
   list: T[],
   k: number = list.length,
   partial: T[] = [],
@@ -20,11 +20,7 @@ export function yieldPermutations<T>(
     };
   }
 
-  let subiterator = yieldPermutations(
-    list.slice(1),
-    k - 1,
-    partial.concat([list[index]]),
-  );
+  let subiterator = yieldSubsets(list.slice(1), k - 1, partial.concat([list[index]]));
 
   return {
     next() {
@@ -37,7 +33,7 @@ export function yieldPermutations<T>(
       if (subiteration.done) {
         index++;
         const nextSubList = list.slice();
-        subiterator = yieldPermutations(
+        subiterator = yieldSubsets(
           nextSubList,
           k - 1,
           partial.concat(nextSubList.splice(index, 1)),
@@ -46,6 +42,30 @@ export function yieldPermutations<T>(
       }
 
       return {value: subiteration.value, done: false};
+    },
+    [Symbol.iterator]() {
+      return this;
+    },
+  };
+}
+
+/**
+ * Returns an array of permutations taking 2 elements from the supplied array.
+ */
+export function yieldPermutations<T>(arr: T[]): IterableIterator<[T, T], undefined> {
+  let i = 0;
+  let j = 0;
+
+  return {
+    next: () => {
+      while (i < arr.length) {
+        if (i !== j && j < arr.length) {
+          return {value: [arr[i], arr[j++]], done: false};
+        }
+        j = 0;
+        i++;
+      }
+      return {done: true};
     },
     [Symbol.iterator]() {
       return this;

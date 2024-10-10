@@ -62,6 +62,7 @@ export interface Datagroup {
       hierarchy: TesseractHierarchy;
       level: TesseractLevel;
       properties: TesseractProperty[];
+      members: Record<string, (number | string | boolean)[]>;
     };
   };
 }

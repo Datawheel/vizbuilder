@@ -7,8 +7,8 @@ import type {
   TesseractHierarchy,
   TesseractLevel,
   TesseractMeasure,
+  TesseractProperty,
 } from "../schema";
-import type {ChartType} from "../structs";
 import {filterMap} from "../toolbox/array";
 import type {Datagroup} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
@@ -28,6 +28,7 @@ export interface LinePlot {
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
+    property?: TesseractProperty;
     members: string[] | number[] | boolean[];
   };
   time: {
@@ -44,12 +45,12 @@ export interface LinePlot {
  * - time drilldown with at least LINE_POINT_MIN members
  * - std drilldowns
  */
-export function buildLineplot(
+export function examineLineplotConfigs(
   dg: Datagroup,
   {LINEPLOT_LINE_MAX, LINEPLOT_LINE_POINT_MIN}: ChartLimits,
 ): LinePlot[] {
   const {dataset, timeHierarchy} = dg;
-  const chartType: ChartType = "lineplot";
+  const chartType = "lineplot" as const;
 
   // Bail if no time dimension present
   if (!timeHierarchy) return [];
@@ -69,7 +70,7 @@ export function buildLineplot(
     filterMap(axis.levels, level => {
       const members = axis.members[level.name];
       return members.length > 1 && members.length <= LINEPLOT_LINE_MAX
-        ? ([axis.hierarchy.name, level] as const)
+        ? ([axis, level] as const)
         : null;
     }),
   );
@@ -80,12 +81,11 @@ export function buildLineplot(
       const {measure, range} = quantiAxis;
 
       return timeLevels.flatMap(timeLevel => {
-        const keyChain = [chartType];
+        const keyChain = [chartType, dataset.length, measure.name, timeLevel.name];
 
-        return nonTimeLevels.flatMap<LinePlot>(([hierarchyName, level]) => {
-          const axis = nonTimeHierarchies[hierarchyName];
+        return nonTimeLevels.flatMap<LinePlot>(([axis, level]) => {
           return {
-            key: shortHash(keyChain.concat().join("|")),
+            key: shortHash(keyChain.concat(level.name).join("|")),
             type: chartType,
             dataset,
             locale: dg.locale,

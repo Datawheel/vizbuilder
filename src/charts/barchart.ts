@@ -1,5 +1,12 @@
 import type {ChartLimits} from "../constants";
-import {Aggregator} from "../schema";
+import {
+  Aggregator,
+  type TesseractDimension,
+  type TesseractHierarchy,
+  type TesseractLevel,
+  type TesseractMeasure,
+  type TesseractProperty,
+} from "../schema";
 import {getLast} from "../toolbox/array";
 import type {Datagroup} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
@@ -15,25 +22,29 @@ export interface BarChart {
   locale: string;
   orientation: "vertical" | "horizontal";
   values: {
-    name: string;
-    caption: string;
-    aggregator: Aggregator;
+    measure: TesseractMeasure;
     minValue: number;
     maxValue: number;
   };
   series: {
-    name: string;
-    caption: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
+    property?: TesseractProperty;
     members: string[] | number[] | boolean[];
-  };
+  }[];
   timeline?: {
-    name: string;
-    caption: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
     members: string[] | number[];
   };
 }
 
-export function buildBarcharts(dg: Datagroup, chartLimits: ChartLimits): BarChart[] {
+export function examineBarchartConfigs(
+  dg: Datagroup,
+  chartLimits: ChartLimits,
+): BarChart[] {
   return [
     ...buildHorizontalBarcharts(dg, chartLimits),
     ...buildVerticalBarcharts(dg, chartLimits),
@@ -54,7 +65,7 @@ export function buildBarcharts(dg: Datagroup, chartLimits: ChartLimits): BarChar
  */
 export function buildHorizontalBarcharts(
   dg: Datagroup,
-  chartLimits: ChartLimits,
+  {BARCHART_MAX_BARS}: ChartLimits,
 ): BarChart[] {
   const {dataset, timeHierarchy} = dg;
   const chartType = "barchart" as const;
@@ -87,8 +98,7 @@ export function buildHorizontalBarcharts(
           return qualiAxis.levels.flatMap<BarChart>(level => {
             const members = qualiAxis.members[level.name];
 
-            if (members.length < 2 || members.length > chartLimits.BARCHART_MAX_BARS)
-              return [];
+            if (members.length < 2 || members.length > BARCHART_MAX_BARS) return [];
 
             return {
               key: shortHash(keyChain.concat(level.name).join("|")),
@@ -97,21 +107,23 @@ export function buildHorizontalBarcharts(
               locale: dg.locale,
               orientation: "horizontal" as const,
               values: {
-                name: measure.name,
-                caption: measure.caption,
-                aggregator: measure.aggregator,
+                measure,
                 minValue: range[0],
                 maxValue: range[1],
               },
-              series: {
-                name: level.name,
-                caption: level.caption,
-                members,
-              },
+              series: [
+                {
+                  dimension: qualiAxis.dimension,
+                  hierarchy: qualiAxis.hierarchy,
+                  level,
+                  members,
+                },
+              ],
               timeline: timeHierarchy
                 ? (level => ({
-                    name: level.name,
-                    caption: level.caption,
+                    dimension: timeHierarchy.dimension,
+                    hierarchy: timeHierarchy.hierarchy,
+                    level,
                     members: timeHierarchy.members[level.name],
                   }))(getLast(timeHierarchy.levels))
                 : undefined,
@@ -132,7 +144,7 @@ export function buildHorizontalBarcharts(
  */
 export function buildVerticalBarcharts(
   dg: Datagroup,
-  chartLimits: ChartLimits,
+  {BARCHART_YEAR_MAX_BARS}: ChartLimits,
 ): BarChart[] {
   const {dataset, timeHierarchy} = dg;
   const chartType = "barchart" as const;
@@ -176,8 +188,7 @@ export function buildVerticalBarcharts(
           return qualiAxis.levels.flatMap<BarChart>(level => {
             const members = qualiAxis.members[level.name];
 
-            if (members.length < 2 || members.length > chartLimits.BARCHART_YEAR_MAX_BARS)
-              return [];
+            if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) return [];
 
             return {
               key: shortHash(keyChain.concat().join("|")),
@@ -186,17 +197,24 @@ export function buildVerticalBarcharts(
               locale: dg.locale,
               orientation: "vertical",
               values: {
-                name: measure.name,
-                caption: measure.caption,
-                aggregator: measure.aggregator,
+                measure,
                 minValue: range[0],
                 maxValue: range[1],
               },
-              series: {
-                name: level.name,
-                caption: level.caption,
-                members,
-              },
+              series: [
+                (level => ({
+                  dimension: timeHierarchy.dimension,
+                  hierarchy: timeHierarchy.hierarchy,
+                  level,
+                  members: timeHierarchy.members[level.name],
+                }))(getLast(timeHierarchy.levels)),
+                {
+                  dimension: qualiAxis.dimension,
+                  hierarchy: qualiAxis.hierarchy,
+                  level,
+                  members,
+                },
+              ],
             };
           });
         });

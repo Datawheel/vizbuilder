@@ -1,6 +1,8 @@
 import flatMap from "lodash/flatMap";
-import {type BarChart, buildBarcharts} from "../charts/barchart";
-import {type LinePlot, buildLineplot} from "../charts/lineplot";
+import {type BarChart, examineBarchartConfigs} from "../charts/barchart";
+import {type DonutChart, examineDonutConfigs} from "../charts/donut";
+import {type LinePlot, examineLineplotConfigs} from "../charts/lineplot";
+import {type TreeMap, examineTreemapConfigs} from "../charts/treemap";
 import {chartComponents} from "../components/ChartCard";
 import {type ChartLimits, DEFAULT_CHART_LIMITS} from "../constants";
 import type {TesseractLevel} from "../schema";
@@ -8,11 +10,13 @@ import type {ChartType, D3plusConfig, Dataset} from "../structs";
 import {filterMap} from "./array";
 import {buildDatagroup} from "./datagroup";
 
-export type Chart = BarChart | LinePlot;
+export type Chart = BarChart | LinePlot | TreeMap | DonutChart;
 
 const chartBuilders = {
-  barchart: buildBarcharts,
-  lineplot: buildLineplot,
+  barchart: examineBarchartConfigs,
+  donut: examineDonutConfigs,
+  lineplot: examineLineplotConfigs,
+  treemap: examineTreemapConfigs,
 };
 
 /** */
