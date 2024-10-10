@@ -1,8 +1,6 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
-import type {TesseractCube, TesseractMeasure} from "./schema";
+import type {TesseractMeasure} from "./schema";
 import type {Column} from "./toolbox/columns";
-
-export type Formatter = (value: number, locale?: string) => string;
 
 export type D3plusConfig = {
   locale?: string;

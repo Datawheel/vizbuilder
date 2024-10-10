@@ -118,7 +118,14 @@ export function useTesseractData(query: RequestParams | undefined) {
 
   useEffect(() => {
     const cube = query ? cubes[query.cube] : undefined;
-    if (!query || !cube || !query.drilldowns.length || !query.measures.length) return;
+    if (!query || !cube || !query.drilldowns.length || !query.measures.length) {
+      setState({
+        error: "Invalid query",
+        isLoading: false,
+        dataset: {columns: {}, data: [], locale: dataLocale},
+      });
+      return;
+    }
 
     setState({error: "", isLoading: true, dataset: undefined});
 

@@ -136,10 +136,8 @@ function App() {
         <Vizwrapper
           datasets={dataset || []}
           downloadFormats={["svg", "png"]}
-          defaultLocale="ar"
-          allowedChartTypes={[
+          chartTypes={[
             "barchart",
-            "barchartyear",
             "donut",
             "geomap",
             "histogram",
@@ -149,7 +147,6 @@ function App() {
             "treemap",
           ]}
           topojsonConfig={topojsonConfig}
-          translations={translations}
           userConfig={{
             locale: "ar-SA",
             scrollContainer: "#viz-scroller",

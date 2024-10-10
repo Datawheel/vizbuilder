@@ -6,7 +6,6 @@ import type {TesseractLevel, TesseractMeasure} from "../schema";
 import type {ChartType, D3plusConfig, Dataset} from "../structs";
 import {castArray} from "../toolbox/array";
 import {generateCharts, normalizeAccessor} from "../toolbox/generateCharts";
-import {type Translation, TranslationProvider} from "../toolbox/translation";
 import {ChartCard} from "./ChartCard";
 import {NonIdealState} from "./NonIdealState";
 
@@ -44,13 +43,13 @@ export function Vizbuilder(props: VizbuilderProps) {
 
   const charts = useMemo(
     () =>
-      generateCharts(castArray(props.queries), {
+      generateCharts(castArray(props.datasets), {
         chartLimits: props.chartLimits,
         chartTypes: props.chartTypes,
         datacap: props.datacap,
         topojsonConfig: props.topojsonConfig,
       }),
-    [props.queries],
+    [props.datasets],
   );
 
   const content = useMemo(() => {
