@@ -9,11 +9,12 @@ import {
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
 import React, {useMemo, useRef} from "react";
+import type {D3plusConfig} from "../d3plus";
 import type {TesseractMeasure} from "../schema";
-import type {ChartType, D3plusConfig} from "../structs";
 import {castArray} from "../toolbox/array";
 import {createChartConfig} from "../toolbox/chartConfigs";
 import type {Chart} from "../toolbox/charts";
+import type {ChartType} from "../toolbox/generateCharts";
 import {useTranslation} from "../toolbox/translation";
 import {ErrorBoundary} from "./ErrorBoundary";
 
@@ -22,11 +23,11 @@ type D3plusComponent = React.ComponentType<{config: D3plusConfig}>;
 export const chartComponents: Record<ChartType, D3plusComponent> = {
   barchart: BarChart,
   donut: Donut,
-  geomap: Geomap,
-  histogram: BarChart,
+  choropleth: Geomap,
+  // histogram: BarChart,
   lineplot: LinePlot,
-  pie: Pie,
-  stacked: StackedArea,
+  // pie: Pie,
+  stackedarea: StackedArea,
   treemap: Treemap,
 };
 

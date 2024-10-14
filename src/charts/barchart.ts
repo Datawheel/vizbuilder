@@ -1,15 +1,14 @@
 import type {ChartLimits} from "../constants";
-import {
-  Aggregator,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
-  type TesseractProperty,
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
 } from "../schema";
-import {getLast} from "../toolbox/array";
-import type {Datagroup} from "../toolbox/datagroup";
+import {filterMap, getLast} from "../toolbox/array";
+import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
+import {aggregatorIn, buildSeries, buildTimeSeries} from "./common";
 
 // TODO: add criteria
 // bail if sum measure && sum of all values for each series is the same
@@ -18,8 +17,7 @@ import {shortHash} from "../toolbox/math";
 export interface BarChart {
   key: string;
   type: "barchart";
-  dataset: Record<string, unknown>[];
-  locale: string;
+  datagroup: Datagroup;
   orientation: "vertical" | "horizontal";
   values: {
     measure: TesseractMeasure;
@@ -27,17 +25,19 @@ export interface BarChart {
     maxValue: number;
   };
   series: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
-    property?: TesseractProperty;
+    captions: {[K: string]: LevelCaption};
     members: string[] | number[] | boolean[];
   }[];
   timeline?: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
-    members: string[] | number[];
+    members: string[] | number[] | boolean[];
   };
 }
 
@@ -46,8 +46,8 @@ export function examineBarchartConfigs(
   chartLimits: ChartLimits,
 ): BarChart[] {
   return [
-    ...buildHorizontalBarcharts(dg, chartLimits),
-    ...buildVerticalBarcharts(dg, chartLimits),
+    ...examineHoriBartchartConfigs(dg, chartLimits),
+    // ...examineVertBarchartConfigs(dg, chartLimits),
   ];
 }
 
@@ -63,70 +63,88 @@ export function examineBarchartConfigs(
  * Notes:
  * - Horizontal orientation improves label readability
  */
-export function buildHorizontalBarcharts(
+export function examineHoriBartchartConfigs(
   dg: Datagroup,
   {BARCHART_MAX_BARS}: ChartLimits,
 ): BarChart[] {
-  const {dataset, timeHierarchy} = dg;
+  const {dataset, timeHierarchy: timeAxis} = dg;
   const chartType = "barchart" as const;
 
-  // pick only hierarchies from a non-time dimension
-  const qualiAxes = [
-    ...Object.values(dg.geoHierarchies),
-    ...Object.values(dg.stdHierarchies),
-  ];
+  const categoryAxes = Object.values(dg.nonTimeHierarchies);
 
-  const dimensionCount = Number(timeHierarchy) + qualiAxes.length;
+  const timeline = buildTimeSeries(timeAxis);
+
+  const dimensionCount = (timeAxis ? 1 : 0) + categoryAxes.length;
 
   return (
     dg.measureColumns
       // Work only with the mainline measures
       .filter(axis => !axis.parentMeasure)
-      // Do not show any stacked charts if aggregation_method is "NONE"
-      // @see {@link https://github.com/Datawheel/canon/issues/327}
-      // TODO: check applicability? pytesseract doesn't have UNKNOWN aggregator
-      // .filter(column => column.measure.aggregator !== "UNKNOWN")
-      .flatMap(quantiAxis => {
-        const {measure, range} = quantiAxis;
+      .flatMap(valueAxis => {
+        const {measure, range} = valueAxis;
+        const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+        const units = measure.annotations.units_of_measurement || "";
 
-        if (dimensionCount > 1 && measure.aggregator !== Aggregator.SUM) return [];
+        // Do not show any stacked charts if aggregation_method is "NONE"
+        // @see {@link https://github.com/Datawheel/canon/issues/327}
+        // TODO: check applicability? pytesseract doesn't have UNKNOWN aggregator
+        // if (measure.aggregator !== "UNKNOWN") return [];
 
-        return qualiAxes.flatMap(qualiAxis => {
-          const {hierarchy} = qualiAxis;
-          const keyChain = [chartType, dataset.length, measure.name, hierarchy.name];
+        // Bail if the measure can't be summed and there are more than 1 dimension
+        // TODO: refine, needs validation
+        if (
+          dimensionCount > 1 &&
+          !aggregatorIn(aggregator, ["SUM"]) &&
+          !["Rate", "Percentage"].includes(units)
+        ) {
+          console.debug(
+            chartType,
+            `Data is sliced in ${dimensionCount} dimensions and measure '${measure.name}' is not a SUM or measured as 'Rate'`,
+          );
+          return [];
+        }
 
-          return qualiAxis.levels.flatMap<BarChart>(level => {
-            const members = qualiAxis.members[level.name];
+        const values = {
+          measure,
+          minValue: range[0],
+          maxValue: range[1],
+        };
 
-            if (members.length < 2 || members.length > BARCHART_MAX_BARS) return [];
+        return categoryAxes.flatMap(categoryAxis => {
+          const keyChain = [chartType, dataset.length, measure.name];
+
+          return categoryAxis.levels.flatMap<BarChart>(axisLevel => {
+            const {level, members} = axisLevel;
+
+            const otherSeries = filterMap(categoryAxes, axis => {
+              if (axis === categoryAxis) return null;
+              const lastLevel = getLast(axis.levels);
+              return buildSeries(axis, lastLevel);
+            });
+            const barCount = otherSeries.reduce(
+              (acc, series) => acc * series.members.length,
+              members.length,
+            );
+
+            // Bail if the amount of members is out of limits
+            if (members.length < 2 || barCount > BARCHART_MAX_BARS) {
+              console.debug(
+                chartType,
+                `Level ${level.name} contains ${members.length} members, out of bounds`,
+              );
+              return [];
+            }
+
+            const series = [buildSeries(categoryAxis, axisLevel), ...otherSeries];
 
             return {
               key: shortHash(keyChain.concat(level.name).join("|")),
               type: chartType,
-              dataset,
-              locale: dg.locale,
-              orientation: "horizontal" as const,
-              values: {
-                measure,
-                minValue: range[0],
-                maxValue: range[1],
-              },
-              series: [
-                {
-                  dimension: qualiAxis.dimension,
-                  hierarchy: qualiAxis.hierarchy,
-                  level,
-                  members,
-                },
-              ],
-              timeline: timeHierarchy
-                ? (level => ({
-                    dimension: timeHierarchy.dimension,
-                    hierarchy: timeHierarchy.hierarchy,
-                    level,
-                    members: timeHierarchy.members[level.name],
-                  }))(getLast(timeHierarchy.levels))
-                : undefined,
+              datagroup: dg,
+              orientation: "horizontal",
+              values,
+              series,
+              timeline,
             };
           });
         });
@@ -142,79 +160,65 @@ export function buildHorizontalBarcharts(
  * Notes:
  * - Vertical orientation is more natural to understand time on x-axis
  */
-export function buildVerticalBarcharts(
+export function examineVertBarchartConfigs(
   dg: Datagroup,
   {BARCHART_YEAR_MAX_BARS}: ChartLimits,
 ): BarChart[] {
-  const {dataset, timeHierarchy} = dg;
+  const {dataset, timeHierarchy: timeAxis} = dg;
   const chartType = "barchart" as const;
 
-  // Pick only hierarchies from a non-time dimension
-  const qualiAxes = [
-    ...Object.values(dg.geoHierarchies),
-    ...Object.values(dg.stdHierarchies),
-  ];
+  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+
+  const timeline = buildTimeSeries(timeAxis);
 
   // Bail if no time dimension present
-  if (!timeHierarchy) return [];
+  if (!timeAxis || !timeline) return [];
 
   // Bail if the time level has less than 2 members
-  const deepestTimeLevel = getLast(timeHierarchy.levels);
-  if (timeHierarchy.members[deepestTimeLevel.name].length < 2) {
-    return [];
-  }
+  const deepestTimeLevel = getLast(timeAxis.levels);
+  if (deepestTimeLevel.members.length < 2) return [];
 
   // If all levels, besides the one from time dimension, have only 1 member,
   // then the chart results in a single block
-  if (
-    qualiAxes.every(axis => {
-      const members = axis.members;
-      return axis.levels.every(level => members[level.name].length === 1);
-    })
-  )
+  if (categoryAxes.every(axis => axis.levels.every(level => level.members.length === 1)))
     return [];
 
   return (
     dg.measureColumns
       // Work only with the mainline measures
       .filter(axis => !axis.parentMeasure)
-      .flatMap(quantiAxis => {
-        const {measure, range} = quantiAxis;
+      .flatMap(valueAxis => {
+        const {measure, range} = valueAxis;
 
-        return qualiAxes.flatMap(qualiAxis => {
-          const {hierarchy} = qualiAxis;
-          const keyChain = [chartType, dataset.length, measure.name, hierarchy.name];
+        const values = {
+          measure,
+          minValue: range[0],
+          maxValue: range[1],
+        };
 
-          return qualiAxis.levels.flatMap<BarChart>(level => {
-            const members = qualiAxis.members[level.name];
+        return categoryAxes.flatMap(categoryAxis => {
+          const {dimension, hierarchy} = categoryAxis;
+          const keyChain = [
+            chartType,
+            dataset.length,
+            measure.name,
+            dimension.name,
+            hierarchy.name,
+          ];
 
+          return categoryAxis.levels.flatMap<BarChart>(axisLevel => {
+            const {captions, level, members, name} = axisLevel;
+
+            // Bail if amount of segments is out of bounds
             if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) return [];
 
             return {
               key: shortHash(keyChain.concat().join("|")),
               type: chartType,
-              dataset,
-              locale: dg.locale,
+              datagroup: dg,
               orientation: "vertical",
-              values: {
-                measure,
-                minValue: range[0],
-                maxValue: range[1],
-              },
-              series: [
-                (level => ({
-                  dimension: timeHierarchy.dimension,
-                  hierarchy: timeHierarchy.hierarchy,
-                  level,
-                  members: timeHierarchy.members[level.name],
-                }))(getLast(timeHierarchy.levels)),
-                {
-                  dimension: qualiAxis.dimension,
-                  hierarchy: qualiAxis.hierarchy,
-                  level,
-                  members,
-                },
-              ],
+              values,
+              series: [timeline, {name, dimension, hierarchy, level, captions, members}],
             };
           });
         });

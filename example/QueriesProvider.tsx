@@ -1,21 +1,13 @@
 import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash";
 import React, {createContext, useContext, useMemo, useState} from "react";
+import type {TesseractCube} from "../src/schema";
 
 export interface RequestParams {
   key: string;
   cube: string;
   drilldowns: string[];
   measures: string[];
-}
-
-export function emptyRequestParams(): RequestParams {
-  return {
-    key: Math.random().toString(16).slice(2, 10),
-    cube: "",
-    drilldowns: [],
-    measures: [],
-  };
 }
 
 interface QueriesContextValue {
@@ -32,10 +24,11 @@ const QueriesContext = createContext<QueriesContextValue | undefined>(undefined)
 
 export function QueriesProvider(props: {
   children: React.ReactNode;
+  cubes: Record<string, TesseractCube>;
 }) {
   const [index, setIndex] = useState(0);
   const [items, setItems] = useLocalStorage({
-    key: "queries",
+    key: "QueriesProvider:items",
     getInitialValueInEffect: false,
     defaultValue: [emptyRequestParams()],
   });
@@ -75,6 +68,16 @@ export function QueriesProvider(props: {
   return (
     <QueriesContext.Provider value={value}>{props.children}</QueriesContext.Provider>
   );
+
+  function emptyRequestParams(): RequestParams {
+    const cubes = Object.values(props.cubes);
+    return {
+      key: Math.random().toString(16).slice(2, 10),
+      cube: cubes.length ? cubes[Math.floor(Math.random() * cubes.length)].name : "",
+      drilldowns: [],
+      measures: [],
+    };
+  }
 }
 
 export function useQueries() {

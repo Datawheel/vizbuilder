@@ -6,12 +6,13 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type {TesseractCube, TesseractDataResponse, TesseractSchema} from "../src/schema";
 import type {Dataset} from "../src/structs";
 import {buildColumn} from "../src/toolbox/columns";
-import type {RequestParams} from "./QueriesProvider";
+import {QueriesProvider, type RequestParams} from "./QueriesProvider";
 
 interface TesseractContextValue {
   readonly error: string;
@@ -35,22 +36,39 @@ export function TesseractProvider(props: {
   const [error, setError] = useState("");
 
   const [schema, setSchema] = useLocalStorage({
-    key: "tesseract_schema",
+    key: "TesseractProvider:schema",
     getInitialValueInEffect: false,
     defaultValue: {
       availableLocale: [] as string[],
-      locale: "",
+      locale: "", // keep falsey
       cubes: {} as Record<string, TesseractCube>,
     },
   });
 
+  const schemaController = useRef<AbortController | undefined>();
+
   const fetchSchema = useCallback((): Promise<TesseractSchema> => {
+    if (schemaController.current) schemaController.current.abort();
+
+    const controller = new AbortController();
+    schemaController.current = controller;
+
     const url = new URL(`cubes?locale=${schema.locale}`, serverURL);
-    return fetch(url, serverConfig).then(response => response.json());
+
+    return fetch(url, {...serverConfig, signal: controller.signal}).then(response =>
+      response.json(),
+    );
   }, [serverConfig, serverURL, schema.locale]);
+
+  const dataController = useRef<AbortController | undefined>();
 
   const fetchData = useCallback(
     (params: RequestParams): Promise<TesseractDataResponse> => {
+      if (dataController.current) dataController.current.abort();
+
+      const controller = new AbortController();
+      dataController.current = controller;
+
       const url = new URL("data.jsonrecords", serverURL);
       url.search = new URLSearchParams({
         cube: params.cube,
@@ -58,7 +76,10 @@ export function TesseractProvider(props: {
         drilldowns: params.drilldowns.join(","),
         measures: params.measures.join(","),
       }).toString();
-      return fetch(url, serverConfig).then(response => response.json());
+
+      return fetch(url, {...serverConfig, signal: controller.signal}).then(response =>
+        response.json(),
+      );
     },
     [serverConfig, serverURL, schema.locale],
   );
@@ -95,7 +116,9 @@ export function TesseractProvider(props: {
   }, [fetchSchema, setSchema, schema.locale]);
 
   return (
-    <TesseractContext.Provider value={value}>{props.children}</TesseractContext.Provider>
+    <TesseractContext.Provider value={value}>
+      <QueriesProvider cubes={value.cubes}>{props.children}</QueriesProvider>
+    </TesseractContext.Provider>
   );
 }
 
@@ -132,7 +155,7 @@ export function useTesseractData(query: RequestParams | undefined) {
     fetchData(query).then(
       result => {
         const columns = Object.fromEntries(
-          result.columns.map(name => [name, buildColumn(cube, name)]),
+          result.columns.map((name, _, cols) => [name, buildColumn(cube, name, cols)]),
         );
         setState({
           error: "",
@@ -141,7 +164,8 @@ export function useTesseractData(query: RequestParams | undefined) {
         });
       },
       err => {
-        setState({error: err.message, isLoading: false, dataset: undefined});
+        if (err.message !== "The operation was aborted.")
+          setState({error: err.message, isLoading: false, dataset: undefined});
       },
     );
   }, [cubes, fetchData, query, dataLocale]);

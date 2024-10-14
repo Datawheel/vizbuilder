@@ -10,38 +10,37 @@ import {
 import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
+import {FormatterProvider} from "../src/components/FormatterProvider";
 import {Vizbuilder} from "../src/index";
 import {TranslationProvider} from "../src/toolbox/translation";
-import {QueriesProvider, useQueries} from "./QueriesProvider";
+import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
 import {Vizdebugger} from "./Vizdebugger";
 
-const topojsonArray = [
-  {
-    id: "Province",
-    name: "مقاطعة",
-    topojson: "/topojson/SA_regions.json",
-    topojsonId: d => d.properties.id,
-  },
-  {
-    id: "Destination Country",
-    name: "دولة",
-    topojson: "/topojson/world-50m.json",
-    topojsonId: d => d.id,
-    projection: "geoMiller",
-  },
-  {
-    id: "Source Country",
-    name: "دولة",
-    topojson: "/topojson/world-50m.json",
-    topojsonId: d => d.id,
-    projection: "geoMiller",
-  },
-];
-const topojsonConfig = topojsonArray.reduce(
-  (acc, item) => ({...acc, [item.id]: item}),
-  {},
+const topojsonConfig = Object.fromEntries(
+  [
+    {
+      id: "Province",
+      name: "مقاطعة",
+      topojson: "/topojson/SA_regions.json",
+      topojsonId: d => d.properties.id,
+    },
+    {
+      id: "Destination Country",
+      name: "دولة",
+      topojson: "/topojson/world-50m.json",
+      topojsonId: d => d.id,
+      projection: "geoMiller",
+    },
+    {
+      id: "Source Country",
+      name: "دولة",
+      topojson: "/topojson/world-50m.json",
+      topojsonId: d => d.id,
+      projection: "geoMiller",
+    },
+  ].map(item => [item.id, item]),
 );
 
 const translations = {
@@ -84,7 +83,9 @@ const translations = {
 const container = document.getElementById("app");
 container && mount(container);
 
-const modeOptions = ["Vizdebugger", "Vizbuilder"].map(i => ({value: i, label: i}));
+const modeOptions = ["Vizdebugger", "Vizbuilder"];
+
+const rtlLanguages = ["ar", "he", "fa", "ur", "yi", "dv"];
 
 function App() {
   const [mode, setMode] = useState("Vizdebugger");
@@ -102,7 +103,6 @@ function App() {
       <Header height={51} p="xs" withBorder>
         <Flex direction="row" gap="xs" align="center" h={30}>
           <SegmentedControl
-            radius="lg"
             color="blue"
             data={modeOptions}
             value={mode}
@@ -127,6 +127,7 @@ function App() {
       <div
         id="viz-scroller"
         style={{
+          direction: rtlLanguages.includes(dataLocale) ? "rtl" : "ltr",
           overflowY: "scroll",
           flex: "1 0 auto",
           padding: "0.75rem",
@@ -136,16 +137,6 @@ function App() {
         <Vizwrapper
           datasets={dataset || []}
           downloadFormats={["svg", "png"]}
-          chartTypes={[
-            "barchart",
-            "donut",
-            "geomap",
-            "histogram",
-            "lineplot",
-            "pie",
-            "stacked",
-            "treemap",
-          ]}
           topojsonConfig={topojsonConfig}
           userConfig={{
             locale: "ar-SA",
@@ -158,19 +149,25 @@ function App() {
 }
 
 function mount(container) {
+  const formatters = {
+    Seconds: secondFormatter,
+    Percentage: value => `${value}%`,
+    Rate: value => `${value*100}%`,
+  };
+
   const root = createRoot(container);
   root.render(
-    <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
-      <QueriesProvider>
-        <MantineProvider>
+    <MantineProvider withGlobalStyles withNormalizeCSS>
+      <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
+        <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
           <TranslationProvider defaultLocale="ar" translations={translations}>
-            <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
+            <FormatterProvider items={formatters}>
               <App />
-            </D3plusContext.Provider>
+            </FormatterProvider>
           </TranslationProvider>
-        </MantineProvider>
-      </QueriesProvider>
-    </TesseractProvider>,
+        </TesseractProvider>
+      </D3plusContext.Provider>
+    </MantineProvider>,
   );
 }
 

@@ -25,6 +25,8 @@ export interface LevelColumn {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
   level: TesseractLevel;
+  property?: undefined;
+  hasID: boolean;
   isID: boolean;
 }
 
@@ -37,56 +39,66 @@ export interface PropertyColumn {
   property: TesseractProperty;
 }
 
-function buildEntityMap(cube: TesseractCube): {
-  [K: string]:
-    | [TesseractMeasure, TesseractMeasure | undefined]
-    | [TesseractLevel, TesseractHierarchy, TesseractDimension]
-    | [TesseractProperty, TesseractLevel, TesseractHierarchy, TesseractDimension];
-} {
-  return Object.fromEntries([
-    ...Array.from(yieldMeasures(cube), item => [item[0].name, item]),
-    ...Array.from(yieldLevels(cube), item => [item[0].name, item]),
-    ...Array.from(yieldProperties(cube), item => [item[0].name, item]),
-  ]);
+function next<T>(iterable: Iterator<T>, condition: (item: T) => boolean): T | undefined {
+  let result = iterable.next();
+  while (!result.done) {
+    if (condition(result.value)) return result.value;
+    result = iterable.next();
+  }
 }
 
-export function buildColumn(cube: TesseractCube, name: string): Column {
-  const map = buildEntityMap(cube);
-  const entity = map[name] || map[name.replace(/\sID$/, "")] || [];
+export function buildColumn(
+  cube: TesseractCube,
+  name: string,
+  columns: string[],
+): Column {
+  const nameWithoutID = name.replace(/\sID$/, "");
+  const nameWithID = `${nameWithoutID} ID`;
 
-  if (entity.length === 2) {
+  const maybeMeasure = next(yieldMeasures(cube), item => item[0].name === name);
+  if (maybeMeasure) {
+    const [measure, parentMeasure] = maybeMeasure;
     return {
       name,
       type: "measure",
-      measure: entity[0],
-      parentMeasure: entity[1],
+      measure,
+      parentMeasure,
       parentRelationship: undefined, // TODO
     };
   }
 
-  if (entity.length === 3) {
+  const maybeLevel = next(
+    yieldLevels(cube),
+    item => item[0].name === nameWithoutID || item[0].name === nameWithID,
+  );
+  if (maybeLevel) {
+    const [level, hierarchy, dimension] = maybeLevel;
+    const hasID = columns.includes(nameWithID);
     return {
       name,
       type: "level",
-      dimension: entity[2],
-      hierarchy: entity[1],
-      level: entity[0],
-      isID: name !== name.replace(/\sID$/, ""),
+      dimension,
+      hierarchy,
+      level,
+      isID: !hasID || name === nameWithID,
+      hasID,
     };
   }
 
-  if (entity.length === 4) {
+  const maybeProperty = next(yieldProperties(cube), item => item[0].name === name);
+  if (maybeProperty) {
+    const [property, level, hierarchy, dimension] = maybeProperty;
     return {
       name,
       type: "property",
-      dimension: entity[3],
-      hierarchy: entity[2],
-      level: entity[1],
-      property: entity[0],
+      dimension,
+      hierarchy,
+      level,
+      property,
     };
   }
 
-  throw new Error(`Missing entity in cube '${cube.name}': ${name}`);
+  throw new Error(`Missing entity in cube '${cube.name}': ${nameWithoutID}`);
 }
 
 /**

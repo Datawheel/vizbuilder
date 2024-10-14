@@ -1,6 +1,7 @@
+import type {DataPoint} from "../schema";
 import type {UIParams} from "../structs";
 import type {Chart} from "./charts";
-import { getCaption } from "./columns";
+import {getCaption} from "./columns";
 import {abbreviateList} from "./strings";
 
 /**
@@ -80,7 +81,10 @@ export function tooltipGenerator(chart: Chart, {translate: t}: UIParams) {
     }
 
     // add measure value at end
-    output.push([getCaption(measure, locale), () => formatter(input[measureName], locale)]);
+    output.push([
+      getCaption(measure, locale),
+      () => formatter(input[measureName], locale),
+    ]);
 
     return output;
   };
@@ -100,7 +104,7 @@ type MetaMeasures = "moe" | "lci" | "uci" | "src" | "clt";
  * @param {Record<string, string>} names
  */
 function areMetaMeasuresZero(
-  dataset: Record<string, unknown>[],
+  dataset: DataPoint[],
   {moeName, lciName, uciName, srcName, cltName}: Record<`${MetaMeasures}Name`, string>,
 ) {
   const results: Record<string, boolean> = {};

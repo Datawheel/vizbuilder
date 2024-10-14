@@ -1,3 +1,5 @@
+import type {DataPoint} from "../schema";
+
 /**
  * Serializes a list of strings into an abbreviated, comma-separated enumeration
  * so that the first maxPrinted tokens are shown, and the rest is described as
@@ -21,10 +23,7 @@ export function abbreviateList(list: string[], limit = 2): string {
 /**
  * Returns the ID column name for a label column name, if exists.
  */
-export function getColumnId(
-  columnName: string,
-  dataset: Record<string, unknown>[],
-): string {
+export function getColumnId(columnName: string, dataset: DataPoint[]): string {
   const firstItem = dataset[0];
   if (`ID ${columnName}` in firstItem) return `ID ${columnName}`;
   if (`${columnName} ID` in firstItem) return `${columnName} ID`;

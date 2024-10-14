@@ -3,6 +3,7 @@ import mapValues from "lodash/mapValues";
 import max from "lodash/max";
 import min from "lodash/min";
 import {
+  type DataPoint,
   DimensionType,
   type TesseractDimension,
   type TesseractHierarchy,
@@ -11,11 +12,15 @@ import {
   type TesseractProperty,
 } from "../schema";
 import type {Dataset} from "../structs";
+import {filterMap} from "./array";
 import type {Column, LevelColumn} from "./columns";
+import {isOneOf} from "./validation";
+
+export type PrimitiveType = "string" | "number" | "boolean";
 
 export interface Datagroup {
   columns: Record<string, Column>;
-  dataset: Record<string, unknown>[];
+  dataset: DataPoint[];
   locale: string;
 
   measureColumns: {
@@ -25,75 +30,61 @@ export interface Datagroup {
   }[];
 
   // We assume a unique time hierarchy in the data
-  timeHierarchy?: {
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    levels: TesseractLevel[];
-    hasID: Record<string, boolean>;
-    members: Record<string, number[]>;
-  };
+  timeHierarchy?: CategoryAxis;
 
-  geoHierarchies: {
-    // Keys are Hierarchy names
-    [K: string]: {
-      dimension: TesseractDimension;
-      hierarchy: TesseractHierarchy;
-      levels: TesseractLevel[];
-      hasID: Record<string, boolean>;
-      members: Record<string, number[]>;
-    };
-  };
+  // Keys are Hierarchy names
+  nonTimeHierarchies: {[K: string]: CategoryAxis};
+}
 
-  stdHierarchies: {
-    // Keys are Hierarchy names
-    [K: string]: {
-      dimension: TesseractDimension;
-      hierarchy: TesseractHierarchy;
-      levels: TesseractLevel[];
-      hasID: Record<string, boolean>;
-      members: Record<string, number[]>;
-    };
-  };
+export interface CategoryAxis {
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  levels: AxisSeries[];
+}
 
-  propertyColumns: {
-    // Keys are Level names
-    [K: string]: {
-      dimension: TesseractDimension;
-      hierarchy: TesseractHierarchy;
-      level: TesseractLevel;
-      properties: TesseractProperty[];
-      members: Record<string, (number | string | boolean)[]>;
-    };
+export interface AxisSeries {
+  name: string;
+  type: PrimitiveType;
+  members: string[] | number[] | boolean[];
+  level: TesseractLevel;
+  properties: TesseractProperty[];
+  captions: {
+    // Keys are Column.name, not LevelCaption.entity.name
+    [K: string]: LevelCaption;
   };
+}
+
+export interface LevelCaption {
+  entity: TesseractLevel | TesseractProperty;
+  type: PrimitiveType;
+  members: string[] | number[] | boolean[];
 }
 
 /** */
 export function buildDatagroup(ds: Dataset): Datagroup {
   const {columns, data, locale} = ds;
 
+  const collator = new Intl.Collator(locale, {numeric: true, ignorePunctuation: false});
+
   const columnList = Object.values(columns);
 
   const measureColumns = columnList.filter(column => column.type === "measure");
-  const levelColumns = columnList
-    .filter(column => column.type === "level")
-    .filter(column => !column.isID);
-  const propertyColumns = columnList.filter(column => column.type === "property");
 
-  const levelHasID = Object.fromEntries(
-    levelColumns.map(column => [column.name, `${column.name} ID` in columns]),
+  const levelColumns = columnList.filter(column => column.type === "level");
+
+  const propertyColumns = groupBy(
+    columnList.filter(column => column.type === "property"),
+    column => column.level.name,
   );
 
-  const timeColumns = levelColumns
-    .filter(column => column.dimension.type === DimensionType.TIME)
-    .sort((a, b) => a.level.depth - b.level.depth);
+  const timeColumns = levelColumns.filter(
+    column => column.dimension.type === DimensionType.TIME,
+  );
 
-  const geoColumns = levelColumns
-    .filter(column => column.dimension.type === DimensionType.GEO)
-    .sort((a, b) => a.level.depth - b.level.depth);
-
-  const stdColumns = levelColumns
-    .filter(column => column.dimension.type === DimensionType.STANDARD)
-    .sort((a, b) => a.level.depth - b.level.depth);
+  const nonTimeColumns = groupBy(
+    levelColumns.filter(column => column.dimension.type !== DimensionType.TIME),
+    column => column.hierarchy.name,
+  );
 
   return {
     columns,
@@ -108,47 +99,68 @@ export function buildDatagroup(ds: Dataset): Datagroup {
       };
     }),
     timeHierarchy: timeColumns.length ? adaptLevelList(timeColumns) : undefined,
-    geoHierarchies: mapValues(
-      groupBy(geoColumns, column => column.hierarchy.name),
-      adaptLevelList,
-    ),
-    stdHierarchies: mapValues(
-      groupBy(stdColumns, column => column.hierarchy.name),
-      adaptLevelList,
-    ),
-    propertyColumns: mapValues(
-      groupBy(propertyColumns, column => column.level.name),
-      columns => ({
-        dimension: columns[0].dimension,
-        hierarchy: columns[0].hierarchy,
-        level: columns[0].level,
-        properties: columns.map(column => column.property),
-        members: Object.fromEntries(
-          columns.map(column => {
-            return [column.name, getUniqueMembers<string>(data, column.name).sort()];
-          }),
-        ),
-      }),
-    ),
+    nonTimeHierarchies: mapValues(nonTimeColumns, adaptLevelList),
   };
 
-  function adaptLevelList(columns: LevelColumn[]) {
+  /**
+   * We assume all columns in the array belong to the same hierarchy.
+   */
+  function adaptLevelList(columns: LevelColumn[]): CategoryAxis {
+    const captionColumnMap = Object.fromEntries(
+      filterMap(columns, column => {
+        const propColumns = propertyColumns[column.level.name] || [];
+        return column.isID ? null : [column.name, [column, ...propColumns]];
+      }),
+    );
     return {
       dimension: columns[0].dimension,
       hierarchy: columns[0].hierarchy,
-      levels: columns.map(column => column.level),
-      hasID: Object.fromEntries(
-        columns.map(column => [column.name, levelHasID[column.name]]),
-      ),
-      members: Object.fromEntries(
-        columns.map(column => {
-          return [column.name, getUniqueMembers<number>(data, column.name).sort()];
+      levels: columns
+        .filter(column => column.isID)
+        .sort((a, b) => a.level.depth - b.level.depth)
+        .map(column => {
+          const {level} = column;
+          const columnNameWithoutID = column.name.replace(/\sID$/, "");
+          const propColumns = propertyColumns[level.name] || [];
+          const captionColumns = captionColumnMap[columnNameWithoutID] || propColumns;
+          const members = getUniqueMembers<string>(data, column.name).sort(
+            collator.compare,
+          );
+
+          return {
+            name: column.name,
+            type: getTypeFromMembers(members),
+            members,
+            level,
+            properties: propColumns.map(column => column.property),
+            captions: Object.fromEntries(
+              captionColumns.map(column => {
+                const entity = column.property || column.level;
+                const members = getUniqueMembers<string>(data, column.name).sort(
+                  collator.compare,
+                );
+                const type = getTypeFromMembers(members);
+                return [column.name, {entity, type, members}];
+              }),
+            ),
+          };
         }),
-      ),
     };
   }
 }
 
-function getUniqueMembers<T>(dataset: Record<string, unknown>[], column: string) {
-  return [...new Set(dataset.map(row => row[column]))] as T[];
+function getUniqueMembers<T>(dataset: DataPoint[], column: string): T[] {
+  return [...new Set(dataset.slice(0, 5e5).map(row => row[column]))] as T[];
+}
+
+function getTypeFromMembers(members: unknown[]) {
+  const types = new Set(members.map(item => typeof item));
+  if (types.size > 1) {
+    throw new Error(`Dataset contains a column multiple data types: ${types}`);
+  }
+  const value = [...types][0];
+  if (!isOneOf(value, ["string", "number", "boolean"])) {
+    throw new Error(`Invalid data type in dataset: ${value}`);
+  }
+  return value;
 }

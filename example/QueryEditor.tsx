@@ -1,7 +1,7 @@
-import {MultiSelect, Select, Stack} from "@mantine/core";
+import {MultiSelect, Select, Stack, Text} from "@mantine/core";
 import React, {useCallback, useMemo, useRef} from "react";
-import type {TesseractDimension, TesseractMeasure} from "../src/schema";
-import {type RequestParams, emptyRequestParams} from "./QueriesProvider";
+import {type TesseractDimension, type TesseractMeasure, getAnnotation } from "../src/schema";
+import type {RequestParams} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
 
 export function QueryEditor(props: {
@@ -10,7 +10,7 @@ export function QueryEditor(props: {
 }) {
   const {params} = props;
 
-  const {cubes} = useTesseract();
+  const {cubes, dataLocale} = useTesseract();
 
   const cubeOptions = useMemo(
     () =>
@@ -24,7 +24,7 @@ export function QueryEditor(props: {
   const cube = cubes[params.cube] || Object.values(cubes)[0];
 
   return (
-    <Stack>
+    <Stack h="50vh" justify="space-around">
       <Select
         label="Cube"
         data={cubeOptions}
@@ -37,10 +37,17 @@ export function QueryEditor(props: {
             console.log("Same cube selected");
           } else {
             console.log("New cube selected", cube);
-            props.onChange({...emptyRequestParams(), key: params.key, cube});
+            props.onChange({key: params.key, cube, drilldowns: [], measures: []});
           }
         }}
       />
+      {cube && (
+        <Text size="sm">
+          <span>{`${getAnnotation(cube, "topic", dataLocale)} > `}</span>
+          <span>{`${getAnnotation(cube, "subtopic", dataLocale)} > `}</span>
+          <span>{getAnnotation(cube, "table", dataLocale)}</span>
+        </Text>
+      )}
 
       <SelectMeasures
         options={cube.measures}

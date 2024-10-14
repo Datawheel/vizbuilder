@@ -1,12 +1,14 @@
 import type {TesseractMeasure} from "../schema";
-import type {CutItem} from "../structs";
 import {findFirstNumber} from "./find";
 
 /**
  * Checks if the provided string matches one of the options.
  */
-export function isOneOf<T extends string>(str: string, options: T[]): str is T {
-  return options.includes(str);
+export function isOneOf<T extends string>(
+  str: string | undefined,
+  options: T[],
+): str is T {
+  return options.includes(str as T);
 }
 
 /**
@@ -42,10 +44,6 @@ export function areKindaNumeric(list: string[], tolerance = 0.8) {
   const numericReducer = (sum, item) =>
     sum + (isNumeric(findFirstNumber(item, Number.NaN)) ? 1 : 0);
   return list.reduce(numericReducer, 0) / list.length > tolerance;
-}
-
-export function isCutItem(obj: unknown): obj is CutItem {
-  return hasProperty(obj, "level") && hasProperty(obj, "members");
 }
 
 /**

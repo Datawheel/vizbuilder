@@ -10,11 +10,12 @@ import {filterMap} from "../toolbox/array";
 import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {yieldPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {buildSeries, buildTimeSeries} from "./common";
+import { isOneOf } from "../toolbox/validation";
+import {buildTimeSeries} from "./common";
 
-export interface TreeMap {
+export interface StackedArea {
   key: string;
-  type: "treemap";
+  type: "stackedarea";
   datagroup: Datagroup;
   values: {
     measure: TesseractMeasure;
@@ -22,7 +23,6 @@ export interface TreeMap {
     maxValue: number;
   };
   series: {
-    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -30,7 +30,6 @@ export interface TreeMap {
     members: string[] | number[] | boolean[];
   }[];
   timeline?: {
-    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -38,25 +37,24 @@ export interface TreeMap {
   };
 }
 
-/**
- * Requirements:
- * - Present 2 levels of treemap hierarchy
- *
- * Notes:
- * - If the 2 levels belong to the same dimension, ensure level depths apply.
- */
-export function examineTreemapConfigs(
+export function examineStackedareaConfigs(
   dg: Datagroup,
-  {TREE_MAP_SHAPE_MAX}: ChartLimits,
-): TreeMap[] {
+  {STACKED_SHAPE_MAX, STACKED_TIME_MEMBER_MIN}: ChartLimits,
+): StackedArea[] {
   const {dataset, timeHierarchy: timeAxis} = dg;
-  const chartType = "treemap" as const;
+  const chartType = "stackedarea" as const;
 
   const categoryAxes = Object.values(dg.nonTimeHierarchies);
 
   const timeline = buildTimeSeries(timeAxis);
 
-  // Pick only levels with member counts above the limit
+  // Bail if there's no Time dimension
+  if (!timeAxis || !timeline) return [];
+
+  // Bail if there's not enough time points to draw a line
+  if (timeline.members.length < STACKED_TIME_MEMBER_MIN) return [];
+
+  // Pick only levels with at least 2 members
   const nonTimeLevels = categoryAxes.flatMap(axis =>
     filterMap(axis.levels, axisLevel => {
       return axisLevel.members.length > 1 ? ([axis, axisLevel] as const) : null;
@@ -71,11 +69,12 @@ export function examineTreemapConfigs(
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement;
 
-    if (valueAxis.parentMeasure) return [];
-
-    // Treemaps are valid only with SUM-aggregated measures
+    // Stacked Area charts are valid only with SUM-aggregated measures
     if (![Aggregator.SUM, Aggregator.COUNT, "SUM", "COUNT"].includes(aggregator))
       return [];
+
+    // Bail if measure is marked as 'Percentage' or 'Rate'
+    if (["Percentage", "Rate"].includes(units as string)) return []
 
     // All values must be positive
     if (dataset.some(row => (row[measure.name] as number) < 0)) return [];
@@ -88,33 +87,42 @@ export function examineTreemapConfigs(
 
     const keyChain = [chartType, dataset.length, measure.name];
 
-    return [...yieldPermutations(nonTimeLevels)].flatMap<TreeMap>(([hier1, hier2]) => {
-      const [axis1, level1] = hier1;
-      const [axis2, level2] = hier2;
+    return [...yieldPermutations(nonTimeLevels)].flatMap<StackedArea>(
+      ([hier1, hier2]) => {
+        const [axis1, level1] = hier1;
+        const [axis2, level2] = hier2;
 
-      // Bail if levels belong to same hierarchy but don't respect depths
-      if (
-        axis1.dimension.name === axis2.dimension.name &&
-        axis1.hierarchy.name === axis2.hierarchy.name &&
-        level1.level.depth < level2.level.depth
-      )
-        return [];
+        const members1 = level1.members;
+        const members2 = level2.members;
 
-      const members1 = level1.members;
-      const members2 = level2.members;
+        // Bail if the amount of shapes to draw is above the limit
+        if (members1.length * members2.length > STACKED_SHAPE_MAX) return [];
 
-      // Bail if number of shapes to draw exceeds limit
-      if (members1.length * members2.length > TREE_MAP_SHAPE_MAX) return [];
-
-      return {
-        key: shortHash(keyChain.concat(level1.level.name, level2.level.name).join("|")),
-        type: chartType,
-        dataset,
-        locale: dg.locale,
-        values,
-        series: [buildSeries(axis1, level1), buildSeries(axis2, level2)],
-        timeline,
-      };
-    });
+        return {
+          key: shortHash(keyChain.concat(level1.level.name, level2.level.name).join("|")),
+          type: chartType,
+          dataset,
+          locale: dg.locale,
+          values,
+          series: [
+            {
+              dimension: axis1.dimension,
+              hierarchy: axis1.hierarchy,
+              level: level1.level,
+              captions: level1.captions,
+              members: members1,
+            },
+            {
+              dimension: axis2.dimension,
+              hierarchy: axis2.hierarchy,
+              level: level2.level,
+              captions: level2.captions,
+              members: members2,
+            },
+          ],
+          timeline,
+        };
+      },
+    );
   });
 }

@@ -1,30 +1,67 @@
+import {Group, Select, SimpleGrid, Switch} from "@mantine/core";
+import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import cls from "clsx";
 import React, {useEffect, useMemo, useState} from "react";
 import {ObjectInspector} from "react-inspector";
 import type {VizbuilderProps} from "../src";
+import {D3plusBarchart} from "../src/components/Barchart";
 import {ChartCard} from "../src/components/ChartCard";
+import {D3plusChoropleth} from "../src/components/Geomap";
+import {D3plusLineplot} from "../src/components/Lineplot";
+import { D3plusTreemap } from "../src/components/Treemap";
 import {castArray} from "../src/toolbox/array";
-import {generateCharts, normalizeAccessor} from "../src/toolbox/generateCharts";
+import {
+  type Chart,
+  type ChartType,
+  generateCharts,
+  normalizeAccessor,
+} from "../src/toolbox/generateCharts";
+
+const components: Record<
+  ChartType,
+  React.ComponentType<{config: Chart; fullMode: boolean}>
+> = {
+  barchart: D3plusBarchart,
+  choropleth: D3plusChoropleth,
+  lineplot: D3plusLineplot,
+  treemap: D3plusTreemap,
+};
 
 export function Vizdebugger(props: VizbuilderProps) {
-  const {chartLimits, chartTypes, datasets, datacap, topojsonConfig} = props;
+  const {chartLimits, chartTypes, datacap, datasets, topojsonConfig} = props;
 
-  const charts = useMemo(
-    () =>
-      generateCharts(castArray(datasets), {
-        chartLimits: chartLimits,
-        chartTypes: chartTypes,
-        datacap: datacap,
-        topojsonConfig: topojsonConfig,
-      }),
-    [datasets, chartLimits, chartTypes, datacap, topojsonConfig],
-  );
+  const charts = useMemo(() => {
+    const options = {chartLimits, chartTypes, datacap, topojsonConfig};
+    const charts = generateCharts(castArray(datasets), options);
+    return Object.fromEntries(charts.map(chart => [chart.key, chart]));
+  }, [datasets, chartLimits, chartTypes, datacap, topojsonConfig]);
+
+  const [chartKey, setChartKey] = useLocalStorage({
+    key: "Vizdebugger:chartKey",
+    getInitialValueInEffect: false,
+    defaultValue: Object.keys(charts)[0] || "",
+  });
+  const [fullMode, setFullMode] = useDisclosure(true);
+
+  const chartConfig = charts[chartKey];
+  const ChartComponent = chartConfig && components[chartConfig.type];
 
   return (
-    <div>
-      <ObjectInspector data={props} expandLevel={1} />
-      <ObjectInspector data={charts} expandLevel={3} />
-    </div>
+    <SimpleGrid cols={2}>
+      <div>
+        <Group grow>
+          <Select data={Object.keys(charts)} value={chartKey} onChange={setChartKey} />
+          <Switch label="Full mode" checked={fullMode} onChange={setFullMode.toggle} />
+        </Group>
+        {chartConfig && ChartComponent && (
+          <ChartComponent config={chartConfig} fullMode={fullMode} />
+        )}
+      </div>
+      <div>
+        <ObjectInspector data={props} expandLevel={1} />
+        <ObjectInspector data={charts} expandLevel={2} />
+      </div>
+    </SimpleGrid>
   );
 }
 

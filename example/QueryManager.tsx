@@ -32,7 +32,10 @@ export function QueryManager() {
               color="blue"
               radius="xl"
               variant={item === currentQuery ? "filled" : "transparent"}
-              onClick={() => setEditIndex(index)}
+              onClick={(evt) => {
+                evt.stopPropagation();
+                setEditIndex(index)
+              }}
             >
               <IconEdit size="xs" />
             </ActionIcon>

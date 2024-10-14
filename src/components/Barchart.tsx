@@ -1,85 +1,92 @@
 import {BarChart as BarChartComponent} from "d3plus-react";
 import React, {useMemo} from "react";
+import {ObjectInspector} from "react-inspector";
 import type {BarChart} from "../charts/barchart";
+import {aggregatorIn} from "../charts/common";
+import type {D3plusConfig} from "../d3plus";
+import type {DataPoint} from "../schema";
 import {useTranslation} from "../toolbox/translation";
 import {useFormatter} from "./FormatterProvider";
 
-export interface BarChartD3plusConfig {
-  container: string; // CSS selector for the container element
-  data: Record<string, unknown>[];
-  x: string; // Key for the x-axis values
-  y: string; // Key for the y-axis values
-  groupBy?: string; // Optional grouping key
-  title?: string; // Optional title for the chart
-  xConfig?: {
-    label?: string; // Label for the x-axis
-    tickFormat?: (d: any) => string | number; // Custom tick formatting function
-  };
-  yConfig?: {
-    label?: string; // Label for the y-axis
-    tickFormat?: (d: any) => string | number; // Custom tick formatting function
-  };
-  barPadding?: number; // Padding between bars
-  tooltip?: boolean | ((d: any) => string); // Tooltip configuration or custom function
-  colorScale?: string | ((d: any) => string); // Color scale or custom color function
-}
-
-export function D3plusBarchart(props: {chart: BarChart; mode: "minimal" | "full"}) {
-  const {chart, mode} = props;
+export function D3plusBarchart(props: {config: BarChart; fullMode: boolean}) {
+  const {config: chart, fullMode} = props;
 
   const {t} = useTranslation();
 
   const {getFormatter} = useFormatter();
 
   const config = useMemo(() => {
-    const {locale, values, series, timeline} = chart;
+    const {values, series, timeline} = chart;
+    const {columns, dataset, locale} = chart.datagroup;
+    const [mainSeries, ...otherSeries] = series;
 
-    const measureFormatter = getFormatter(values.measure.name);
-    const seriesFormatter = mapValues getFormatter(series)
-    const d3plusLocale = uiParams.userConfig.locale || locale;
+    const collate = new Intl.Collator(locale, {numeric: true, ignorePunctuation: true});
 
-    const firstLevel = levels[0];
-    const firstLevelName = firstLevel.caption;
-    const measureName = measure.name;
+    const measureFormatter = getFormatter(values.measure);
+    const measureAggregator =
+      values.measure.annotations.aggregation_method || values.measure.aggregator;
+    const measureUnits = values.measure.annotations.units_of_measurement || "";
 
-    const config: BarChartD3plusConfig = {
-      data: chart.dataset,
+    const config: D3plusConfig = {
+      barPadding: fullMode ? 5 : 1,
+      data: dataset,
+      discrete: chart.orientation === "horizontal" ? "y" : "x",
+      groupBy: otherSeries.map(series => series.name),
+      groupPadding: fullMode ? 5 : 1,
+      label: (d: DataPoint) => otherSeries.map(series => d[series.level.name]).join("\n"),
       locale,
-      groupBy: [firstLevelName],
-      groupPadding: bigMode ? 5 : 1,
-      discrete: "y",
-      x: measureName,
-      xConfig: {
-        title: getCaption(measure, locale),
-        tickFormat: (d: any) => formatter(d, d3plusLocale),
+      stacked:
+        (otherSeries.length > 0 && aggregatorIn(measureAggregator, ["SUM"])) ||
+        ["Percentage", "Rate"].includes(measureUnits),
+      time: timeline?.level.name,
+      timeline: fullMode && timeline,
+      timelineConfig: {
+        brushing: false,
+        playButton: false,
       },
-      y: firstLevelName,
-      yConfig: {
-        title: getCaption(firstLevel, locale),
-        ticks: [],
-      },
-      stacked: measure.aggregator === "sum" && firstLevel.depth > 1,
-      ySort: propertySorterFactory(firstLevelName, dg.members[firstLevelName]),
+      total: !timeline,
     };
 
-    if (timeLevel) {
-      const hierarchy = timeLevel.hierarchy;
-      config.groupBy = hierarchy.levels
-        .slice(0, 1)
-        .filter((lvl: {caption: string}) => lvl.caption in dg.dataset[0])
-        .concat(levels)
-        .map((lvl: {caption: any}) => lvl.caption);
-      config.time = timeLevel.caption;
-    } else if (levels.length > 1) {
-      config.groupBy = levels.map((lvl: {caption: any}) => lvl.caption);
-    }
-
-    if (!config.time) {
-      delete config.total;
+    if (chart.orientation === "horizontal") {
+      Object.assign(config, {
+        x: values.measure.name,
+        xConfig: {
+          domain:
+            ["Percentage", "Rate"].includes(measureUnits) && values.maxValue <= 101
+              ? [0, 100]
+              : undefined,
+          title: values.measure.caption,
+          tickFormat: (d: number) => measureFormatter(d, locale),
+        },
+        y: mainSeries.level.name,
+        yConfig: {
+          title: mainSeries.level.caption,
+        },
+        ySort: collate.compare,
+      });
+    } else {
+      Object.assign(config, {
+        x: mainSeries.level.name,
+        xConfig: {
+          title: mainSeries.level.caption,
+        },
+        y: values.measure.name,
+        yConfig: {
+          title: values.measure.caption,
+          tickFormat: (d: number) => measureFormatter(d, locale),
+        },
+      });
     }
 
     return config;
-  }, [chart, t]);
+  }, [chart, fullMode, getFormatter]);
 
-  return <BarChartComponent config={config} />;
+  return (
+    <>
+      <BarChartComponent config={config} />
+      <ObjectInspector data={config} />
+    </>
+  );
 }
+
+D3plusBarchart.displayName = "BarChart";

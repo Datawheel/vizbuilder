@@ -2,10 +2,15 @@ import {Modal, SimpleGrid} from "@mantine/core";
 import cls from "clsx";
 import React, {useMemo, useState} from "react";
 import type {ChartLimits} from "../constants";
+import type {D3plusConfig} from "../d3plus";
 import type {TesseractLevel, TesseractMeasure} from "../schema";
-import type {ChartType, D3plusConfig, Dataset} from "../structs";
+import type {Dataset} from "../structs";
 import {castArray} from "../toolbox/array";
-import {generateCharts, normalizeAccessor} from "../toolbox/generateCharts";
+import {
+  type ChartType,
+  generateCharts,
+  normalizeAccessor,
+} from "../toolbox/generateCharts";
 import {ChartCard} from "./ChartCard";
 import {NonIdealState} from "./NonIdealState";
 

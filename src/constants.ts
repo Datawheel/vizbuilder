@@ -1,6 +1,8 @@
 export interface ChartLimits {
   /** Maximum number of bars in barchart */
   BARCHART_MAX_BARS: number;
+  /** Maximum number of series stacked in the single bar */
+  BARCHART_MAX_STACKED_BARS: number;
   /** Maximum number of bars in a year barchart */
   BARCHART_YEAR_MAX_BARS: number;
   /** Max number of groups to be rendered in a donut or pie chart */
@@ -22,6 +24,7 @@ export interface ChartLimits {
  */
 export const DEFAULT_CHART_LIMITS: ChartLimits = {
   BARCHART_MAX_BARS: 20,
+  BARCHART_MAX_STACKED_BARS: 10,
   BARCHART_YEAR_MAX_BARS: 20,
   DONUT_SHAPE_MAX: 30,
   LINEPLOT_LINE_POINT_MIN: 2,

@@ -88,6 +88,8 @@ export type Annotations = {
   [K: string]: string | undefined;
 };
 
+export type DataPoint = Record<string, unknown>;
+
 export interface TesseractDataRequest {
   cube: string;
 
@@ -189,7 +191,7 @@ export interface TesseractDataResponse {
   error?: true;
   detail?: string;
   columns: string[];
-  data: Record<string, unknown>[];
+  data: DataPoint[];
   page: {
     limit: number;
     offset: number;
@@ -284,6 +286,8 @@ export interface TesseractMeasure {
     details?: string;
     /** Specifies the type of calculated error this measure returns */
     error_type?: "moe" | "lci" | "uci";
+    /** Specifies a custom formatter template, hydratable with d3plus-format */
+    format_template?: string;
     /** The measure which the RCA calculation uses */
     rca_measure?: string;
     /** Comma separated list of the dimensions which the RCA calculation uses */
@@ -347,7 +351,7 @@ export interface TesseractProperty {
   name: string;
   caption: string;
   annotations: Annotations;
-  type: string;
+  type: ColumnType;
 }
 
 export interface TesseractMember {

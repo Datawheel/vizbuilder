@@ -3,10 +3,10 @@ import flattenDeep from "lodash/flattenDeep";
 import includes from "lodash/includes";
 import range from "lodash/range";
 import type {ChartLimits} from "../constants";
-import {Aggregator, DimensionType, type TesseractLevel} from "../schema";
-import type {ChartType} from "../structs";
+import {Aggregator, type DataPoint, DimensionType, type TesseractLevel} from "../schema";
 import {getPermutations} from "./array";
 import type {Datagroup} from "./datagroup";
+import type {ChartType} from "./generateCharts";
 import {yieldPermutations} from "./iterator";
 import {shortHash} from "./math";
 import {yieldLevels} from "./tesseract";
@@ -73,7 +73,7 @@ export function getNumberGroupsFromLevels(
  * Generates a unique key based on the parameters set for a chart.
  */
 function keyMaker(
-  dataset: Record<string, unknown>[],
+  dataset: DataPoint[],
   levels: TesseractLevel[],
   measureSet: MeasureSet,
   chartType: ChartType,

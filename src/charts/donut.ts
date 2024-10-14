@@ -4,17 +4,15 @@ import type {
   TesseractHierarchy,
   TesseractLevel,
   TesseractMeasure,
-  TesseractProperty,
 } from "../schema";
-import {getLast} from "../toolbox/array";
-import type {Datagroup} from "../toolbox/datagroup";
+import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
+import {buildTimeSeries} from "./common";
 
 export interface DonutChart {
   key: string;
   type: "donut";
-  dataset: Record<string, unknown>[];
-  locale: string;
+  datagroup: Datagroup;
   values: {
     measure: TesseractMeasure;
     minValue: number;
@@ -24,14 +22,14 @@ export interface DonutChart {
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
-    property?: TesseractProperty;
+    captions: {[K: string]: LevelCaption};
     members: string[] | number[] | boolean[];
   };
   timeline?: {
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
-    members: string[] | number[];
+    members: string[] | number[] | boolean[];
   };
 }
 
@@ -48,58 +46,54 @@ export function examineDonutConfigs(
   dg: Datagroup,
   {DONUT_SHAPE_MAX}: ChartLimits,
 ): DonutChart[] {
-  const {dataset, timeHierarchy} = dg;
+  const {dataset, timeHierarchy: timeAxis} = dg;
   const chartType = "donut" as const;
 
-  // Pick only hierarchies from a non-time dimension
-  const nonTimeHierarchies = {...dg.geoHierarchies, ...dg.stdHierarchies};
-  const qualiAxes = Object.values(nonTimeHierarchies);
+  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+
+  const timeline = buildTimeSeries(timeAxis);
 
   return (
     dg.measureColumns
       // Work only with the mainline measures
       .filter(axis => !axis.parentMeasure)
-      .flatMap(quantiAxis => {
-        const {measure, range} = quantiAxis;
-        const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+      .flatMap(valueAxis => {
+        const {measure, range} = valueAxis;
         const units = measure.annotations.units_of_measurement;
 
         // Bail if measure doesn't represent percentage, rate, or proportion
         if (units && !["Percentage", "Rate"].includes(units)) return [];
 
-        return qualiAxes.flatMap(axis => {
-          const keyChain = [chartType, dataset.length, measure.name];
+        const values = {
+          measure,
+          minValue: range[0],
+          maxValue: range[1],
+        };
 
-          return axis.levels.flatMap<DonutChart>(level => {
-            const members = axis.members[level.name];
+        return categoryAxes.flatMap(categoryAxis => {
+          const {dimension, hierarchy} = categoryAxis;
+          const keyChain = [
+            chartType,
+            dataset.length,
+            measure.name,
+            dimension.name,
+            hierarchy.name,
+          ];
 
-            // Bail if amount of segments in ring is above limits
-            if (members.length > DONUT_SHAPE_MAX) return [];
+          return categoryAxis.levels.flatMap<DonutChart>(axisLevel => {
+            const {captions, level, members} = axisLevel;
+
+            // Bail if amount of segments in ring is out of limits
+            if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];
 
             return {
               key: shortHash(keyChain.concat(level.name).join("|")),
               type: chartType,
               dataset,
               locale: dg.locale,
-              values: {
-                measure,
-                minValue: range[0],
-                maxValue: range[1],
-              },
-              series: {
-                dimension: axis.dimension,
-                hierarchy: axis.hierarchy,
-                level,
-                members,
-              },
-              timeline: timeHierarchy
-                ? (level => ({
-                    dimension: timeHierarchy.dimension,
-                    hierarchy: timeHierarchy.hierarchy,
-                    level,
-                    members: timeHierarchy.members[level.name],
-                  }))(getLast(timeHierarchy.levels))
-                : undefined,
+              values,
+              series: {dimension, hierarchy, level, captions, members},
+              timeline,
             };
           });
         });
