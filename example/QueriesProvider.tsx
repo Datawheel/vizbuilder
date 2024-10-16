@@ -1,6 +1,6 @@
 import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash";
-import React, {createContext, useContext, useMemo, useState} from "react";
+import React, {createContext, useContext, useMemo} from "react";
 import type {TesseractCube} from "../src/schema";
 
 export interface RequestParams {
@@ -15,8 +15,8 @@ interface QueriesContextValue {
   readonly currentQuery?: RequestParams;
   setCurrentQuery(key: string): void;
   clearQueries(): void;
-  createQuery(): void;
-  updateQuery(params: Partial<RequestParams> & {key: string}): void;
+  createQuery(key: string): void;
+  updateQuery(key: string, params: Partial<RequestParams>): void;
   deleteQuery(key: string): void;
 }
 
@@ -26,11 +26,16 @@ export function QueriesProvider(props: {
   children: React.ReactNode;
   cubes: Record<string, TesseractCube>;
 }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useLocalStorage({
+    key: "QueriesProvider:index",
+    getInitialValueInEffect: false,
+    defaultValue: 0,
+  });
+
   const [items, setItems] = useLocalStorage({
     key: "QueriesProvider:items",
     getInitialValueInEffect: false,
-    defaultValue: [emptyRequestParams()],
+    defaultValue: [randomRequestParams()] as RequestParams[],
   });
 
   const value = useMemo((): QueriesContextValue => {
@@ -40,21 +45,24 @@ export function QueriesProvider(props: {
       setCurrentQuery(key: string) {
         const index = items.findIndex(item => item.key === key);
         if (index > -1) setIndex(index);
+        else {
+          setIndex(items.length);
+          setItems([...items, emptyRequestParams(key)]);
+        }
       },
       clearQueries() {
-        setItems([emptyRequestParams()]);
-        setIndex(0);
+        setItems([]);
+        setIndex(-1);
       },
-      createQuery() {
-        const obj = emptyRequestParams();
-        setItems([...items, obj]);
+      createQuery(key: string) {
+        setItems([...items, emptyRequestParams(key)]);
         setIndex(items.length);
       },
-      updateQuery(params: Partial<RequestParams> & {key: string}) {
-        const index = items.findIndex(item => item.key === params.key);
+      updateQuery(key: string, params: Partial<RequestParams>) {
+        const index = items.findIndex(item => item.key === key);
         if (index > -1) {
-          const obj = {...items[index], ...params};
-          setItems(items.map(item => (item.key === params.key ? obj : item)));
+          const obj = {...items[index], ...params, key};
+          setItems(items.map(item => (item.key === key ? obj : item)));
         }
       },
       deleteQuery(key: string) {
@@ -63,20 +71,26 @@ export function QueriesProvider(props: {
         if (obj === items[index]) setIndex(0);
       },
     };
-  }, [index, items, setItems]);
+  }, [index, items, setIndex, setItems]);
 
   return (
     <QueriesContext.Provider value={value}>{props.children}</QueriesContext.Provider>
   );
 
-  function emptyRequestParams(): RequestParams {
-    const cubes = Object.values(props.cubes);
+  function emptyRequestParams(cubeName: string): RequestParams {
+    const cube = props.cubes[cubeName];
     return {
-      key: Math.random().toString(16).slice(2, 10),
-      cube: cubes.length ? cubes[Math.floor(Math.random() * cubes.length)].name : "",
+      key: cube.name,
+      cube: cube.name,
       drilldowns: [],
-      measures: [],
+      measures: cube.measures.map(item => item.name),
     };
+  }
+
+  function randomRequestParams(): RequestParams {
+    const cubes = Object.values(props.cubes);
+    const cube = cubes[Math.floor(Math.random() * cubes.length)];
+    return emptyRequestParams(cube.name);
   }
 }
 

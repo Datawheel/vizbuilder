@@ -1,6 +1,5 @@
 import {
   Badge,
-  Box,
   Flex,
   Header,
   Loader,
@@ -99,7 +98,7 @@ function App() {
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
   return (
-    <Box h="100vh">
+    <div style={{height: "100vh", backgroundColor: "#f0f0f0"}}>
       <Header height={51} p="xs" withBorder>
         <Flex direction="row" gap="xs" align="center" h={30}>
           <SegmentedControl
@@ -108,19 +107,19 @@ function App() {
             value={mode}
             onChange={setMode}
           />
-          <QueryManager />
-          {isLoading && <Loader variant="bars" />}
-          {error && (
-            <Badge color="red" variant="filled" title={error}>
-              Error
-            </Badge>
-          )}
           <SegmentedControl
             tt="uppercase"
             data={availableDataLocale}
             value={dataLocale}
             onChange={setDataLocale}
           />
+          <QueryManager />
+          {error && (
+            <Badge color="red" variant="filled" title={error}>
+              Error
+            </Badge>
+          )}
+          {isLoading && <Loader />}
         </Flex>
       </Header>
 
@@ -144,7 +143,7 @@ function App() {
           }}
         />
       </div>
-    </Box>
+    </div>
   );
 }
 
@@ -152,7 +151,7 @@ function mount(container) {
   const formatters = {
     Seconds: secondFormatter,
     Percentage: value => `${value}%`,
-    Rate: value => `${value*100}%`,
+    Rate: value => `${value * 100}%`,
   };
 
   const root = createRoot(container);
@@ -160,7 +159,7 @@ function mount(container) {
     <MantineProvider withGlobalStyles withNormalizeCSS>
       <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
         <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
-          <TranslationProvider defaultLocale="ar" translations={translations}>
+          <TranslationProvider defaultLocale="en" translations={translations}>
             <FormatterProvider items={formatters}>
               <App />
             </FormatterProvider>

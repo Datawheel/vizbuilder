@@ -24,7 +24,6 @@ export type ChartType =
   | "barchart"
   | "choropleth"
   | "donut"
-  // | "histogram"
   | "lineplot"
   | "stackedarea"
   | "treemap";
@@ -32,10 +31,10 @@ export type ChartType =
 const chartBuilders = {
   barchart: examineBarchartConfigs,
   choropleth: examineChoroplethMapConfigs,
-  // donut: examineDonutConfigs,
+  donut: examineDonutConfigs,
   lineplot: examineLineplotConfigs,
-  // treemap: examineTreemapConfigs,
-  // stackedarea: examineStackedareaConfigs,
+  stackedarea: examineStackedareaConfigs,
+  treemap: examineTreemapConfigs,
 };
 
 /** */
@@ -51,7 +50,7 @@ export function generateCharts(
   },
 ): Chart[] {
   const chartLimits = {...DEFAULT_CHART_LIMITS, ...options.chartLimits};
-  const chartTypes = options.chartTypes || (Object.keys(chartComponents) as ChartType[]);
+  const chartTypes = options.chartTypes || Object.keys(chartBuilders);
   const chartProps = {
     datacap: options.datacap ?? 2e4,
     getTopojsonConfig: normalizeAccessor(options.topojsonConfig || {}),

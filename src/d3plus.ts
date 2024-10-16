@@ -1,10 +1,43 @@
 import type {CSSProperties} from "react";
 import type {DataPoint} from "./schema";
 
-export type Position = "top" | "right" | "bottom" | "left";
+type AxisScale =
+  | "band"
+  | "diverging"
+  | "divergingLog"
+  | "divergingPow"
+  | "divergingSqrt"
+  | "divergingSymlog"
+  | "identity"
+  | "implicit"
+  | "jenks"
+  | "linear"
+  | "log"
+  | "ordinal"
+  | "point"
+  | "pow"
+  | "quantile"
+  | "quantize"
+  | "radial"
+  | "sequential"
+  | "sequentialLog"
+  | "sequentialPow"
+  | "sequentialQuantile"
+  | "sequentialSqrt"
+  | "sequentialSymlog"
+  | "sqrt"
+  | "symlog"
+  | "threshold"
+  | "time"
+  | "utc";
+
+type Position = "top" | "right" | "bottom" | "left";
+
+type DataPointAccessor<T> = string | ((d: DataPoint) => T);
 
 export type D3plusConfig<P extends DataPoint = DataPoint> = {
   data: P[] | string;
+  locale: string;
 
   aggs?: Record<keyof P, (d: P[keyof P]) => number | string>;
   barPadding?: number; // Padding between bars
@@ -13,7 +46,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
     axisConfig?: {
       tickFormat?: (d: number) => string;
     };
-    scale?: "linear" | "log" | "jenks";
+    scale?: AxisScale;
   };
   colorScalePosition?: false | Position;
   discrete?: "x" | "y"; // Sets orientation of main category series
@@ -32,7 +65,6 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   legendPosition?: Position;
   loadingMessage?: boolean;
   loadingHTML?: string; // innerHTML to write in the loading pin
-  locale?: string;
   on?: Record<string, (event: Event) => void>;
   stacked?: boolean;
   stackOrder?: string[];
@@ -45,10 +77,13 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   tooltipConfig?: {
     title?: (d: DataPoint) => string;
     body?: (d: DataPoint) => string;
-    thead?: [string, (d: DataPoint) => string][];
-    tbody?: [string, (d: DataPoint) => string][];
+    thead?: (d: DataPoint) => [string, string][];
+    tbody?: (d: DataPoint) => [string, string][];
   };
   shapeConfig?: Record<string, string | number>;
+  /** Value accessor for treemaps */
+  sum?: DataPointAccessor<number>;
+  value?: DataPointAccessor<number>;
   x?: string; // Key for the x-axis values
   xConfig?: {
     title?: string;

@@ -1,21 +1,27 @@
-import {Group, Select, SimpleGrid, Switch} from "@mantine/core";
+import {
+  ActionIcon,
+  Group,
+  Paper,
+  Select,
+  SimpleGrid,
+  Switch,
+  Text,
+  Title,
+} from "@mantine/core";
 import {useDisclosure, useLocalStorage} from "@mantine/hooks";
-import cls from "clsx";
-import React, {useEffect, useMemo, useState} from "react";
+import {IconWindowMaximize} from "@tabler/icons-react";
+import React, {forwardRef, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
 import type {VizbuilderProps} from "../src";
 import {D3plusBarchart} from "../src/components/Barchart";
-import {ChartCard} from "../src/components/ChartCard";
+import {D3plusDonut} from "../src/components/Donut";
+import {ErrorBoundary} from "../src/components/ErrorBoundary";
 import {D3plusChoropleth} from "../src/components/Geomap";
 import {D3plusLineplot} from "../src/components/Lineplot";
-import { D3plusTreemap } from "../src/components/Treemap";
+import {D3plusStacked} from "../src/components/StackedArea";
+import {D3plusTreemap} from "../src/components/Treemap";
 import {castArray} from "../src/toolbox/array";
-import {
-  type Chart,
-  type ChartType,
-  generateCharts,
-  normalizeAccessor,
-} from "../src/toolbox/generateCharts";
+import {type Chart, type ChartType, generateCharts} from "../src/toolbox/generateCharts";
 
 const components: Record<
   ChartType,
@@ -23,7 +29,9 @@ const components: Record<
 > = {
   barchart: D3plusBarchart,
   choropleth: D3plusChoropleth,
+  donut: D3plusDonut,
   lineplot: D3plusLineplot,
+  stackedarea: D3plusStacked,
   treemap: D3plusTreemap,
 };
 
@@ -33,143 +41,88 @@ export function Vizdebugger(props: VizbuilderProps) {
   const charts = useMemo(() => {
     const options = {chartLimits, chartTypes, datacap, topojsonConfig};
     const charts = generateCharts(castArray(datasets), options);
-    return Object.fromEntries(charts.map(chart => [chart.key, chart]));
+    return charts;
   }, [datasets, chartLimits, chartTypes, datacap, topojsonConfig]);
 
-  const [chartKey, setChartKey] = useLocalStorage({
-    key: "Vizdebugger:chartKey",
+  const chartOptions = useMemo(
+    () =>
+      charts.map((chart, index) => ({
+        chart,
+        label: `${chart.key} - ${chart.values.measure.name}`,
+        value: index,
+      })),
+    [charts],
+  );
+
+  const [chartIndex, setChartIndex] = useLocalStorage({
+    key: "Vizdebugger:chartIndex",
     getInitialValueInEffect: false,
-    defaultValue: Object.keys(charts)[0] || "",
+    defaultValue: 0,
   });
   const [fullMode, setFullMode] = useDisclosure(true);
 
-  const chartConfig = charts[chartKey];
+  const chartConfig = charts[chartIndex];
   const ChartComponent = chartConfig && components[chartConfig.type];
 
   return (
     <SimpleGrid cols={2}>
       <div>
-        <Group grow>
-          <Select data={Object.keys(charts)} value={chartKey} onChange={setChartKey} />
-          <Switch label="Full mode" checked={fullMode} onChange={setFullMode.toggle} />
-        </Group>
-        {chartConfig && ChartComponent && (
-          <ChartComponent config={chartConfig} fullMode={fullMode} />
-        )}
+        <Title order={3} mb="xs">
+          Dataset
+        </Title>
+        <Paper shadow="xs" p="xs">
+          <ObjectInspector data={props.datasets} expandLevel={1} />
+        </Paper>
+        <Title order={3} mt="lg" mb="xs">
+          Generated charts
+        </Title>
+        <SimpleGrid cols={3}>
+          {charts.map((chart, index) => (
+            <Paper key={chart.key} shadow="xs" p="xs" pos="relative">
+              <ObjectInspector data={chart} expandLevel={1} />
+              <ActionIcon
+                sx={{position: "absolute", right: 0, bottom: 0, margin: "0.25rem"}}
+                size="xs"
+                onClick={() => setChartIndex(index)}
+              >
+                <IconWindowMaximize />
+              </ActionIcon>
+            </Paper>
+          ))}
+        </SimpleGrid>
       </div>
       <div>
-        <ObjectInspector data={props} expandLevel={1} />
-        <ObjectInspector data={charts} expandLevel={2} />
+        <Group grow mb="lg">
+          <Select
+            data={chartOptions}
+            itemComponent={ChartItem}
+            onChange={setChartIndex}
+            value={chartIndex}
+          />
+          <Switch label="Full mode" checked={fullMode} onChange={setFullMode.toggle} />
+        </Group>
+        <ErrorBoundary>
+          {chartConfig && ChartComponent && (
+            <ChartComponent config={chartConfig} fullMode={fullMode} />
+          )}
+        </ErrorBoundary>
       </div>
     </SimpleGrid>
   );
 }
 
-export function VizdebuggerOG(props: VizbuilderProps) {
-  const {chartLimits, chartTypes} = props;
-
-  const [currentChart, setCurrentChart] = useState("");
-  const [isUniqueChart, setUniqueChart] = useState(false);
-  const [isSingleChart, setSingleChart] = useState(false);
-
-  const charts = useMemo(
-    () =>
-      generateCharts(castArray(props.datasets), {
-        chartLimits: chartLimits,
-        chartTypes: chartTypes,
-        datacap: props.datacap,
-        topojsonConfig: props.topojsonConfig,
-      }),
-    [props.datasets, chartLimits, chartTypes, props.datacap, props.topojsonConfig],
-  );
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies:
-  useEffect(() => {
-    if (charts.length > 0) {
-      const params = new URLSearchParams(window.location.search);
-      const chart = params.get("chart") || currentChart || charts[0].key;
-      setCurrentChart(chart);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (currentChart) {
-      const params = new URLSearchParams({chart: `${currentChart}`});
-      const nextLocation = `${window.location.pathname}?${params}`;
-      window.history.replaceState(currentChart, "", nextLocation);
-    }
-  }, [currentChart]);
-
-  const chartIndex = charts.findIndex(chart => chart.key === currentChart);
-
-  const content = useMemo(() => {
-    if (charts.length === 0) {
-      return <div>No charts outputted.</div>;
-    }
-    const chart = charts[chartIndex];
-    if (!chart) {
-      return <div>Chart with key {currentChart} not found.</div>;
-    }
-    const measureConfig = normalizeAccessor(props.measureConfig || {});
-
-    return (
-      <ChartCard
-        chart={chart}
-        currentChart={isSingleChart || isUniqueChart ? currentChart : ""}
-        downloadFormats={props.downloadFormats}
-        isSingleChart={isSingleChart}
-        key={chart.key}
-        measureConfig={measureConfig}
-        onToggle={() => null}
-        showConfidenceInt={props.showConfidenceInt || false}
-        userConfig={props.userConfig || {}}
-      />
-    );
-  }, [
-    charts,
-    chartIndex,
-    currentChart,
-    props.downloadFormats,
-    props.measureConfig,
-    props.userConfig,
-    isSingleChart,
-    isUniqueChart,
-    props.showConfidenceInt,
-  ]);
-
+const ChartItem = forwardRef<
+  HTMLDivElement,
+  {label: string; value: string; chart: Chart}
+>((props, ref) => {
+  const {chart, label, value, ...others} = props;
+  const drilldowns = castArray(chart.series)
+    .map(series => series.level.name)
+    .join(", ");
   return (
-    <div className={cls("vb-wrapper debugger", props.className)}>
-      <div className="vb-toolbar-wrapper">
-        {props.toolbar}
-        <button
-          type="button"
-          onClick={() => setCurrentChart(charts[Math.max(0, chartIndex - 1)].key)}
-        >
-          Prev
-        </button>
-        <span>{currentChart}</span>
-        <button
-          type="button"
-          onClick={() =>
-            setCurrentChart(charts[Math.min(chartIndex + 1, charts.length - 1)].key)
-          }
-        >
-          Next
-        </button>
-        <label>
-          <input type="checkbox" onChange={() => setUniqueChart(!isUniqueChart)} />
-          <span>Unique</span>
-        </label>
-        <label>
-          <input type="checkbox" onChange={() => setSingleChart(!isSingleChart)} />
-          <span>Single</span>
-        </label>
-      </div>
-      <div className="vb-charts-wrapper unique">{content}</div>
-      <div className="vb-props-wrapper">
-        <ObjectInspector data={props.datasets} />
-        <ObjectInspector data={charts[chartIndex]} />
-      </div>
+    <div ref={ref} {...others}>
+      <Text>{`${chart.type}: ${chart.key}`}</Text>
+      <Text size="xs">{`${chart.values.measure.name} [${chart.values.measure.aggregator}] - ${drilldowns}`}</Text>
     </div>
   );
-}
+});

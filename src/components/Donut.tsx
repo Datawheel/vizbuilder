@@ -1,11 +1,12 @@
-import {Treemap as TreeMapComponent} from "d3plus-react";
+import {Donut as DonutComponent} from "d3plus-react"
 import React, {useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
-import type {TreeMap} from "../charts/treemap";
+import type {DonutChart} from "../charts/donut";
 import type {D3plusConfig} from "../d3plus";
+import type {DataPoint} from "../schema";
 import {useFormatter} from "./FormatterProvider";
 
-export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
+export function D3plusDonut(props: {config: DonutChart; fullMode: boolean}) {
   const {config: chart, fullMode} = props;
 
   const {getFormatter} = useFormatter();
@@ -18,14 +19,17 @@ export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
 
     const config: D3plusConfig = {
       data: dataset,
-      label: d => series.map(series => d[series.level.name]).join("\n"),
+      groupBy: [series.name],
+      label: (d: DataPoint) => d[series.level.name] as string,
       locale,
-      groupBy: series.map(series => series.name),
-      sum: values.measure.name,
       time: timeline?.name,
-      timeline: timeline && fullMode,
-      threshold: 0.005,
-      thresholdName: series[0].name,
+      timeline: fullMode && timeline,
+      timelineConfig: {
+        brushing: false,
+        playButton: false,
+      },
+      total: !timeline,
+      value: values.measure.name,
     };
 
     return config;
@@ -33,7 +37,7 @@ export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
 
   return (
     <>
-      <TreeMapComponent config={config} />
+      <DonutComponent config={config} />
       <ObjectInspector data={config} />
     </>
   );

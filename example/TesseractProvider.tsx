@@ -73,8 +73,8 @@ export function TesseractProvider(props: {
       url.search = new URLSearchParams({
         cube: params.cube,
         locale: schema.locale,
-        drilldowns: params.drilldowns.join(","),
-        measures: params.measures.join(","),
+        drilldowns: params.drilldowns.sort().join(","),
+        measures: params.measures.sort().join(","),
       }).toString();
 
       return fetch(url, {...serverConfig, signal: controller.signal}).then(response =>

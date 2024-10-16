@@ -26,20 +26,22 @@ export function D3plusBarchart(props: {config: BarChart; fullMode: boolean}) {
     const measureAggregator =
       values.measure.annotations.aggregation_method || values.measure.aggregator;
     const measureUnits = values.measure.annotations.units_of_measurement || "";
+    const isPercentage = ["Percentage", "Rate"].includes(measureUnits);
 
     const config: D3plusConfig = {
       barPadding: fullMode ? 5 : 1,
       data: dataset,
       discrete: chart.orientation === "horizontal" ? "y" : "x",
-      groupBy: otherSeries.map(series => series.name),
+      groupBy:
+        otherSeries.length > 0 ? otherSeries.map(series => series.name) : undefined,
       groupPadding: fullMode ? 5 : 1,
-      label: (d: DataPoint) => otherSeries.map(series => d[series.level.name]).join("\n"),
+      label: (d: DataPoint) => series.map(series => d[series.level.name]).join("\n"),
       locale,
       stacked:
         (otherSeries.length > 0 && aggregatorIn(measureAggregator, ["SUM"])) ||
-        ["Percentage", "Rate"].includes(measureUnits),
-      time: timeline?.level.name,
-      timeline: fullMode && timeline,
+        isPercentage,
+      time: timeline?.name === "Quarter ID" ? timeline.level.name : timeline?.name,
+      timeline: timeline && fullMode,
       timelineConfig: {
         brushing: false,
         playButton: false,
@@ -51,10 +53,6 @@ export function D3plusBarchart(props: {config: BarChart; fullMode: boolean}) {
       Object.assign(config, {
         x: values.measure.name,
         xConfig: {
-          domain:
-            ["Percentage", "Rate"].includes(measureUnits) && values.maxValue <= 101
-              ? [0, 100]
-              : undefined,
           title: values.measure.caption,
           tickFormat: (d: number) => measureFormatter(d, locale),
         },

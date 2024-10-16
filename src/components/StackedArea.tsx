@@ -1,11 +1,12 @@
-import {Treemap as TreeMapComponent} from "d3plus-react";
+import {StackedArea as StackedAreaComponent} from "d3plus-react";
 import React, {useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
-import type {TreeMap} from "../charts/treemap";
+import type {StackedArea} from "../charts/stackedarea";
 import type {D3plusConfig} from "../d3plus";
+import {ErrorBoundary} from "./ErrorBoundary";
 import {useFormatter} from "./FormatterProvider";
 
-export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
+export function D3plusStacked(props: {config: StackedArea; fullMode: boolean}) {
   const {config: chart, fullMode} = props;
 
   const {getFormatter} = useFormatter();
@@ -18,14 +19,11 @@ export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
 
     const config: D3plusConfig = {
       data: dataset,
-      label: d => series.map(series => d[series.level.name]).join("\n"),
-      locale,
       groupBy: series.map(series => series.name),
-      sum: values.measure.name,
+      locale,
       time: timeline?.name,
       timeline: timeline && fullMode,
-      threshold: 0.005,
-      thresholdName: series[0].name,
+      value: values.measure.name,
     };
 
     return config;
@@ -33,8 +31,10 @@ export function D3plusTreemap(props: {config: TreeMap; fullMode: boolean}) {
 
   return (
     <>
-      <TreeMapComponent config={config} />
-      <ObjectInspector data={config} />
+      <ErrorBoundary>
+        <StackedAreaComponent config={config} />
+      </ErrorBoundary>
+      <ObjectInspector data={config} expandLevel={1} />
     </>
   );
 }

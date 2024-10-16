@@ -7,7 +7,7 @@ import type {
 } from "../schema";
 import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
-import {buildTimeSeries} from "./common";
+import {buildSeries, buildTimeSeries} from "./common";
 
 export interface DonutChart {
   key: string;
@@ -19,6 +19,7 @@ export interface DonutChart {
     maxValue: number;
   };
   series: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -26,6 +27,7 @@ export interface DonutChart {
     members: string[] | number[] | boolean[];
   };
   timeline?: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -43,60 +45,57 @@ export interface DonutChart {
  * - limited amount of segments per ring
  */
 export function examineDonutConfigs(
-  dg: Datagroup,
+  datagroup: Datagroup,
   {DONUT_SHAPE_MAX}: ChartLimits,
 ): DonutChart[] {
-  const {dataset, timeHierarchy: timeAxis} = dg;
+  const {dataset, timeHierarchy: timeAxis} = datagroup;
   const chartType = "donut" as const;
 
-  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
   const timeline = buildTimeSeries(timeAxis);
 
-  return (
-    dg.measureColumns
-      // Work only with the mainline measures
-      .filter(axis => !axis.parentMeasure)
-      .flatMap(valueAxis => {
-        const {measure, range} = valueAxis;
-        const units = measure.annotations.units_of_measurement;
+  return datagroup.measureColumns.flatMap(valueAxis => {
+    const {measure, range} = valueAxis;
+    const units = measure.annotations.units_of_measurement;
 
-        // Bail if measure doesn't represent percentage, rate, or proportion
-        if (units && !["Percentage", "Rate"].includes(units)) return [];
+    // Work only with the mainline measures
+    if (valueAxis.parentMeasure) return [];
 
-        const values = {
-          measure,
-          minValue: range[0],
-          maxValue: range[1],
+    // Bail if measure doesn't represent percentage, rate, or proportion
+    if (units && !["Percentage", "Rate"].includes(units)) return [];
+
+    const values = {
+      measure,
+      minValue: range[0],
+      maxValue: range[1],
+    };
+
+    return categoryAxes.flatMap(categoryAxis => {
+      const {dimension, hierarchy} = categoryAxis;
+      const keyChain = [
+        chartType,
+        dataset.length,
+        measure.name,
+        dimension.name,
+        hierarchy.name,
+      ];
+
+      return categoryAxis.levels.flatMap<DonutChart>(axisLevel => {
+        const {captions, level, members} = axisLevel;
+
+        // Bail if amount of segments in ring is out of limits
+        if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];
+
+        return {
+          key: shortHash(keyChain.concat(level.name).join("|")),
+          type: chartType,
+          datagroup,
+          values,
+          series: buildSeries(categoryAxis, axisLevel),
+          timeline,
         };
-
-        return categoryAxes.flatMap(categoryAxis => {
-          const {dimension, hierarchy} = categoryAxis;
-          const keyChain = [
-            chartType,
-            dataset.length,
-            measure.name,
-            dimension.name,
-            hierarchy.name,
-          ];
-
-          return categoryAxis.levels.flatMap<DonutChart>(axisLevel => {
-            const {captions, level, members} = axisLevel;
-
-            // Bail if amount of segments in ring is out of limits
-            if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];
-
-            return {
-              key: shortHash(keyChain.concat(level.name).join("|")),
-              type: chartType,
-              dataset,
-              locale: dg.locale,
-              values,
-              series: {dimension, hierarchy, level, captions, members},
-              timeline,
-            };
-          });
-        });
-      })
-  );
+      });
+    });
+  });
 }

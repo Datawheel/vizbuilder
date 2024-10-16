@@ -90,12 +90,7 @@ export function examineChoroplethMapConfigs(
             type: chartType,
             datagroup: dg,
             values,
-            series: [buildSeries(categoryAxis, axisLevel)].concat(
-              nonGeoAxes.map(axis => {
-                const lastLevel = getLast(axis.levels);
-                return buildSeries(axis, lastLevel);
-              }),
-            ),
+            series: [buildSeries(categoryAxis, axisLevel)],
             timeline,
             extraConfig: getTopojsonConfig(getLast(categoryAxis.levels).level),
           };
@@ -103,3 +98,10 @@ export function examineChoroplethMapConfigs(
       });
   });
 }
+
+// .concat(
+//   nonGeoAxes.map(axis => {
+//     const lastLevel = getLast(axis.levels);
+//     return buildSeries(axis, lastLevel);
+//   }),
+// )

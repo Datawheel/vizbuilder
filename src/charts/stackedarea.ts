@@ -8,10 +8,9 @@ import {
 } from "../schema";
 import {filterMap} from "../toolbox/array";
 import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
-import {yieldPermutations} from "../toolbox/iterator";
+import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import { isOneOf } from "../toolbox/validation";
-import {buildTimeSeries} from "./common";
+import {buildSeries, buildTimeSeries} from "./common";
 
 export interface StackedArea {
   key: string;
@@ -23,6 +22,7 @@ export interface StackedArea {
     maxValue: number;
   };
   series: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -30,6 +30,7 @@ export interface StackedArea {
     members: string[] | number[] | boolean[];
   }[];
   timeline?: {
+    name: string;
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
@@ -38,13 +39,13 @@ export interface StackedArea {
 }
 
 export function examineStackedareaConfigs(
-  dg: Datagroup,
+  datagroup: Datagroup,
   {STACKED_SHAPE_MAX, STACKED_TIME_MEMBER_MIN}: ChartLimits,
 ): StackedArea[] {
-  const {dataset, timeHierarchy: timeAxis} = dg;
+  const {dataset, timeHierarchy: timeAxis} = datagroup;
   const chartType = "stackedarea" as const;
 
-  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
   const timeline = buildTimeSeries(timeAxis);
 
@@ -64,7 +65,7 @@ export function examineStackedareaConfigs(
   // Bail if time dimension is the only valid dimension
   if (categoryAxes.length === 0) return [];
 
-  return dg.measureColumns.flatMap(valueAxis => {
+  return datagroup.measureColumns.flatMap(valueAxis => {
     const {measure, range} = valueAxis;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement;
@@ -74,7 +75,7 @@ export function examineStackedareaConfigs(
       return [];
 
     // Bail if measure is marked as 'Percentage' or 'Rate'
-    if (["Percentage", "Rate"].includes(units as string)) return []
+    if (["Percentage", "Rate"].includes(units as string)) return [];
 
     // All values must be positive
     if (dataset.some(row => (row[measure.name] as number) < 0)) return [];
@@ -87,42 +88,30 @@ export function examineStackedareaConfigs(
 
     const keyChain = [chartType, dataset.length, measure.name];
 
-    return [...yieldPermutations(nonTimeLevels)].flatMap<StackedArea>(
-      ([hier1, hier2]) => {
-        const [axis1, level1] = hier1;
-        const [axis2, level2] = hier2;
+    return [...yieldPartialPermutations(nonTimeLevels, 2)].flatMap<StackedArea>(tuple => {
+      const [mainAxis, mainAxisLevel] = tuple[0];
+      const [otherAxis, otherAxisLevel] = tuple[1];
 
-        const members1 = level1.members;
-        const members2 = level2.members;
+      // Bail if the amount of shapes to draw is above the limit
+      if (
+        mainAxisLevel.members.length * otherAxisLevel.members.length >
+        STACKED_SHAPE_MAX
+      )
+        return [];
 
-        // Bail if the amount of shapes to draw is above the limit
-        if (members1.length * members2.length > STACKED_SHAPE_MAX) return [];
-
-        return {
-          key: shortHash(keyChain.concat(level1.level.name, level2.level.name).join("|")),
-          type: chartType,
-          dataset,
-          locale: dg.locale,
-          values,
-          series: [
-            {
-              dimension: axis1.dimension,
-              hierarchy: axis1.hierarchy,
-              level: level1.level,
-              captions: level1.captions,
-              members: members1,
-            },
-            {
-              dimension: axis2.dimension,
-              hierarchy: axis2.hierarchy,
-              level: level2.level,
-              captions: level2.captions,
-              members: members2,
-            },
-          ],
-          timeline,
-        };
-      },
-    );
+      return {
+        key: shortHash(
+          keyChain.concat(mainAxisLevel.name, otherAxisLevel.name).join("|"),
+        ),
+        type: chartType,
+        datagroup,
+        values,
+        series: [
+          buildSeries(mainAxis, mainAxisLevel),
+          buildSeries(otherAxis, otherAxisLevel),
+        ],
+        timeline,
+      };
+    });
   });
 }

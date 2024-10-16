@@ -7,7 +7,7 @@ import {Aggregator, type DataPoint, DimensionType, type TesseractLevel} from "..
 import {getPermutations} from "./array";
 import type {Datagroup} from "./datagroup";
 import type {ChartType} from "./generateCharts";
-import {yieldPermutations} from "./iterator";
+import {yieldPartialPermutations} from "./iterator";
 import {shortHash} from "./math";
 import {yieldLevels} from "./tesseract";
 import {dataIsSignConsistent, hasProperty} from "./validation";
@@ -112,7 +112,7 @@ function defaultChart(chartType: ChartType, dg: Datagroup): Chart[] {
   return flatMap(dg.measureSets, measureSet =>
     flatMap(kValues, k =>
       // get different combinations of non-time (discrete) drilldowns
-      Array.from(yieldPermutations(getNonTimeDrilldowns(dg), k), levels => ({
+      Array.from(yieldPartialPermutations(getNonTimeDrilldowns(dg), k), levels => ({
         chartType,
         dg,
         isMap: levels.some(lvl => dimTypeMap[lvl.name] === DimensionType.GEO),
@@ -169,7 +169,7 @@ const remixerForChartType: Record<ChartType, ChartBuilder> = {
       const kValues = range(1, validDrilldowns.length + 1);
 
       return flatMap(kValues, (k): Chart[] =>
-        Array.from(yieldPermutations(validDrilldowns, k), levels => {
+        Array.from(yieldPartialPermutations(validDrilldowns, k), levels => {
           /** Disable if too many bars would make the chart unreadable */
           if (getNumberGroupsFromLevels(dg, levels) > chartLimits.BARCHART_MAX_BARS)
             return [];
@@ -250,7 +250,7 @@ const remixerForChartType: Record<ChartType, ChartBuilder> = {
     const kValues = range(1, multipleMemberLevels.length + 1);
     return flatMap(allowedMeasures, measureSet =>
       flatMap(kValues, k =>
-        Array.from(yieldPermutations(multipleMemberLevels, k), levels => {
+        Array.from(yieldPartialPermutations(multipleMemberLevels, k), levels => {
           /* DISABLE if there are too many shapes / data groups */
           if (getNumberGroupsFromLevels(dg, levels) > chartLimits.DONUT_SHAPE_MAX)
             return null;

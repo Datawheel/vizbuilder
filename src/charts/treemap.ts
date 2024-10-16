@@ -1,16 +1,15 @@
 import type {ChartLimits} from "../constants";
-import {
-  Aggregator,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
 } from "../schema";
 import {filterMap} from "../toolbox/array";
 import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
-import {yieldPermutations} from "../toolbox/iterator";
+import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {buildSeries, buildTimeSeries} from "./common";
+import {aggregatorIn, buildSeries, buildTimeSeries} from "./common";
 
 export interface TreeMap {
   key: string;
@@ -46,36 +45,37 @@ export interface TreeMap {
  * - If the 2 levels belong to the same dimension, ensure level depths apply.
  */
 export function examineTreemapConfigs(
-  dg: Datagroup,
+  datagroup: Datagroup,
   {TREE_MAP_SHAPE_MAX}: ChartLimits,
 ): TreeMap[] {
-  const {dataset, timeHierarchy: timeAxis} = dg;
+  const {dataset, timeHierarchy: timeAxis} = datagroup;
   const chartType = "treemap" as const;
 
-  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
   const timeline = buildTimeSeries(timeAxis);
 
   // Pick only levels with member counts above the limit
   const nonTimeLevels = categoryAxes.flatMap(axis =>
     filterMap(axis.levels, axisLevel => {
-      return axisLevel.members.length > 1 ? ([axis, axisLevel] as const) : null;
+      if (axisLevel.members.length === 1) return null;
+      return [axis, axisLevel] as const;
     }),
   );
 
   // Bail if time dimension is the only valid dimension
   if (categoryAxes.length === 0) return [];
 
-  return dg.measureColumns.flatMap(valueAxis => {
+  return datagroup.measureColumns.flatMap(valueAxis => {
     const {measure, range} = valueAxis;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement;
 
+    // Discard if measure is associated to a parent measure
     if (valueAxis.parentMeasure) return [];
 
     // Treemaps are valid only with SUM-aggregated measures
-    if (![Aggregator.SUM, Aggregator.COUNT, "SUM", "COUNT"].includes(aggregator))
-      return [];
+    if (!aggregatorIn(aggregator, ["SUM", "COUNT"])) return [];
 
     // All values must be positive
     if (dataset.some(row => (row[measure.name] as number) < 0)) return [];
@@ -88,31 +88,36 @@ export function examineTreemapConfigs(
 
     const keyChain = [chartType, dataset.length, measure.name];
 
-    return [...yieldPermutations(nonTimeLevels)].flatMap<TreeMap>(([hier1, hier2]) => {
-      const [axis1, level1] = hier1;
-      const [axis2, level2] = hier2;
+    return [...yieldPartialPermutations(nonTimeLevels, 2)].flatMap<TreeMap>(tuple => {
+      const [mainAxis, mainAxisLevel] = tuple[0];
+      const [otherAxis, otherAxisLevel] = tuple[1];
 
-      // Bail if levels belong to same hierarchy but don't respect depths
+      // Bail if levels belong to same hierarchy but aren't sorted by depth
       if (
-        axis1.dimension.name === axis2.dimension.name &&
-        axis1.hierarchy.name === axis2.hierarchy.name &&
-        level1.level.depth < level2.level.depth
+        mainAxis.dimension.name === otherAxis.dimension.name &&
+        mainAxis.hierarchy.name === otherAxis.hierarchy.name &&
+        mainAxisLevel.level.depth < otherAxisLevel.level.depth
       )
         return [];
 
-      const members1 = level1.members;
-      const members2 = level2.members;
-
       // Bail if number of shapes to draw exceeds limit
-      if (members1.length * members2.length > TREE_MAP_SHAPE_MAX) return [];
+      if (
+        mainAxisLevel.members.length * otherAxisLevel.members.length >
+        TREE_MAP_SHAPE_MAX
+      )
+        return [];
 
       return {
-        key: shortHash(keyChain.concat(level1.level.name, level2.level.name).join("|")),
+        key: shortHash(
+          keyChain.concat(mainAxisLevel.name, otherAxisLevel.name).join("|"),
+        ),
         type: chartType,
-        dataset,
-        locale: dg.locale,
+        datagroup,
         values,
-        series: [buildSeries(axis1, level1), buildSeries(axis2, level2)],
+        series: [
+          buildSeries(mainAxis, mainAxisLevel),
+          buildSeries(otherAxis, otherAxisLevel),
+        ],
         timeline,
       };
     });
