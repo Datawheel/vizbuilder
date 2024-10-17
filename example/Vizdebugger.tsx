@@ -12,37 +12,45 @@ import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import {IconWindowMaximize} from "@tabler/icons-react";
 import React, {forwardRef, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
-import type {VizbuilderProps} from "../src";
-import {D3plusBarchart} from "../src/components/Barchart";
-import {D3plusDonut} from "../src/components/Donut";
-import {ErrorBoundary} from "../src/components/ErrorBoundary";
-import {D3plusChoropleth} from "../src/components/Geomap";
-import {D3plusLineplot} from "../src/components/Lineplot";
-import {D3plusStacked} from "../src/components/StackedArea";
-import {D3plusTreemap} from "../src/components/Treemap";
+import {type Chart, generateCharts} from "../src/charts";
+import {ErrorBoundary} from "../src/react/ErrorBoundary";
+import type {VizbuilderProps} from "../src/react/Vizbuilder";
+import {useD3plusConfig} from "../src/react/useD3plusConfig";
 import {castArray} from "../src/toolbox/array";
-import {type Chart, type ChartType, generateCharts} from "../src/toolbox/generateCharts";
-
-const components: Record<
-  ChartType,
-  React.ComponentType<{config: Chart; fullMode: boolean}>
-> = {
-  barchart: D3plusBarchart,
-  choropleth: D3plusChoropleth,
-  donut: D3plusDonut,
-  lineplot: D3plusLineplot,
-  stackedarea: D3plusStacked,
-  treemap: D3plusTreemap,
-};
 
 export function Vizdebugger(props: VizbuilderProps) {
-  const {chartLimits, chartTypes, datacap, datasets, topojsonConfig} = props;
+  const {
+    datasets,
+    chartLimits,
+    chartTypes,
+    datacap,
+    measureConfig,
+    topojsonConfig,
+    userConfig,
+  } = props;
 
-  const charts = useMemo(() => {
-    const options = {chartLimits, chartTypes, datacap, topojsonConfig};
-    const charts = generateCharts(castArray(datasets), options);
-    return charts;
-  }, [datasets, chartLimits, chartTypes, datacap, topojsonConfig]);
+  // Normalize measureConfig to function type
+  const getMeasureConfig = useMemo(() => {
+    const config = measureConfig || {};
+    return typeof config === "function" ? config : item => config[item.name];
+  }, [measureConfig]);
+
+  // Normalize topojsonConfig to function type
+  const getTopojsonConfig = useMemo(() => {
+    const config = topojsonConfig || {};
+    return typeof config === "function" ? config : item => config[item.name];
+  }, [topojsonConfig]);
+
+  const charts = useMemo(
+    () =>
+      generateCharts(castArray(datasets), {
+        chartLimits,
+        chartTypes,
+        datacap,
+        getTopojsonConfig,
+      }),
+    [datasets, chartLimits, chartTypes, datacap, getTopojsonConfig],
+  );
 
   const chartOptions = useMemo(
     () =>
@@ -54,27 +62,50 @@ export function Vizdebugger(props: VizbuilderProps) {
     [charts],
   );
 
+  const [fullMode, setFullMode] = useDisclosure(false);
+
+  const [showConfidenceInt, setShowConfidenceInt] = useDisclosure(true);
+
   const [chartIndex, setChartIndex] = useLocalStorage({
     key: "Vizdebugger:chartIndex",
     getInitialValueInEffect: false,
     defaultValue: 0,
   });
-  const [fullMode, setFullMode] = useDisclosure(true);
 
-  const chartConfig = charts[chartIndex];
-  const ChartComponent = chartConfig && components[chartConfig.type];
+  const chart = charts[chartIndex];
+
+  const [ChartComponent, chartConfig] = useD3plusConfig(chart, {
+    fullMode,
+    showConfidenceInt,
+    getMeasureConfig,
+    t: i => i,
+  });
 
   return (
     <SimpleGrid cols={2}>
       <div>
-        <Title order={3} mb="xs">
-          Dataset
-        </Title>
-        <Paper shadow="xs" p="xs">
-          <ObjectInspector data={props.datasets} expandLevel={1} />
-        </Paper>
+        <SimpleGrid cols={2}>
+          <div>
+            <Title order={3} mb="xs">
+              Columns
+            </Title>
+            <Paper shadow="xs" p="xs">
+              <ObjectInspector data={props.datasets} expandLevel={1} />
+            </Paper>
+          </div>
+
+          <div>
+            <Title order={3} mb="xs">
+              d3plus config
+            </Title>
+            <Paper shadow="xs" p="xs">
+              <ObjectInspector data={chartConfig} />
+            </Paper>
+          </div>
+        </SimpleGrid>
+
         <Title order={3} mt="lg" mb="xs">
-          Generated charts
+          All generated charts
         </Title>
         <SimpleGrid cols={3}>
           {charts.map((chart, index) => (
@@ -91,6 +122,7 @@ export function Vizdebugger(props: VizbuilderProps) {
           ))}
         </SimpleGrid>
       </div>
+
       <div>
         <Group grow mb="lg">
           <Select
@@ -99,12 +131,15 @@ export function Vizdebugger(props: VizbuilderProps) {
             onChange={setChartIndex}
             value={chartIndex}
           />
-          <Switch label="Full mode" checked={fullMode} onChange={setFullMode.toggle} />
+          <Switch label="Featured" checked={fullMode} onChange={setFullMode.toggle} />
+          <Switch
+            label="Confidence Interval"
+            checked={showConfidenceInt}
+            onChange={setShowConfidenceInt.toggle}
+          />
         </Group>
         <ErrorBoundary>
-          {chartConfig && ChartComponent && (
-            <ChartComponent config={chartConfig} fullMode={fullMode} />
-          )}
+          {ChartComponent && <ChartComponent config={chartConfig} />}
         </ErrorBoundary>
       </div>
     </SimpleGrid>

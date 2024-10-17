@@ -1,17 +1,15 @@
-import flatMap from "lodash/flatMap";
-import groupBy from "lodash/groupBy";
-import sortBy from "lodash/sortBy";
-import type {ChartLimits} from "../constants";
+import {flatMap, groupBy, sortBy} from "lodash-es";
 import type {
   TesseractDimension,
   TesseractHierarchy,
   TesseractLevel,
   TesseractMeasure,
 } from "../schema";
-import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
 import {hasProperty} from "../toolbox/validation";
-import {buildSeries, buildTimeSeries} from "./common";
+import type {ChartLimits} from "../types";
+import {buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup, LevelCaption} from "./datagroup";
 
 export interface LinePlot {
   key: string;
@@ -45,7 +43,7 @@ export interface LinePlot {
  * - time level with at least LINE_POINT_MIN members
  * - at least one std level
  */
-export function examineLineplotConfigs(
+export function generateLineplotConfigs(
   dg: Datagroup,
   {LINEPLOT_LINE_MAX, LINEPLOT_LINE_POINT_MIN}: ChartLimits,
 ): LinePlot[] {
@@ -54,7 +52,7 @@ export function examineLineplotConfigs(
 
   const categoryAxes = Object.values(dg.nonTimeHierarchies);
 
-  const timeline = buildTimeSeries(timeAxis);
+  const timeline = buildDeepestSeries(timeAxis);
 
   // Bail if no time dimension present
   if (!timeAxis || !timeline) return [];
@@ -77,7 +75,7 @@ export function examineLineplotConfigs(
       const keyChain = [chartType, dataset.length, measure.name];
 
       return categoryAxis.levels.flatMap<LinePlot>(axisLevel => {
-        const {captions, level, members, name} = axisLevel;
+        const {level, members} = axisLevel;
 
         // Pick only levels with member counts within the limit
         if (members.length < 2 || members.length > LINEPLOT_LINE_MAX) return [];

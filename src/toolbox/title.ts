@@ -1,9 +1,9 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
 import type {Aggregator} from "../schema";
-import type {UIParams} from "../structs";
+import type {UIParams} from "../types";
 import {filterMap} from "./array";
 import type {Chart} from "./charts";
-import { getCaption } from "./columns";
+import {getCaption} from "./columns";
 import {findTimeRange} from "./find";
 import {getColumnId} from "./strings";
 

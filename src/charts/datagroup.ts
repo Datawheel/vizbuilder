@@ -1,7 +1,4 @@
-import groupBy from "lodash/groupBy";
-import mapValues from "lodash/mapValues";
-import max from "lodash/max";
-import min from "lodash/min";
+import {groupBy, mapValues, max, min} from "lodash-es";
 import {
   type DataPoint,
   DimensionType,
@@ -11,10 +8,10 @@ import {
   type TesseractMeasure,
   type TesseractProperty,
 } from "../schema";
-import type {Dataset} from "../structs";
-import {filterMap} from "./array";
-import type {Column, LevelColumn} from "./columns";
-import {isOneOf} from "./validation";
+import {filterMap} from "../toolbox/array";
+import type {Column, LevelColumn} from "../toolbox/columns";
+import {isOneOf} from "../toolbox/validation";
+import type {Dataset} from "../types";
 
 export type PrimitiveType = "string" | "number" | "boolean";
 
@@ -46,6 +43,7 @@ export interface AxisSeries {
   name: string;
   type: PrimitiveType;
   members: string[] | number[] | boolean[];
+  sumByMember: Record<string | number, {[K: string]: number}>;
   level: TesseractLevel;
   properties: TesseractProperty[];
   captions: {
@@ -86,6 +84,8 @@ export function buildDatagroup(ds: Dataset): Datagroup {
     column => column.hierarchy.name,
   );
 
+  const sumByMemberAnalysis = calculateSumByMember(data, columns);
+
   return {
     columns,
     dataset: data,
@@ -123,6 +123,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
           const columnNameWithoutID = column.name.replace(/\sID$/, "");
           const propColumns = propertyColumns[level.name] || [];
           const captionColumns = captionColumnMap[columnNameWithoutID] || propColumns;
+          const sumByMember = sumByMemberAnalysis[column.name];
           const members = getUniqueMembers<string>(data, column.name).sort(
             collator.compare,
           );
@@ -131,6 +132,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
             name: column.name,
             type: getTypeFromMembers(members),
             members,
+            sumByMember,
             level,
             properties: propColumns.map(column => column.property),
             captions: Object.fromEntries(
@@ -149,10 +151,20 @@ export function buildDatagroup(ds: Dataset): Datagroup {
   }
 }
 
+/**
+ * For the provided array of record objects, extracts a list of unique values
+ * for the specified column. For performance reasons, it only considers the
+ * first 500000 records in the array.
+ */
 function getUniqueMembers<T>(dataset: DataPoint[], column: string): T[] {
   return [...new Set(dataset.slice(0, 5e5).map(row => row[column]))] as T[];
 }
 
+/**
+ * Under the assumption all the values in the provided array are primitives and
+ * of same type (function throws if not), returns the name of type of primitive
+ * the array is made of.
+ */
 function getTypeFromMembers(members: unknown[]) {
   const types = new Set(members.map(item => typeof item));
   if (types.size > 1) {
@@ -163,4 +175,62 @@ function getTypeFromMembers(members: unknown[]) {
     throw new Error(`Invalid data type in dataset: ${value}`);
   }
   return value;
+}
+
+/**
+ * Sums the Measure values for each distinct Member of the Level in the dataset.
+ *
+ * @returns An object where each category key maps to its distinct values, and each value contains the summed measurements.
+ *
+ * @example
+ * const dataset = [
+ *   { Continent: 'A', Country: 'X', Quantity: 10, "Trade Value": 5 },
+ *   { Continent: 'A', Country: 'X', Quantity: 15, "Trade Value": 10 },
+ *   { Continent: 'B', Country: 'Y', Quantity: 20, "Trade Value": 25 },
+ *   { Continent: 'A', Country: 'Y', Quantity: 5, "Trade Value": 5 }
+ * ];
+ * console.log(calculateSumByMember(dataset, columns));
+ * // {
+ * //   "Continent": {
+ * //     "A": { "Quantity": 30, "Trade Value": 20 },
+ * //     "B": { "Quantity": 20, "Trade Value": 25 }
+ * //   },
+ * //   "Country": {
+ * //     "X": { "Quantity": 25, "Trade Value": 15 },
+ * //     "Y": { "Quantity": 25, "Trade Value": 30 }
+ * //   }
+ * // }
+ */
+function calculateSumByMember(dataset: DataPoint[], columns: Record<string, Column>) {
+  const columnList = Object.values(columns);
+
+  const levelNames = filterMap(columnList, column =>
+    column.type === "level" && column.isID ? column.name : null,
+  );
+  const measureNames = filterMap(columnList, column =>
+    column.type === "measure" ? column.name : null,
+  );
+
+  return Object.fromEntries(
+    levelNames.map(levelName => {
+      const memberMap: Record<string, Record<string, number>> = {};
+
+      // Iterate through the records
+      for (const row of dataset) {
+        const member = row[levelName] as string;
+        const measureMap =
+          memberMap[member] ||
+          Object.fromEntries(measureNames.map(measure => [measure, 0]));
+
+        // Sum the measurements for this category value
+        for (const measure of measureNames) {
+          measureMap[measure] += row[measure] as number;
+        }
+
+        memberMap[member] = measureMap;
+      }
+
+      return [levelName, memberMap];
+    }),
+  );
 }

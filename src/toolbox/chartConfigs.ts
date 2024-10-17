@@ -1,6 +1,7 @@
 import {assign} from "d3plus-common";
-import includes from "lodash/includes";
-import type {D3plusConfig, UIParams} from "../structs";
+import {includes} from "lodash-es";
+import type {D3plusConfig} from "../d3plus";
+import type {UIParams} from "../types";
 import type {Chart} from "./charts";
 import {getCaption} from "./columns";
 import type {ChartType} from "./generateCharts";

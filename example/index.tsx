@@ -9,9 +9,9 @@ import {
 import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
-import {FormatterProvider} from "../src/components/FormatterProvider";
-import {Vizbuilder} from "../src/index";
-import {TranslationProvider} from "../src/toolbox/translation";
+import {FormatterProvider} from "../src/react/FormatterProvider";
+import {TranslationProvider} from "../src/react/TranslationProvider";
+import {Vizbuilder} from "../src/react/Vizbuilder";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
@@ -137,10 +137,9 @@ function App() {
           datasets={dataset || []}
           downloadFormats={["svg", "png"]}
           topojsonConfig={topojsonConfig}
-          userConfig={{
-            locale: "ar-SA",
+          userConfig={() => ({
             scrollContainer: "#viz-scroller",
-          }}
+          })}
         />
       </div>
     </div>

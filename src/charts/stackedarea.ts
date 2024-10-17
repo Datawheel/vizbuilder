@@ -1,4 +1,3 @@
-import type {ChartLimits} from "../constants";
 import {
   Aggregator,
   type TesseractDimension,
@@ -7,10 +6,11 @@ import {
   type TesseractMeasure,
 } from "../schema";
 import {filterMap} from "../toolbox/array";
-import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {buildSeries, buildTimeSeries} from "./common";
+import type {ChartLimits} from "../types";
+import {buildDeepestSeries, buildSeries } from "./common";
+import type {Datagroup, LevelCaption} from "./datagroup";
 
 export interface StackedArea {
   key: string;
@@ -38,7 +38,7 @@ export interface StackedArea {
   };
 }
 
-export function examineStackedareaConfigs(
+export function generateStackedareaConfigs(
   datagroup: Datagroup,
   {STACKED_SHAPE_MAX, STACKED_TIME_MEMBER_MIN}: ChartLimits,
 ): StackedArea[] {
@@ -47,7 +47,7 @@ export function examineStackedareaConfigs(
 
   const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildTimeSeries(timeAxis);
+  const timeline = buildDeepestSeries(timeAxis);
 
   // Bail if there's no Time dimension
   if (!timeAxis || !timeline) return [];

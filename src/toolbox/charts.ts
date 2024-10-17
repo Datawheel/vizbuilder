@@ -1,11 +1,8 @@
-import flatMap from "lodash/flatMap";
-import flattenDeep from "lodash/flattenDeep";
-import includes from "lodash/includes";
-import range from "lodash/range";
-import type {ChartLimits} from "../constants";
+import {flatMap, flattenDeep, includes, range} from "lodash-es";
+import type {Datagroup} from "../charts/datagroup";
 import {Aggregator, type DataPoint, DimensionType, type TesseractLevel} from "../schema";
+import type {ChartLimits} from "../types";
 import {getPermutations} from "./array";
-import type {Datagroup} from "./datagroup";
 import type {ChartType} from "./generateCharts";
 import {yieldPartialPermutations} from "./iterator";
 import {shortHash} from "./math";

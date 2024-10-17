@@ -1,4 +1,3 @@
-import type {ChartLimits} from "../constants";
 import type {
   TesseractDimension,
   TesseractHierarchy,
@@ -6,10 +5,11 @@ import type {
   TesseractMeasure,
 } from "../schema";
 import {filterMap} from "../toolbox/array";
-import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn, buildSeries, buildTimeSeries} from "./common";
+import type {ChartLimits} from "../types";
+import {aggregatorIn, buildDeepestSeries, buildSeries } from "./common";
+import type {Datagroup, LevelCaption} from "./datagroup";
 
 export interface TreeMap {
   key: string;
@@ -44,7 +44,7 @@ export interface TreeMap {
  * Notes:
  * - If the 2 levels belong to the same dimension, ensure level depths apply.
  */
-export function examineTreemapConfigs(
+export function generateTreemapConfigs(
   datagroup: Datagroup,
   {TREE_MAP_SHAPE_MAX}: ChartLimits,
 ): TreeMap[] {
@@ -53,7 +53,7 @@ export function examineTreemapConfigs(
 
   const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildTimeSeries(timeAxis);
+  const timeline = buildDeepestSeries(timeAxis);
 
   // Pick only levels with member counts above the limit
   const nonTimeLevels = categoryAxes.flatMap(axis =>

@@ -1,16 +1,16 @@
-import type {ChartLimits} from "../constants";
-import type {D3plusConfig} from "../d3plus";
-import {
-  DimensionType,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
-} from "../schema";
-import {filterMap, getLast} from "../toolbox/array";
-import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
+import {DimensionType} from "../schema";
+import {getLast} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import {buildSeries, buildTimeSeries} from "./common";
+import type {
+  ChartLimits,
+  D3plusConfig,
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
+} from "../types";
+import {buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup, LevelCaption} from "./datagroup";
 
 export interface ChoroplethMap {
   key: string;
@@ -39,7 +39,7 @@ export interface ChoroplethMap {
   extraConfig?: Partial<D3plusConfig>;
 }
 
-export function examineChoroplethMapConfigs(
+export function generateChoroplethMapConfigs(
   dg: Datagroup,
   limits: ChartLimits,
   params: {
@@ -53,7 +53,7 @@ export function examineChoroplethMapConfigs(
 
   const categoryAxes = Object.values(dg.nonTimeHierarchies);
 
-  const timeline = buildTimeSeries(timeAxis);
+  const timeline = buildDeepestSeries(timeAxis);
 
   const geoAxes = categoryAxes.filter(axis => axis.dimension.type === DimensionType.GEO);
 

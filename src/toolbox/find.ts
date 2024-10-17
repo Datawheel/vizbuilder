@@ -1,8 +1,6 @@
 import {formatAbbreviate} from "d3plus-format";
-import {keyBy} from "lodash";
+import {keyBy} from "lodash-es";
 import type {TesseractCube} from "../schema";
-import type {MeasureSet} from "../structs";
-import type {MeasureItem} from "../structs";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -15,7 +13,10 @@ export function findFirstNumber(string: string, elseValue?: number) {
 }
 
 /** */
-export function findMeasuresInCube(cube: TesseractCube, item: MeasureItem): MeasureSet | undefined {
+export function findMeasuresInCube(
+  cube: TesseractCube,
+  item: MeasureItem,
+): MeasureSet | undefined {
   const measuresByName = keyBy(cube.measures, "name");
   const measure = measuresByName[item.measure];
   if (!measure) {

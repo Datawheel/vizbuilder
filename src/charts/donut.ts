@@ -1,13 +1,13 @@
-import type {ChartLimits} from "../constants";
 import type {
   TesseractDimension,
   TesseractHierarchy,
   TesseractLevel,
   TesseractMeasure,
 } from "../schema";
-import type {Datagroup, LevelCaption} from "../toolbox/datagroup";
 import {shortHash} from "../toolbox/math";
-import {buildSeries, buildTimeSeries} from "./common";
+import type {ChartLimits} from "../types";
+import {aggregatorIn, buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup, LevelCaption} from "./datagroup";
 
 export interface DonutChart {
   key: string;
@@ -44,7 +44,7 @@ export interface DonutChart {
  * Notes:
  * - limited amount of segments per ring
  */
-export function examineDonutConfigs(
+export function generateDonutConfigs(
   datagroup: Datagroup,
   {DONUT_SHAPE_MAX}: ChartLimits,
 ): DonutChart[] {
@@ -53,17 +53,33 @@ export function examineDonutConfigs(
 
   const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildTimeSeries(timeAxis);
+  const timeline = buildDeepestSeries(timeAxis);
 
   return datagroup.measureColumns.flatMap(valueAxis => {
     const {measure, range} = valueAxis;
-    const units = measure.annotations.units_of_measurement;
+    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+    const units = measure.annotations.units_of_measurement || "";
 
     // Work only with the mainline measures
     if (valueAxis.parentMeasure) return [];
 
-    // Bail if measure doesn't represent percentage, rate, or proportion
-    if (units && !["Percentage", "Rate"].includes(units)) return [];
+    // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
+    if (
+      categoryAxes.length > 1 &&
+      !aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
+      !["Percentage", "Rate"].includes(units)
+    ) {
+      console.debug(
+        "[%s] Measure '%s' has aggregator '%s' and units '%s'; can't be summed.",
+        chartType,
+        measure.name,
+        aggregator,
+        units,
+      );
+      return [];
+    }
+
+    // TODO: if percentage, identify which dimensions output 100%
 
     const values = {
       measure,
@@ -82,7 +98,7 @@ export function examineDonutConfigs(
       ];
 
       return categoryAxis.levels.flatMap<DonutChart>(axisLevel => {
-        const {captions, level, members} = axisLevel;
+        const {level, members} = axisLevel;
 
         // Bail if amount of segments in ring is out of limits
         if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];

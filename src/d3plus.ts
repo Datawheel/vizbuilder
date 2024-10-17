@@ -1,7 +1,20 @@
 import type {CSSProperties} from "react";
 import type {DataPoint} from "./schema";
 
+interface AxisConfig {
+  barConfig?: Record<string, string | number>;
+  gridConfig?: Record<string, string | number>;
+  label?: string;
+  labelOffset?: false | number;
+  maxSize?: number;
+  scale?: AxisScale;
+  tickFormat?: (d: number | string) => string | number; // Custom tick formatting function
+  tickSize?: number;
+  title?: string;
+}
+
 type AxisScale =
+  | "auto"
   | "band"
   | "diverging"
   | "divergingLog"
@@ -43,9 +56,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   barPadding?: number; // Padding between bars
   colorScale?: string | ((d: number) => string); // Color scale or custom color function
   colorScaleConfig?: {
-    axisConfig?: {
-      tickFormat?: (d: number) => string;
-    };
+    axisConfig?: AxisConfig;
     scale?: AxisScale;
   };
   colorScalePosition?: false | Position;
@@ -71,7 +82,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   threshold?: number;
   thresholdName?: string;
   time?: string;
-  title?: string; // Optional title for the chart
+  title?: string | (() => string); // Optional title for the chart
   titleConfig?: CSSProperties;
   tooltip?: boolean | ((d: any) => string); // Tooltip configuration or custom function
   tooltipConfig?: {
@@ -85,21 +96,9 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   sum?: DataPointAccessor<number>;
   value?: DataPointAccessor<number>;
   x?: string; // Key for the x-axis values
-  xConfig?: {
-    title?: string;
-    barConfig?: Record<string, string | number>;
-    label?: string; // Label for the x-axis
-    tickFormat?: (d: number | string) => string | number; // Custom tick formatting function
-  };
+  xConfig?: AxisConfig;
   y?: string; // Key for the y-axis values
-  yConfig?: {
-    gridConfig?: Record<string, string | number>;
-    label?: string; // Label for the y-axis
-    labelOffset?: false | number;
-    maxSize?: number;
-    tickFormat?: (d: number | string) => string | number; // Custom tick formatting function
-    tickSize?: number;
-  };
+  yConfig?: AxisConfig;
 
   depth?: number;
   /** Allows removing specific geographies from topojson file to improve zooming determination. */

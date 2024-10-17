@@ -1,5 +1,4 @@
-import type {DataPoint} from "../schema";
-import type {UIParams} from "../structs";
+import type {DataPoint, UIParams} from "../types";
 import type {Chart} from "./charts";
 import {getCaption} from "./columns";
 import {abbreviateList} from "./strings";

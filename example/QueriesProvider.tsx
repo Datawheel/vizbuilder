@@ -1,5 +1,5 @@
 import {useLocalStorage} from "@mantine/hooks";
-import {clamp} from "lodash";
+import {clamp} from "lodash-es";
 import React, {createContext, useContext, useMemo} from "react";
 import type {TesseractCube} from "../src/schema";
 
