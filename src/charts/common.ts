@@ -1,19 +1,10 @@
-import type {Aggregator} from "../schema";
-import type {BarChart} from "./barchart";
-import type {AxisSeries, CategoryAxis} from "./datagroup";
-import type {DonutChart} from "./donut";
-import type {ChoroplethMap} from "./geomap";
-import type {LinePlot} from "./lineplot";
-import type {StackedArea} from "./stackedarea";
-import type {TreeMap} from "./treemap";
-
-export type Chart =
-  | BarChart
-  | LinePlot
-  | TreeMap
-  | DonutChart
-  | ChoroplethMap
-  | StackedArea;
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
+} from "../schema";
+import type {AxisSeries, CategoryAxis, Datagroup, LevelCaption} from "./datagroup";
 
 export type ChartType =
   | "barchart"
@@ -23,11 +14,30 @@ export type ChartType =
   | "stackedarea"
   | "treemap";
 
-export function aggregatorIn<T extends Uppercase<`${Aggregator}`> | "MOE" | "RCA">(
-  aggregator: Aggregator | string,
-  set: T[],
-): aggregator is T {
-  return set.includes(aggregator.toUpperCase() as T);
+export interface BaseChart {
+  key: string;
+  type: ChartType;
+  datagroup: Datagroup;
+  values: {
+    measure: TesseractMeasure;
+    minValue: number;
+    maxValue: number;
+  };
+  series: {
+    name: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
+    captions: {[K: string]: LevelCaption};
+    members: string[] | number[] | boolean[];
+  }[];
+  timeline?: {
+    name: string;
+    dimension: TesseractDimension;
+    hierarchy: TesseractHierarchy;
+    level: TesseractLevel;
+    members: string[] | number[] | boolean[];
+  };
 }
 
 /**

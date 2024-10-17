@@ -18,11 +18,11 @@ import type {
   StackedArea,
   TreeMap,
 } from "../charts";
-import {aggregatorIn} from "../charts/common";
 import type {D3plusConfig} from "../d3plus";
 import type {DataPoint, TesseractMeasure} from "../schema";
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
+import {aggregatorIn} from "../toolbox/validation";
 import {type Formatter, useFormatter} from "./FormatterProvider";
 
 interface ChartBuilderParams {
@@ -194,13 +194,14 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
   const {fullMode, getFormatter, t} = params;
 
   const {columns, dataset, locale} = datagroup;
+  const [mainSeries] = series;
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     data: dataset,
-    groupBy: [series.name],
-    label: (d: DataPoint) => d[series.level.name] as string,
+    groupBy: [mainSeries.name],
+    label: d => d[mainSeries.level.name] as string,
     locale,
     time: timeline?.name,
     timeline: fullMode && timeline,

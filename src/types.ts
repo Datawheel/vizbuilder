@@ -3,18 +3,6 @@ import type {D3plusConfig} from "./d3plus";
 import type {DataPoint, TesseractMeasure} from "./schema";
 import type {Column} from "./toolbox/columns";
 
-export {D3plusConfig} from "./d3plus";
-export type {
-  DataPoint,
-  TesseractCube,
-  TesseractDataResponse,
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-  TesseractSchema,
-} from "./schema";
-
 /**
  * Parameters for determining the constraints and limits of certain chart types
  */

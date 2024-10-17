@@ -84,6 +84,8 @@ export function buildDatagroup(ds: Dataset): Datagroup {
     column => column.hierarchy.name,
   );
 
+  // Warning: we are just precalculating here to share on many functions
+  // later stages are responsible to check if these sums are meaningful
   const sumByMemberAnalysis = calculateSumByMember(data, columns);
 
   return {

@@ -1,15 +1,25 @@
+import type {D3plusConfig} from "../d3plus";
+import type {TesseractLevel} from "../schema";
 import {filterMap} from "../toolbox/array";
-import type {ChartLimits, D3plusConfig, Dataset, TesseractLevel} from "../types";
-import {generateBarchartConfigs} from "./barchart";
-import type {Chart, ChartType} from "./common";
+import type {ChartLimits, Dataset} from "../types";
+import {type BarChart, generateBarchartConfigs} from "./barchart";
+import type {ChartType} from "./common";
 import {type Datagroup, buildDatagroup} from "./datagroup";
-import {generateDonutConfigs} from "./donut";
-import {generateChoroplethMapConfigs} from "./geomap";
-import {generateLineplotConfigs} from "./lineplot";
-import {generateStackedareaConfigs} from "./stackedarea";
-import {generateTreemapConfigs} from "./treemap";
+import {type DonutChart, generateDonutConfigs} from "./donut";
+import {type ChoroplethMap, generateChoroplethMapConfigs} from "./geomap";
+import {type LinePlot, generateLineplotConfigs } from "./lineplot";
+import {type StackedArea, generateStackedareaConfigs } from "./stackedarea";
+import {type TreeMap, generateTreemapConfigs } from "./treemap";
 
-const chartGenerator: {
+export type Chart =
+  | BarChart
+  | LinePlot
+  | TreeMap
+  | DonutChart
+  | ChoroplethMap
+  | StackedArea;
+
+export const chartGenerator: {
   [K in ChartType]: (
     dg: Datagroup,
     limits: ChartLimits,
@@ -73,3 +83,5 @@ export function generateCharts(
       }).flat();
     });
 }
+
+generateCharts.generators = chartGenerator;

@@ -1,5 +1,12 @@
-import type {TesseractMeasure} from "../schema";
+import type {Aggregator, TesseractMeasure} from "../schema";
 import {findFirstNumber} from "./find";
+
+export function aggregatorIn<T extends Uppercase<`${Aggregator}`> | "MOE" | "RCA">(
+  aggregator: Aggregator | string,
+  set: T[],
+): aggregator is T {
+  return isOneOf(aggregator.toUpperCase(), set);
+}
 
 /**
  * Checks if the provided string matches one of the options.

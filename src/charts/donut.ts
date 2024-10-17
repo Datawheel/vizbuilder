@@ -1,38 +1,11 @@
-import type {
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-} from "../schema";
 import {shortHash} from "../toolbox/math";
+import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
-import {aggregatorIn, buildDeepestSeries, buildSeries} from "./common";
-import type {Datagroup, LevelCaption} from "./datagroup";
+import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup} from "./datagroup";
 
-export interface DonutChart {
-  key: string;
+export interface DonutChart extends BaseChart {
   type: "donut";
-  datagroup: Datagroup;
-  values: {
-    measure: TesseractMeasure;
-    minValue: number;
-    maxValue: number;
-  };
-  series: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    captions: {[K: string]: LevelCaption};
-    members: string[] | number[] | boolean[];
-  };
-  timeline?: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    members: string[] | number[] | boolean[];
-  };
 }
 
 /**
@@ -108,7 +81,7 @@ export function generateDonutConfigs(
           type: chartType,
           datagroup,
           values,
-          series: buildSeries(categoryAxis, axisLevel),
+          series: [buildSeries(categoryAxis, axisLevel)],
           timeline,
         };
       });

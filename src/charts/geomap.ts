@@ -1,14 +1,14 @@
-import {DimensionType} from "../schema";
+import type {D3plusConfig} from "../d3plus";
+import {
+  DimensionType,
+  type TesseractDimension,
+  type TesseractHierarchy,
+  type TesseractLevel,
+  type TesseractMeasure,
+} from "../schema";
 import {getLast} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import type {
-  ChartLimits,
-  D3plusConfig,
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-} from "../types";
+import type {ChartLimits} from "../types";
 import {buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup, LevelCaption} from "./datagroup";
 

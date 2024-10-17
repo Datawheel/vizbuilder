@@ -1,45 +1,17 @@
-import type {
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-} from "../schema";
 import {getLast} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
+import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
-import {aggregatorIn, buildDeepestSeries, buildSeries} from "./common";
-import type {Datagroup, LevelCaption} from "./datagroup";
+import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup} from "./datagroup";
 
 // TODO: add criteria
 // bail if sum measure && sum of all values for each series is the same
 
-// TODO: encode stacked bars in the config
-export interface BarChart {
-  key: string;
+export interface BarChart extends BaseChart {
   type: "barchart";
-  datagroup: Datagroup;
   orientation: "vertical" | "horizontal";
-  values: {
-    measure: TesseractMeasure;
-    minValue: number;
-    maxValue: number;
-  };
-  series: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    captions: {[K: string]: LevelCaption};
-    members: string[] | number[] | boolean[];
-  }[];
-  timeline?: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    members: string[] | number[] | boolean[];
-  };
 }
 
 export function generateBarchartConfigs(
