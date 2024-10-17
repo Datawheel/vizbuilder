@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "checkJs": true,
+    "jsx": "react",
+    "lib": ["DOM", "ES2019"],
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strictNullChecks": true,
+    "target": "ES2016"
+  },
+  "include": [
+    "example",
+    "src",
+  ]
+}

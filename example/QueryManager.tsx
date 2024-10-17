@@ -1,107 +1,129 @@
-import { ActionIcon, Badge, Flex, rem } from "@mantine/core";
-import { IconEdit } from "@tabler/icons-react";
-import React, { useCallback, useMemo, useState } from "react";
-import { QueryEditor } from "./QueryEditor";
-import { useStoredState } from "./useStorage";
+import {Chip, Flex, Select, Text} from "@mantine/core";
+import React, {forwardRef, useMemo} from "react";
+import {type TesseractCube, getAnnotation} from "../src/schema";
+import {useQueries} from "./QueriesProvider";
+import {useTesseract} from "./TesseractProvider";
 
-export const QueryManager = (props: {
-  currentQuery: string;
-  onChange: (nextQuery: string) => void;
-}) => {
-  const {currentQuery, onChange} = props;
+const COLORS = [
+  "grape",
+  "red",
+  "pink",
+  "blue",
+  "violet",
+  "indigo",
+  "lime",
+  "cyan",
+  "green",
+  "teal",
+  "yellow",
+  "orange",
+  "dark",
+  "gray",
+];
 
-  const [currentEdit, setCurrentEdit] = useState<null | string>(null);
-  const [queries, setQueries] = useStoredState<string[]>("queries", []);
+// TODO: offer a fullscreen cube selector
+export function QueryManager() {
+  const {currentQuery, setCurrentQuery, updateQuery} = useQueries();
 
-  const createHandler = useCallback(() => {
-    const newKey = Math.random().toString(16).slice(2, 10);
-    setQueries([...queries, newKey]);
-    setCurrentEdit(newKey);
-  }, [queries]);
+  const {cubes, dataLocale} = useTesseract();
 
-  const clearHandler = useCallback(() => {
-    setQueries([]);
-  }, []);
+  const cubeOptions = useMemo(() => {
+    return Object.values(cubes).map(cube => ({label: cube.name, value: cube.name, cube}));
+  }, [cubes]);
 
-  const closeHandler = useCallback(() => {
-    if (!currentEdit) return;
-    setCurrentEdit(null);
-    onChange(currentEdit);
-  }, [currentEdit, onChange]);
+  const CubeItem = useMemo(
+    () =>
+      forwardRef<HTMLDivElement, {label: string; value: string; cube: TesseractCube}>(
+        (props, ref) => {
+          const {cube, label, value, ...others} = props;
+          return (
+            <div ref={ref} {...others}>
+              <Text fw={700}>{cube.name}</Text>
+              {[
+                getAnnotation(cube, "topic", dataLocale),
+                getAnnotation(cube, "subtopic", dataLocale),
+                getAnnotation(cube, "table", dataLocale),
+              ]
+                .filter(Boolean)
+                .map(label => (
+                  <Text key={label} size="xs" sx={{whiteSpace: "nowrap"}}>
+                    {label}
+                  </Text>
+                ))}
+            </div>
+          );
+        },
+      ),
+    [dataLocale],
+  );
 
-  const queryPickers = useMemo(() => queries.map(item =>
-    <QueryPicker
-      key={item}
-      active={item === currentQuery}
-      onSelect={() => onChange(item)}
-      onEdit={() => setCurrentEdit(item)}
-      label={item}
-    />
-  ), [currentQuery, queries]);
+  const levels = useMemo(() => {
+    if (!currentQuery) return [];
+
+    const {drilldowns} = currentQuery;
+    const cube = cubes[currentQuery.cube];
+    const colors = COLORS.slice();
+    return cube.dimensions.flatMap(dimension => {
+      const selectedHierarchy = dimension.hierarchies.find(hierarchy =>
+        hierarchy.levels.some(level => drilldowns.includes(level.name)),
+      );
+      return dimension.hierarchies.flatMap(hierarchy => {
+        const color = colors.shift();
+        return hierarchy.levels.flatMap(level => {
+          const isActive = currentQuery.drilldowns.includes(level.name);
+          const isDisabled = selectedHierarchy && selectedHierarchy !== hierarchy;
+          return (
+            <Chip
+              key={level.name}
+              checked={isActive}
+              color={color}
+              disabled={isDisabled}
+              title={level.name}
+              onClick={() => {
+                updateQuery(cube.name, {
+                  drilldowns: isActive
+                    ? drilldowns.filter(item => item !== level.name)
+                    : [...drilldowns, level.name],
+                });
+              }}
+              variant="outline"
+              wrapperProps={{
+                title:
+                  level.name +
+                  (isDisabled
+                    ? ` (disabled by hierarchy '${selectedHierarchy.name}')`
+                    : ""),
+                sx: {
+                  "& > label": {
+                    maxWidth: 200,
+                    overflow: "hidden",
+                    "& > span": {
+                      minWidth: 18,
+                    },
+                  },
+                },
+              }}
+            >
+              {level.name}
+            </Chip>
+          );
+        });
+      });
+    });
+  }, [currentQuery, cubes, updateQuery]);
 
   return (
-    <Flex direction="column" w="100%" gap="sm" className="query-manager">
-      <button onClick={createHandler}>New query</button>
-      {queryPickers}
-      <button onClick={clearHandler}>Clear</button>
-      <dialog open={currentEdit != null}>
-        <QueryEditor id={currentEdit || ""} onClose={closeHandler} />
-      </dialog>
-      <style>{`
-dialog {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  margin: auto;
-  box-shadow: 0 0 1em rgba(0, 0, 0, 0.4);
-  border-width: 1px;
-  border-radius: 3px;
-}
-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(0.2);
-}
-
-dialog textarea {
-  display: block;
-  width: 50vw;
-  height: 50vh;
-  box-sizing: border-box;
-}
-`}</style>
+    <Flex style={{flex: "1 0"}} direction="row" align="center" gap="sm">
+      <Select
+        data={cubeOptions}
+        itemComponent={CubeItem}
+        onChange={setCurrentQuery}
+        searchable
+        size="xs"
+        styles={{dropdown: {width: 300}}}
+        value={currentQuery?.cube}
+      />
+      {levels}
     </Flex>
   );
-};
-
-function QueryPicker(props: {
-  active: boolean;
-  label: string;
-  onEdit: () => void;
-  onSelect: () => void;
-}) {
-  const removeButton = (
-    <ActionIcon
-      size="xs"
-      color="blue"
-      radius="xl"
-      variant={props.active ? "filled" : "transparent"}
-      onClick={props.onEdit}
-    >
-      <IconEdit size={rem(16)} />
-    </ActionIcon>
-  );
-
-  return (
-    <Badge
-      variant={props.active ? "filled" : "outline"}
-      size="lg"
-      pr={3}
-      rightSection={removeButton}
-      onClick={props.onSelect}
-    >
-      {props.label}
-    </Badge>
-  )
 }
