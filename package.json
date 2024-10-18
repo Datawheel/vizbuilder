@@ -6,13 +6,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js",
       "default": "./dist/index.esm.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "require": "./dist/react.cjs.js",
+      "default": "./dist/react.esm.js"
     }
   },
   "files": [
-    "dist/index.esm.js",
-    "dist/index.d.ts"
+    "dist"
   ],
   "scripts": {
     "build": "tsup",

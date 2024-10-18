@@ -4,7 +4,7 @@ import {defineConfig} from "tsup";
 export default defineConfig(options => ({
   clean: !options.watch,
   entry: {
-    index: "src/charts/index.ts",
+    index: "src/index.ts",
     react: "src/react/index.ts"
   },
   format: ["cjs", "esm"],
@@ -14,6 +14,5 @@ export default defineConfig(options => ({
   dts: true,
   shims: true,
   sourcemap: !!options.watch,
-  splitting: false,
   treeshake: true,
 }));
