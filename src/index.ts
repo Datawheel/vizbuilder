@@ -1,3 +1,12 @@
-export {Column, LevelColumn, MeasureColumn, PropertyColumn} from "./toolbox/columns";
-export {Chart, generateCharts, ChartType} from "./charts";
-export {ChartLimits, Dataset} from "./types";
+export {type BarChart, generateBarchartConfigs} from "./charts/barchart";
+export type {BaseChart, ChartType} from "./charts/common";
+export type {AxisSeries, CategoryAxis, Datagroup, LevelCaption} from "./charts/datagroup";
+export {type DonutChart, generateDonutConfigs} from "./charts/donut";
+export {type Chart, generateCharts} from "./charts/generator";
+export {type ChoroplethMap, generateChoroplethMapConfigs} from "./charts/geomap";
+export {type LinePlot, generateLineplotConfigs} from "./charts/lineplot";
+export {type StackedArea, generateStackedareaConfigs} from "./charts/stackedarea";
+export {type TreeMap, generateTreemapConfigs} from "./charts/treemap";
+export type {D3plusConfig} from "./d3plus";
+export type {Column, LevelColumn, MeasureColumn, PropertyColumn} from "./toolbox/columns";
+export type {ChartLimits, Dataset} from "./types";

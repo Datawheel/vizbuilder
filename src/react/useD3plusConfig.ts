@@ -9,15 +9,13 @@ import {
 } from "d3plus-react";
 import {assign} from "lodash-es";
 import {useMemo} from "react";
-import type {
-  BarChart,
-  Chart,
-  ChoroplethMap,
-  DonutChart,
-  LinePlot,
-  StackedArea,
-  TreeMap,
-} from "../charts";
+import type {BarChart} from "../charts/barchart";
+import type {DonutChart} from "../charts/donut";
+import type {Chart} from "../charts/generator";
+import type {ChoroplethMap} from "../charts/geomap";
+import type {LinePlot} from "../charts/lineplot";
+import type {StackedArea} from "../charts/stackedarea";
+import type {TreeMap} from "../charts/treemap";
 import type {D3plusConfig} from "../d3plus";
 import type {DataPoint, TesseractMeasure} from "../schema";
 import {filterMap, getLast} from "../toolbox/array";

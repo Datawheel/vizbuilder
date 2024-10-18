@@ -1,7 +1,8 @@
 import {Modal, SimpleGrid} from "@mantine/core";
 import cls from "clsx";
 import React, {useCallback, useMemo, useState} from "react";
-import {type Chart, type ChartType, generateCharts} from "../charts";
+import type {ChartType} from "../charts/common";
+import {type Chart, generateCharts} from "../charts/generator";
 import type {D3plusConfig} from "../d3plus";
 import type {TesseractLevel, TesseractMeasure} from "../schema";
 import {castArray} from "../toolbox/array";
