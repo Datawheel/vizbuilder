@@ -26,14 +26,15 @@ export const defaultTranslation = {
     and: "and"
   },
   title: {
+    by_drilldowns: "by {{drilldowns}}",
+    measure_and_modifier: "{{modifier}} {{measure}}",
+    measure_on_period: "{{measure}} on {{period}}",
     nonidealstate: "No results",
     of_selected_cut_members: "of Selected {{members}} Members",
-    top_drilldowns: "for Top {{drilldowns}}",
-    by_drilldowns: "by {{drilldowns}}",
     over_time: "Over Time",
-    measure_and_modifier: "{{modifier}} {{measure}}",
-    total: "Total"
-  }
+    top_drilldowns: "for Top {{drilldowns}}",
+    total: "Total",
+  },
 };
 
 export type Translation = typeof defaultTranslation;

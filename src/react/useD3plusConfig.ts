@@ -218,7 +218,7 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
 }
 
 export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams) {
-  const {datagroup, values, series, time} = chart;
+  const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
   const {columns, dataset, locale} = datagroup;
@@ -229,12 +229,18 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     data: dataset,
     discrete: "x",
     label: (d: DataPoint) => {
-      return series.map(series => d[series.level.name]).join("\n");
+      return (
+        series.map(series => d[series.level.name]).join("\n") ||
+        t("title.measure_on_period", {
+          measure: values.measure.caption,
+          period: d[timeline.level.name],
+        })
+      );
     },
     legend: fullMode,
     locale,
-    groupBy: series.map(series => series.name),
-    time: time.level.name,
+    groupBy: series.length ? series.map(series => series.name) : undefined,
+    time: timeline.level.name,
     timeline: fullMode,
     timelineConfig: {
       brushing: true,
@@ -244,9 +250,9 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
     total: false,
-    x: time.level.name,
+    x: timeline.level.name,
     xConfig: {
-      title: time.level.caption,
+      title: timeline.level.caption,
     },
     y: values.measure.name,
     yConfig: {

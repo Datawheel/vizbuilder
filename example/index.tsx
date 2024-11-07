@@ -10,7 +10,11 @@ import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 import {FormatterProvider} from "../src/react/FormatterProvider";
-import {TranslationProvider} from "../src/react/TranslationProvider";
+import {
+  type Translation,
+  TranslationProvider,
+  defaultTranslation,
+} from "../src/react/TranslationProvider";
 import {Vizbuilder} from "../src/react/Vizbuilder";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
@@ -42,13 +46,15 @@ const topojsonConfig = Object.fromEntries(
   ].map(item => [item.id, item]),
 );
 
-const translations = {
+const translations: Record<string, Translation> = {
+  en: defaultTranslation,
   ar: {
     action_close: "يغلق",
     action_enlarge: "تكبير",
     action_fileissue: "قدم مشكلة",
     action_retry: "أعد المحاولة",
     aggregators: {
+      sum: "",
       avg: "متوسط",
       max: "أقصى",
       min: "الحد الأدنى",
@@ -64,16 +70,17 @@ const translations = {
       message: 'التفاصيل: "{{message}}".',
       title: "خطأ",
     },
-    nonidealstate_msg: "لا نتائج",
     sentence_connectors: {
       and: "و",
     },
     title: {
-      of_selected_cut_members: "من أعضاء {{members}} المختارين",
-      top_drilldowns: "لأفضل {{members}}",
       by_drilldowns: "بواسطة {{drilldowns}}",
-      over_time: "متأخر , بعد فوات الوقت",
       measure_and_modifier: "{{modifier}} {{measure}}",
+      measure_on_period: "",
+      nonidealstate: "لا نتائج",
+      of_selected_cut_members: "من أعضاء {{members}} المختارين",
+      over_time: "متأخر , بعد فوات الوقت",
+      top_drilldowns: "لأفضل {{members}}",
       total: "مجموع",
     },
   },
