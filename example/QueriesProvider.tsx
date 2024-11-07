@@ -35,7 +35,9 @@ export function QueriesProvider(props: {
   const [items, setItems] = useLocalStorage({
     key: "QueriesProvider:items",
     getInitialValueInEffect: false,
-    defaultValue: [randomRequestParams()] as RequestParams[],
+    defaultValue: Object.keys(props.cubes).length
+      ? ([randomRequestParams()] as RequestParams[])
+      : [],
   });
 
   const value = useMemo((): QueriesContextValue => {

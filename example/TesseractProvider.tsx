@@ -9,13 +9,9 @@ import React, {
   useRef,
   useState,
 } from "react";
+import type {TesseractCube, TesseractDataResponse, TesseractSchema} from "../src/schema";
 import {buildColumn} from "../src/toolbox/columns";
-import type {
-  Dataset,
-  TesseractCube,
-  TesseractDataResponse,
-  TesseractSchema,
-} from "../src/types";
+import type {Dataset} from "../src/types";
 import {QueriesProvider, type RequestParams} from "./QueriesProvider";
 
 interface TesseractContextValue {

@@ -12,7 +12,7 @@ import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import {IconWindowMaximize} from "@tabler/icons-react";
 import React, {forwardRef, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
-import {type Chart, generateCharts} from "../src/charts";
+import {type Chart, generateCharts} from "../src/charts/generator";
 import {ErrorBoundary} from "../src/react/ErrorBoundary";
 import type {VizbuilderProps} from "../src/react/Vizbuilder";
 import {useD3plusConfig} from "../src/react/useD3plusConfig";

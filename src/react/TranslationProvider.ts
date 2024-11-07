@@ -9,21 +9,21 @@ export const defaultTranslation = {
     avg: "Average",
     max: "Max",
     min: "Min",
-    sum: ""
+    sum: "",
   },
   chart_labels: {
     ci: "Confidence Interval",
     moe: "Margin of Error",
     source: "Source",
-    collection: "Collection"
+    collection: "Collection",
   },
   error: {
     detail: "",
-    message: "Details: \"{{message}}\".",
-    title: "Error"
+    message: 'Details: "{{message}}".',
+    title: "Error",
   },
   sentence_connectors: {
-    and: "and"
+    and: "and",
   },
   title: {
     by_drilldowns: "by {{drilldowns}}",
@@ -39,8 +39,5 @@ export const defaultTranslation = {
 
 export type Translation = typeof defaultTranslation;
 
-export const {
-  useTranslation,
-  TranslationConsumer,
-  TranslationProvider
-} = translationFactory({defaultLocale: "en", defaultTranslation});
+export const {useTranslation, TranslationConsumer, TranslationProvider} =
+  translationFactory({defaultLocale: "en", defaultTranslation});
