@@ -141,12 +141,10 @@ export function useTesseractData(query: RequestParams | undefined) {
 
   useEffect(() => {
     const cube = query ? cubes[query.cube] : undefined;
-    if (!query || !cube || !query.drilldowns.length || !query.measures.length) {
-      setState({
-        error: "Invalid query",
-        isLoading: false,
-        dataset: {columns: {}, data: [], locale: dataLocale},
-      });
+    const error = errorInQuery(query);
+    if (!query || !cube || error) {
+      const dataset = {columns: {}, data: [], locale: dataLocale};
+      setState({error, isLoading: false, dataset});
       return;
     }
 
@@ -171,4 +169,20 @@ export function useTesseractData(query: RequestParams | undefined) {
   }, [cubes, fetchData, query, dataLocale]);
 
   return state;
+}
+
+function errorInQuery(query: RequestParams | undefined) {
+  if (!query) {
+    return "Request object has not been initialized.";
+  }
+  if (!query.cube) {
+    return "Request object doesn't have a cube defined.";
+  }
+  if (query.drilldowns.length === 0) {
+    return "Request has no drilldowns selected";
+  }
+  if (query.measures.length === 0) {
+    return "Request has no measures selected";
+  }
+  return "";
 }
