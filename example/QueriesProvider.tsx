@@ -1,6 +1,6 @@
 import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash-es";
-import React, {createContext, useContext, useMemo} from "react";
+import React, {createContext, useContext, useEffect, useMemo} from "react";
 import type {TesseractCube} from "../src/schema";
 
 export interface RequestParams {
@@ -75,6 +75,23 @@ export function QueriesProvider(props: {
     };
   }, [index, items, setIndex, setItems]);
 
+  // Mirror current RequestParams to URLSearchParams
+  useEffect(() => {
+    const currRequest = Object.fromEntries(
+      new URLSearchParams(window.location.search),
+    ) as unknown as RequestParams;
+    const nextRequest = value.currentQuery;
+    if (nextRequest && !isSameRequest(currRequest, nextRequest)) {
+      const search = new URLSearchParams({
+        cube: nextRequest.cube,
+        drilldowns: nextRequest.drilldowns.join(","),
+        measures: nextRequest.measures.join(","),
+      });
+      const url = new URL(search.toString(), location.href);
+      window.history.pushState(value.currentQuery, "", url);
+    }
+  }, [value.currentQuery]);
+
   return (
     <QueriesContext.Provider value={value}>{props.children}</QueriesContext.Provider>
   );
@@ -102,4 +119,16 @@ export function useQueries() {
     throw new Error("Hook useQueries must be used inside a QueriesProvider node.");
   }
   return value;
+}
+
+function isSameRequest(a: RequestParams, b: RequestParams): boolean {
+  return (
+    a.cube === b.cube &&
+    standardizeArray(a.drilldowns || []) === standardizeArray(b.drilldowns || []) &&
+    standardizeArray(a.measures || []) === standardizeArray(b.measures || [])
+  );
+}
+
+function standardizeArray(array: string[]) {
+  return array.sort().toString();
 }
