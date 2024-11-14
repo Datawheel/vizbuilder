@@ -55,7 +55,7 @@ const translations: Record<string, Translation> = {
     action_retry: "أعد المحاولة",
     aggregator: {
       sum: "{{measure}}",
-      average: 'متوسط {{measure}}',
+      average: "متوسط {{measure}}",
       max: "أقصى {{measure}}",
       min: "أدنى {{measure}}",
     },

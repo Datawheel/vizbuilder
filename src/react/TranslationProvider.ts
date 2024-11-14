@@ -1,13 +1,5 @@
 import {translationFactory} from "@datawheel/use-translation";
 
-type Pluralized<T> = {
-  [K in keyof T]: T[K] extends string
-    ? {[P in K]: string} & { [P in `${K}_zero` | `${K}_plural`]?: string }
-    : T[K] extends object
-    ? Pluralized<T[K]>
-    : never;
-}[keyof T];
-
 export const defaultTranslation = {
   action_close: "Close",
   action_enlarge: "Enlarge",
