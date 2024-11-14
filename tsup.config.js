@@ -5,7 +5,8 @@ export default defineConfig(options => ({
   clean: !options.watch,
   entry: {
     index: "src/index.ts",
-    react: "src/react/index.ts"
+    react: "src/react/index.ts",
+    schema: "src/schema.ts"
   },
   format: ["cjs", "esm"],
   outExtension({format}) {

@@ -38,7 +38,7 @@ export const chartGenerator: {
 };
 
 export const DEFAULT_CHART_LIMITS: ChartLimits = {
-  BARCHART_MAX_BARS: 20,
+  BARCHART_MAX_BARS: 24,
   BARCHART_MAX_STACKED_BARS: 10,
   BARCHART_YEAR_MAX_BARS: 20,
   DONUT_SHAPE_MAX: 30,

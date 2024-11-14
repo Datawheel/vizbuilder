@@ -83,6 +83,7 @@ export function generateDonutConfigs(
           values,
           series: [buildSeries(categoryAxis, axisLevel)],
           timeline,
+          extraConfig: {},
         };
       });
     });

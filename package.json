@@ -13,6 +13,11 @@
       "types": "./dist/react.d.ts",
       "require": "./dist/react.cjs.js",
       "default": "./dist/react.esm.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "require": "./dist/schema.cjs.js",
+      "default": "./dist/schema.esm.js"
     }
   },
   "files": [

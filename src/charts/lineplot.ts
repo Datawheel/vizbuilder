@@ -45,6 +45,7 @@ export function generateLineplotConfigs(
       },
       series: [],
       timeline,
+      extraConfig: {},
     };
   });
 
@@ -76,6 +77,7 @@ export function generateLineplotConfigs(
             values,
             series: [buildSeries(categoryAxis, axisLevel)],
             timeline,
+            extraConfig: {},
           };
         });
       });

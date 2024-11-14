@@ -1,3 +1,4 @@
+import type {D3plusConfig} from "../d3plus";
 import type {
   TesseractDimension,
   TesseractHierarchy,
@@ -37,6 +38,9 @@ export interface BaseChart {
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
     members: string[] | number[] | boolean[];
+  };
+  extraConfig: {
+    d3plus?: Partial<D3plusConfig>;
   };
 }
 

@@ -1,41 +1,13 @@
-import {
-  Aggregator,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
-} from "../schema";
+import {Aggregator} from "../schema";
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
 import type {ChartLimits} from "../types";
-import {buildDeepestSeries, buildSeries } from "./common";
-import type {Datagroup, LevelCaption} from "./datagroup";
+import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup} from "./datagroup";
 
-export interface StackedArea {
-  key: string;
+export interface StackedArea extends BaseChart {
   type: "stackedarea";
-  datagroup: Datagroup;
-  values: {
-    measure: TesseractMeasure;
-    minValue: number;
-    maxValue: number;
-  };
-  series: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    captions: {[K: string]: LevelCaption};
-    members: string[] | number[] | boolean[];
-  }[];
-  timeline?: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    members: string[] | number[] | boolean[];
-  };
 }
 
 export function generateStackedareaConfigs(
@@ -111,6 +83,7 @@ export function generateStackedareaConfigs(
           buildSeries(otherAxis, otherAxisLevel),
         ],
         timeline,
+        extraConfig: {},
       };
     });
   });

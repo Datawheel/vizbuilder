@@ -1,42 +1,13 @@
 import type {D3plusConfig} from "../d3plus";
-import {
-  DimensionType,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
-} from "../schema";
+import {DimensionType, type TesseractLevel} from "../schema";
 import {getLast} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
 import type {ChartLimits} from "../types";
-import {buildDeepestSeries, buildSeries} from "./common";
-import type {Datagroup, LevelCaption} from "./datagroup";
+import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
+import type {Datagroup} from "./datagroup";
 
-export interface ChoroplethMap {
-  key: string;
+export interface ChoroplethMap extends BaseChart {
   type: "choropleth";
-  datagroup: Datagroup;
-  values: {
-    measure: TesseractMeasure;
-    minValue: number;
-    maxValue: number;
-  };
-  series: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    captions: {[K: string]: LevelCaption};
-    members: string[] | number[] | boolean[];
-  }[];
-  timeline?: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    members: string[] | number[] | boolean[];
-  };
-  extraConfig?: Partial<D3plusConfig>;
 }
 
 export function generateChoroplethMapConfigs(
@@ -70,38 +41,27 @@ export function generateChoroplethMapConfigs(
       maxValue: range[1],
     };
 
-    const nonGeoAxes = categoryAxes.filter(
-      axis => axis.dimension.type !== DimensionType.GEO,
-    );
+    return geoAxes.flatMap(categoryAxis => {
+      const {dimension} = categoryAxis;
 
-    return categoryAxes
-      .filter(axis => axis.dimension.type === DimensionType.GEO)
-      .flatMap(categoryAxis => {
-        const {dimension} = categoryAxis;
+      const keyChain = [chartType, dataset.length, measure.name];
 
-        const keyChain = [chartType, dataset.length, measure.name];
+      return categoryAxis.levels.flatMap<ChoroplethMap>(axisLevel => {
+        const d3plusConfig = getTopojsonConfig(axisLevel.level);
+        if (dimension.type === DimensionType.GEO && !d3plusConfig?.topojson) return [];
 
-        return categoryAxis.levels.flatMap<ChoroplethMap>(axisLevel => {
-          const extraConfig = getTopojsonConfig(axisLevel.level);
-          if (dimension.type === DimensionType.GEO && !extraConfig?.topojson) return [];
-
-          return {
-            key: shortHash(keyChain.join("|")),
-            type: chartType,
-            datagroup: dg,
-            values,
-            series: [buildSeries(categoryAxis, axisLevel)],
-            timeline,
-            extraConfig: getTopojsonConfig(getLast(categoryAxis.levels).level),
-          };
-        });
+        return {
+          key: shortHash(keyChain.join("|")),
+          type: chartType,
+          datagroup: dg,
+          values,
+          series: [buildSeries(categoryAxis, axisLevel)],
+          timeline,
+          extraConfig: {
+            d3plus: d3plusConfig,
+          },
+        };
       });
+    });
   });
 }
-
-// .concat(
-//   nonGeoAxes.map(axis => {
-//     const lastLevel = getLast(axis.levels);
-//     return buildSeries(axis, lastLevel);
-//   }),
-// )

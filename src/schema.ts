@@ -90,6 +90,8 @@ export type Annotations = {
 
 export type DataPoint = Record<string, unknown>;
 
+export type AggregatedDataPoint = Record<string, unknown | unknown[]>;
+
 export interface TesseractDataRequest {
   cube: string;
 

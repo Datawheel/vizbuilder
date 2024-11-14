@@ -102,7 +102,7 @@ export function generateHoriBartchartConfigs(
         return true;
       });
 
-    return [...yieldPartialPermutations(allLevels, 2)].flatMap(tuple => {
+    return [...yieldPartialPermutations(allLevels, 2)].flatMap<BarChart>(tuple => {
       const keyChain = [chartType, dataset.length, measure.name];
 
       const [mainAxis, mainAxisLevel] = tuple[0];
@@ -145,6 +145,7 @@ export function generateHoriBartchartConfigs(
           buildSeries(otherAxis, otherAxisLevel),
         ],
         timeline,
+        extraConfig: {},
       };
     });
   });
@@ -216,6 +217,7 @@ export function generateVertBarchartConfigs(
           orientation: "vertical",
           values,
           series: [timeline, buildSeries(categoryAxis, axisLevel)],
+          extraConfig: {},
         };
       });
     });

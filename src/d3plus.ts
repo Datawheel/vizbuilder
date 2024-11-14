@@ -70,7 +70,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   label?: string | ((d: DataPoint) => string);
   legend?: boolean;
   legendConfig?: {
-    label?: string;
+    label?: DataPointAccessor<string>;
     shapeConfig?: Record<string, string | number>;
   };
   legendPosition?: Position;
@@ -84,7 +84,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   time?: string;
   title?: string | (() => string); // Optional title for the chart
   titleConfig?: CSSProperties;
-  tooltip?: boolean | ((d: any) => string); // Tooltip configuration or custom function
+  tooltip?: boolean; // Tooltip configuration or custom function
   tooltipConfig?: {
     title?: (d: DataPoint) => string;
     body?: (d: DataPoint) => string;

@@ -1,18 +1,14 @@
 export type {ErrorBoundary} from "./ErrorBoundary";
 export {FormatterProvider, useFormatter, type Formatter} from "./FormatterProvider";
 export {
-  type Translation,
   TranslationConsumer,
   TranslationProvider,
   useTranslation,
+  type Translation,
 } from "./TranslationProvider";
 export {
-  buildBarchartConfig,
-  buildChoroplethConfig,
-  buildDonutConfig,
-  buildLineplotConfig,
-  buildStackedareaConfig,
-  buildTreemapConfig,
+  d3plusConfigBuilder,
+  d3plusConfigParams,
   useD3plusConfig,
 } from "./useD3plusConfig";
 export {Vizbuilder, type VizbuilderProps} from "./Vizbuilder";

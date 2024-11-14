@@ -1,15 +1,23 @@
 import {translationFactory} from "@datawheel/use-translation";
 
+type Pluralized<T> = {
+  [K in keyof T]: T[K] extends string
+    ? {[P in K]: string} & { [P in `${K}_zero` | `${K}_plural`]?: string }
+    : T[K] extends object
+    ? Pluralized<T[K]>
+    : never;
+}[keyof T];
+
 export const defaultTranslation = {
   action_close: "Close",
   action_enlarge: "Enlarge",
   action_fileissue: "File an issue",
   action_retry: "Retry",
-  aggregators: {
-    avg: "Average",
-    max: "Max",
-    min: "Min",
-    sum: "",
+  aggregator: {
+    average: "Average {{measure}}",
+    max: "Max {{measure}}",
+    min: "Min {{measure}}",
+    sum: "{{measure}}",
   },
   chart_labels: {
     ci: "Confidence Interval",
@@ -22,18 +30,23 @@ export const defaultTranslation = {
     message: 'Details: "{{message}}".',
     title: "Error",
   },
-  sentence_connectors: {
-    and: "and",
+  list: {
+    join: ", ",
+    suffix: "{{rest}}, and {{item}}",
+    prefix: "{{list}}",
+    n_more: "{{n}} more",
   },
   title: {
-    by_drilldowns: "by {{drilldowns}}",
-    measure_and_modifier: "{{modifier}} {{measure}}",
-    measure_on_period: "{{measure}} on {{period}}",
+    main_on_period: "{{values}} by {{series}} on {{time_period}}",
+    main_over_period: "{{values}} by {{series}} over {{time}}",
+    main: "{{values}} by {{series}}",
+    measure_on_period: "{{values}} on {{time_period}}",
+    measure_over_period: "{{values}} over {{time}}",
     nonidealstate: "No results",
-    of_selected_cut_members: "of Selected {{members}} Members",
-    over_time: "Over Time",
-    top_drilldowns: "for Top {{drilldowns}}",
-    total: "Total",
+    series_members: "{{series}} ({{members}})",
+    series: "{{series}}",
+    time_range: "in {{from}}-{{to}}",
+    total: "Total: {{value}}",
   },
 };
 

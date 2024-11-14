@@ -8,7 +8,6 @@ import type {Datagroup} from "./datagroup";
 
 export interface TreeMap extends BaseChart {
   type: "treemap";
-  datagroup: Datagroup;
 }
 
 /**
@@ -93,6 +92,7 @@ export function generateTreemapConfigs(
           buildSeries(otherAxis, otherAxisLevel),
         ],
         timeline,
+        extraConfig: {},
       };
     });
   });

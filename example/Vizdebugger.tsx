@@ -13,6 +13,7 @@ import {IconWindowMaximize} from "@tabler/icons-react";
 import React, {forwardRef, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
 import {type Chart, generateCharts} from "../src/charts/generator";
+import {useTranslation} from "../src/react";
 import {ErrorBoundary} from "../src/react/ErrorBoundary";
 import type {VizbuilderProps} from "../src/react/Vizbuilder";
 import {useD3plusConfig} from "../src/react/useD3plusConfig";
@@ -74,11 +75,13 @@ export function Vizdebugger(props: VizbuilderProps) {
 
   const chart = charts[chartIndex];
 
+  const {translate} = useTranslation();
+
   const [ChartComponent, chartConfig] = useD3plusConfig(chart, {
     fullMode,
     showConfidenceInt,
     getMeasureConfig,
-    t: i => i,
+    t: translate,
   });
 
   return (

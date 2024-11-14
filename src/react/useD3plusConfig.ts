@@ -1,4 +1,5 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
+import {assign} from "d3plus-common";
 import {
   BarChart as BarChartComponent,
   Geomap as ChoroplethComponent,
@@ -7,7 +8,7 @@ import {
   StackedArea as StackedAreaComponent,
   Treemap as TreeMapComponent,
 } from "d3plus-react";
-import {assign} from "lodash-es";
+import {sortBy} from "lodash-es";
 import {useMemo} from "react";
 import type {BarChart} from "../charts/barchart";
 import type {DonutChart} from "../charts/donut";
@@ -17,20 +18,33 @@ import type {LinePlot} from "../charts/lineplot";
 import type {StackedArea} from "../charts/stackedarea";
 import type {TreeMap} from "../charts/treemap";
 import type {D3plusConfig} from "../d3plus";
-import type {DataPoint, TesseractMeasure} from "../schema";
+import type {AggregatedDataPoint, DataPoint, TesseractMeasure} from "../schema";
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
 import {isOneOf} from "../toolbox/validation";
 import {type Formatter, useFormatter} from "./FormatterProvider";
 
 interface ChartBuilderParams {
-  commonConfig: D3plusConfig;
   fullMode: boolean;
   getFormatter: (key: string | TesseractMeasure) => Formatter;
   getMeasureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
   showConfidenceInt: boolean;
   t: TranslateFunction;
 }
+
+export const d3plusConfigBuilder = {
+  common: buildCommonConfig,
+  barchart: buildBarchartConfig,
+  choropleth: buildChoroplethConfig,
+  donut: buildDonutConfig,
+  lineplot: buildLineplotConfig,
+  stackedarea: buildStackedareaConfig,
+  treemap: buildTreemapConfig,
+};
+
+export const d3plusConfigParams = {
+  translationPath: "",
+};
 
 export function useD3plusConfig(
   chart: Chart | undefined,
@@ -44,50 +58,139 @@ export function useD3plusConfig(
     React.ComponentType<{config: D3plusConfig}> | null,
     D3plusConfig,
   ] => {
-    if (!chart) return [null, {data: "", locale: ""}];
+    if (!chart) return [null, {data: [], locale: ""}];
 
-    const commonConfig = {
-      data: chart.datagroup.dataset,
-      tooltip: true,
-      locale: chart.datagroup.locale,
-    };
-    const params = {
-      commonConfig,
+    const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
       getMeasureConfig,
       showConfidenceInt,
-      t,
+      t: d3plusConfigParams.translationPath
+        ? (template, data) => t(`${d3plusConfigParams.translationPath}.${template}`, data)
+        : t,
     };
 
     if (chart.type === "barchart") {
-      return [BarChartComponent, buildBarchartConfig(chart, params)];
+      return [BarChartComponent, d3plusConfigBuilder.barchart(chart, params)];
     }
     if (chart.type === "choropleth") {
-      return [ChoroplethComponent, buildChoroplethConfig(chart, params)];
+      const config = d3plusConfigBuilder.choropleth(chart, params);
+      if (chart.extraConfig.d3plus) assign(config, chart.extraConfig.d3plus);
+      return [ChoroplethComponent, config];
     }
     if (chart.type === "donut") {
-      return [DonutComponent, buildDonutConfig(chart, params)];
+      return [DonutComponent, d3plusConfigBuilder.donut(chart, params)];
     }
     if (chart.type === "lineplot") {
-      return [LinePlotComponent, buildLineplotConfig(chart, params)];
+      return [LinePlotComponent, d3plusConfigBuilder.lineplot(chart, params)];
     }
     if (chart.type === "stackedarea") {
-      return [StackedAreaComponent, buildStackedareaConfig(chart, params)];
+      return [StackedAreaComponent, d3plusConfigBuilder.stackedarea(chart, params)];
     }
     if (chart.type === "treemap") {
-      return [TreeMapComponent, buildTreemapConfig(chart, params)];
+      return [TreeMapComponent, d3plusConfigBuilder.treemap(chart, params)];
     }
 
-    return [null, commonConfig];
+    return [null, {data: [], locale: ""}];
   }, [chart, fullMode, getFormatter, getMeasureConfig, showConfidenceInt, t]);
+}
+
+function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
+  const {fullMode, getFormatter, t} = params;
+  const {datagroup, series, timeline, values} = chart;
+
+  const {locale} = datagroup;
+
+  const measureFormatter = getFormatter(values.measure);
+  const {caption: meaCaption, name: meaName} = values.measure;
+
+  const sortedColumnList = sortBy(
+    Object.values(datagroup.columns),
+    column => getColumnEntity(column).caption,
+  );
+
+  const aggsEntries = Object.values(datagroup.nonTimeHierarchies).flatMap(hierarchy => {
+    return hierarchy.levels.map(level => {
+      const key = level.name;
+      return [
+        key,
+        (data: AggregatedDataPoint[]) => {
+          const items = data.map(d => d[key] as string);
+          return _buildTranslatedList(t, items, 4);
+        },
+      ] as const;
+    });
+  });
+
+  if (datagroup.timeHierarchy) {
+    aggsEntries.push(
+      ...datagroup.timeHierarchy.levels.slice(0, -1).map(level => {
+        return [
+          level.name,
+          (data: AggregatedDataPoint[]) => {
+            if (!Array.isArray(data)) return `${data}`;
+            const uniqueValues = [
+              ...new Set(data.map(d => d[level.name] as number)),
+            ].sort();
+            if (uniqueValues.length === 1) return uniqueValues[0].toString();
+            if (_isIntegerSequence(uniqueValues))
+              return t("title.range", {
+                from: uniqueValues[0],
+                to: getLast(uniqueValues),
+              });
+            return _buildTranslatedList(t, uniqueValues.map(i => `${i}`));
+          },
+        ] as const;
+      }),
+    );
+  }
+
+  return {
+    aggs: aggsEntries.length > 0 ? Object.fromEntries(aggsEntries) : undefined,
+    data: datagroup.dataset,
+    legend: fullMode,
+    legendConfig: {
+      label(d) {
+        return d[series[0].level.name];
+      },
+    },
+    tooltip: true,
+    tooltipConfig: {
+      title(d) {
+        if (!timeline) {
+          return values.measure.caption;
+        }
+        if (chart.series.length === 0) {
+          return t("title.measure_on_period", {
+            values: values.measure.caption,
+            time_period: d[timeline.level.name],
+          });
+        }
+        const lastSeries = getLast(chart.series);
+        return d[lastSeries.level.name] as string;
+      },
+      tbody(d: AggregatedDataPoint) {
+        return filterMap<Column, [string, string]>(sortedColumnList, column => {
+          if (column.type === "measure") return null;
+          if (column.type === "level" && column.hasID && column.isID) return null;
+          const {caption, name} = getColumnEntity(column);
+          const value = d[name];
+          return [
+            caption,
+            Array.isArray(value) ? _buildTranslatedList(t, value, 5) : (value as string),
+          ];
+        }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
+      },
+    },
+    locale: datagroup.locale,
+  };
 }
 
 export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams) {
   const {fullMode, getFormatter, t} = params;
   const {datagroup, values, series, timeline, orientation} = chart;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
   const [mainSeries, stackedSeries] = series;
 
   const collate = new Intl.Collator(locale, {numeric: true, ignorePunctuation: true});
@@ -98,17 +201,22 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const measureUnits = values.measure.annotations.units_of_measurement || "";
   const isPercentage = ["Percentage", "Rate"].includes(measureUnits);
 
+  const isStacked =
+    (stackedSeries && isOneOf(measureAggregator.toUpperCase(), ["COUNT", "SUM"])) ||
+    isPercentage;
+
   const config: D3plusConfig = {
-    ...params.commonConfig,
+    ...d3plusConfigBuilder.common(chart, params),
     barPadding: fullMode ? 5 : 1,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
     groupBy: stackedSeries?.name,
     groupPadding: fullMode ? 5 : 1,
-    label: d => series.map(series => d[series.level.name]).join("\n"),
-    legend: fullMode,
-    stacked:
-      (stackedSeries && isOneOf(measureAggregator.toUpperCase(), ["COUNT", "SUM"])) ||
-      isPercentage,
+    label(d) {
+      return isStacked && stackedSeries
+        ? (d[stackedSeries.level.name] as string)
+        : series.map(series => d[series.level.name]).join("\n");
+    },
+    stacked: isStacked,
     time: timeline?.name === "Quarter ID" ? timeline.level.name : timeline?.name,
     timeline: timeline && fullMode,
     timelineConfig: {
@@ -119,15 +227,12 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
     total: !timeline,
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
   };
 
   if (orientation === "horizontal") {
-    Object.assign(config, {
+    assign(config, {
       x: values.measure.name,
       xConfig: {
         title: values.measure.caption,
@@ -140,7 +245,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       ySort: collate.compare,
     });
   } else {
-    Object.assign(config, {
+    assign(config, {
       x: mainSeries.level.name,
       xConfig: {
         title: mainSeries.level.caption,
@@ -160,15 +265,13 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
   const {datagroup, values, series, timeline} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
   const {members: firstSeriesMembers} = series[0];
-
-  const lastSeries = getLast(series);
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
-    ...params.commonConfig,
+    ...d3plusConfigBuilder.common(chart, params),
     colorScale: values.measure.name,
     colorScaleConfig: {
       axisConfig: {
@@ -193,17 +296,9 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      title(d) {
-        return d[lastSeries.level.name] as string;
-      },
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     zoomScroll: false,
   };
-
-  assign(config, chart.extraConfig);
 
   return config;
 }
@@ -212,13 +307,13 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
   const [mainSeries] = series;
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
-    ...params.commonConfig,
+    ...d3plusConfigBuilder.common(chart, params),
     groupBy: [mainSeries.name],
     label: d => d[mainSeries.level.name] as string,
     time: timeline?.name,
@@ -231,11 +326,8 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
     total: !timeline,
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
   };
 
@@ -246,12 +338,12 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
-    ...params.commonConfig,
+    ...d3plusConfigBuilder.common(chart, params),
     discrete: "x",
     label: (d: DataPoint) => {
       return (
@@ -262,23 +354,15 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
         })
       );
     },
-    legend: fullMode,
     groupBy: series.length ? series.map(series => series.name) : undefined,
     time: timeline.level.name,
-    timeline: fullMode,
-    timelineConfig: {
-      brushing: true,
-      playButton: false,
-    },
+    timeline: true,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
     total: false,
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     x: timeline.level.name,
     xConfig: {
       title: timeline.level.caption,
@@ -298,23 +382,20 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
-    ...params.commonConfig,
+    ...d3plusConfigBuilder.common(chart, params),
     groupBy: series.map(series => series.name),
     time: timeline?.name,
-    timeline: timeline && fullMode,
+    timeline: false,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
   };
 
@@ -325,65 +406,51 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {columns, locale} = datagroup;
+  const {locale} = datagroup;
 
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
-    ...params.commonConfig,
-    label: d => series.map(series => d[series.level.name]).join("\n"),
+    ...d3plusConfigBuilder.common(chart, params),
+    label: d =>
+      series
+        .slice(1)
+        .map(series => d[series.level.name])
+        .join("\n"),
     groupBy: series.map(series => series.name),
     sum: values.measure.name,
     threshold: 0.005,
-    thresholdName: series[0].name,
+    thresholdName: series[0].level.name,
     time: timeline?.name,
     timeline: timeline && fullMode,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    tooltipConfig: {
-      tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
-    },
-    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
   };
 
   return config;
 }
 
-function _buildTooltipTbody(
-  columns: Record<string, Column>,
-  measure: TesseractMeasure,
-  measureFormatter: Formatter,
-  locale: string,
-) {
-  return d => {
-    const {caption: meaCaption, name: meaName} = measure;
-    return filterMap(Object.values(columns), column => {
-      if (column.type === "measure") return null;
-      if (column.type === "level" && column.hasID && column.isID) return null;
-      const {caption, name} = getColumnEntity(column);
-      return [caption, d[name]] as [string, string];
-    }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
-  };
-}
-
 function _buildTitle(t: TranslateFunction, chart: Chart) {
   const {series, values, timeline} = chart;
-  const [mainSeries, otherSeries] = series;
   const {measure} = values;
+  const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+  const valuesKey = `aggregator.${aggregator.toLowerCase()}`;
+  const valuesCaption = t(valuesKey, {measure: measure.caption});
 
   const seriesStr = (series: Chart["series"][number]) => {
     const {members} = series.captions[series.level.name];
 
     if (series.members.length < 5) {
-      return t("vizbuilder.title.series_members", {
+      return t("title.series_members", {
         series: series.level.caption,
         members: _buildTranslatedList(t, members as string[]),
       });
     }
 
-    return t("vizbuilder.title.series", {
+    return t("title.series", {
       series: series.level.caption,
     });
   };
@@ -393,33 +460,38 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     series: NonNullable<Chart["timeline"]>,
   ) => {
     if (!data) return getLast(series.members as string[]);
-    return getLast([...new Set(data.map(d => d[series.name]))].sort());
+    return getLast([...new Set(data.map(d => d[series.level.name]))].sort());
   };
 
   return (data?: DataPoint[]): string => {
-    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
-    const valuesKey = `vizbuilder.aggregator.${aggregator.toLowerCase()}`;
-    const values = t(valuesKey, {measure: measure.caption});
+    if (series.length === 0) {
+      if (!timeline || !data) return valuesCaption;
+
+      return t("title.measure_on_period", {
+        measure: valuesCaption,
+        period: data[timeline.level.name],
+      });
+    }
 
     const config = {
-      values: values === valuesKey ? measure.caption : values,
-      series: otherSeries
-        ? _buildTranslatedList(t, [seriesStr(mainSeries), seriesStr(otherSeries)])
-        : seriesStr(mainSeries),
+      values: valuesCaption.endsWith(valuesKey) ? measure.caption : valuesCaption,
+      series: _buildTranslatedList(t, series.map(seriesStr), 4),
       time: timeline?.level.caption,
       time_period: timeline ? getLastTimePeriod(data, timeline) : "",
     };
 
     // time is on the axis, so multiple periods are shown at once
     if (isOneOf(chart.type, ["lineplot", "stackedarea"])) {
-      return t("vizbuilder.title.main_over_period", config);
+      return t("title.main_over_period", config);
     }
 
     // time is on timeline dimension, so a single period is shown
-    if (timeline) return t("vizbuilder.title.main_on_period", config);
+    if (timeline) {
+      return t("title.main_on_period", config);
+    }
 
     // time dimension is not part of the chart
-    return t("vizbuilder.title.main", config);
+    return t("title.main", config);
   };
 }
 
@@ -427,18 +499,41 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
  * Concatenates a list of strings, by offering the possibility to use special
  * syntax for the first and last items.
  */
-function _buildTranslatedList(t: TranslateFunction, list: string[]) {
-  return t("vizbuilder.list.suffix", {
+function _buildTranslatedList(t: TranslateFunction, array: string[], limit = array.length) {
+  if (array.length === 0) {
+    return "";
+  }
+  if (array.length === 1) {
+    return array[0];
+  }
+
+  let list = array;
+  if (list.length > limit) {
+    const final = t("list.n_more", {n: list.length - limit});
+    list = list.slice(0, limit - 1).concat(final);
+  }
+
+  return t("list.suffix", {
     n: list.length,
     nlessone: list.length - 1,
     item: getLast<unknown>(list),
-    rest: t("vizbuilder.list.prefix", {
+    rest: t("list.prefix", {
       n: list.length - 1,
       nlessone: list.length - 2,
       item: list[0],
-      rest: list.slice(1, -1).join(t("vizbuilder.list.join")),
-      list: list.slice(0, -1).join(t("vizbuilder.list.join")),
+      rest: list.slice(1, -1).join(t("list.join")),
+      list: list.slice(0, -1).join(t("list.join")),
     }),
-    list: list.join(t("vizbuilder.list.join")),
+    list: list.join(t("list.join")),
   });
+}
+
+function _isIntegerSequence(list: number[]) {
+  if (list.length < 2) return true;
+  for (let i = 1; i < list.length; i++) {
+    if (list[i] !== list[i - 1] + 1) {
+      return false;
+    }
+  }
+  return true;
 }
