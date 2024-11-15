@@ -18,7 +18,12 @@ import type {LinePlot} from "../charts/lineplot";
 import type {StackedArea} from "../charts/stackedarea";
 import type {TreeMap} from "../charts/treemap";
 import type {D3plusConfig} from "../d3plus";
-import type {AggregatedDataPoint, DataPoint, TesseractMeasure} from "../schema";
+import {
+  type AggregatedDataPoint,
+  type DataPoint,
+  DimensionType,
+  type TesseractMeasure,
+} from "../schema";
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
 import {isOneOf} from "../toolbox/validation";
@@ -105,7 +110,12 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
   const {caption: meaCaption, name: meaName} = values.measure;
 
   const sortedColumnList = sortBy(
-    Object.values(datagroup.columns),
+    Object.values(datagroup.columns).filter(
+      column =>
+        column.type === "measure" ||
+        column.dimension.type === DimensionType.TIME ||
+        series.find(series => series.dimension.name === column.dimension.name),
+    ),
     column => getColumnEntity(column).caption,
   );
 
@@ -138,7 +148,10 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
                 from: uniqueValues[0],
                 to: getLast(uniqueValues),
               });
-            return _buildTranslatedList(t, uniqueValues.map(i => `${i}`));
+            return _buildTranslatedList(
+              t,
+              uniqueValues.map(i => `${i}`),
+            );
           },
         ] as const;
       }),
@@ -151,8 +164,14 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
     legend: fullMode,
     legendConfig: {
       label(d) {
-        return d[series[0].level.name];
+        return series.length ? d[series[0].level.name] : values.measure.caption;
       },
+    },
+    locale: datagroup.locale,
+    timeline: fullMode && timeline?.level.name,
+    timelineConfig: {
+      brushing: false,
+      playButton: false,
     },
     tooltip: true,
     tooltipConfig: {
@@ -160,13 +179,13 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
         if (!timeline) {
           return values.measure.caption;
         }
-        if (chart.series.length === 0) {
+        if (series.length === 0) {
           return t("title.measure_on_period", {
             values: values.measure.caption,
             time_period: d[timeline.level.name],
           });
         }
-        const lastSeries = getLast(chart.series);
+        const lastSeries = getLast(series);
         return d[lastSeries.level.name] as string;
       },
       tbody(d: AggregatedDataPoint) {
@@ -182,7 +201,8 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
         }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
       },
     },
-    locale: datagroup.locale,
+    total: !timeline && fullMode,
+    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
   };
 }
 
@@ -218,17 +238,10 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     },
     stacked: isStacked,
     time: timeline?.name === "Quarter ID" ? timeline.level.name : timeline?.name,
-    timeline: timeline && fullMode,
-    timelineConfig: {
-      brushing: false,
-      playButton: false,
-    },
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    total: !timeline,
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
   };
 
   if (orientation === "horizontal") {
@@ -287,16 +300,10 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
     projectionRotate: [0, 0],
     tiles: false,
     time: timeline?.level.name,
-    timeline: fullMode && timeline?.level.name,
-    timelineConfig: {
-      brushing: false,
-      playButton: false,
-    },
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     zoomScroll: false,
   };
 
@@ -307,27 +314,17 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {locale} = datagroup;
   const [mainSeries] = series;
-
-  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     ...d3plusConfigBuilder.common(chart, params),
     groupBy: [mainSeries.name],
     label: d => d[mainSeries.level.name] as string,
     time: timeline?.name,
-    timeline: fullMode && timeline,
-    timelineConfig: {
-      brushing: false,
-      playButton: false,
-    },
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    total: !timeline,
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
   };
 
@@ -365,7 +362,6 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       fontSize: fullMode ? 20 : 10,
     },
     total: false,
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     x: timeline.level.name,
     xConfig: {
       title: fullMode ? timeline.level.caption : undefined,
@@ -419,10 +415,6 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {locale} = datagroup;
-
-  const measureFormatter = getFormatter(values.measure);
-
   const config: D3plusConfig = {
     ...d3plusConfigBuilder.common(chart, params),
     label: d =>
@@ -435,12 +427,10 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
     threshold: 0.005,
     thresholdName: series[0].level.name,
     time: timeline?.name,
-    timeline: timeline && fullMode,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
   };
 
   return config;
@@ -452,6 +442,25 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   const aggregator = measure.annotations.aggregation_method || measure.aggregator;
   const valuesKey = `aggregator.${aggregator.toLowerCase()}`;
   const valuesCaption = t(valuesKey, {measure: measure.caption});
+
+  const getLastTimePeriod = (
+    data: DataPoint[] | undefined,
+    series: NonNullable<Chart["timeline"]>,
+  ) => {
+    if (!data) return getLast(series.members as string[]);
+    return getLast([...new Set(data.map(d => d[series.level.name]))].sort());
+  };
+
+  if (series.length === 0) {
+    return (data?: DataPoint[]): string => {
+      if (!timeline || !data) return valuesCaption;
+
+      return t("title.measure_on_period", {
+        measure: valuesCaption,
+        period: getLastTimePeriod(data, timeline),
+      });
+    };
+  }
 
   const seriesStr = (series: Chart["series"][number]) => {
     const {members} = series.captions[series.level.name];
@@ -468,24 +477,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     });
   };
 
-  const getLastTimePeriod = (
-    data: DataPoint[] | undefined,
-    series: NonNullable<Chart["timeline"]>,
-  ) => {
-    if (!data) return getLast(series.members as string[]);
-    return getLast([...new Set(data.map(d => d[series.level.name]))].sort());
-  };
-
   return (data?: DataPoint[]): string => {
-    if (series.length === 0) {
-      if (!timeline || !data) return valuesCaption;
-
-      return t("title.measure_on_period", {
-        measure: valuesCaption,
-        period: data[timeline.level.name],
-      });
-    }
-
     const config = {
       values: valuesCaption.endsWith(valuesKey) ? measure.caption : valuesCaption,
       series: _buildTranslatedList(t, series.map(seriesStr), 4),
@@ -512,7 +504,11 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
  * Concatenates a list of strings, by offering the possibility to use special
  * syntax for the first and last items.
  */
-function _buildTranslatedList(t: TranslateFunction, array: string[], limit = array.length) {
+function _buildTranslatedList(
+  t: TranslateFunction,
+  array: string[],
+  limit = array.length,
+) {
   if (array.length === 0) {
     return "";
   }
