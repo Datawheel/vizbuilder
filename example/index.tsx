@@ -112,7 +112,14 @@ function App() {
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
   return (
-    <div style={{height: "100vh", backgroundColor: "#f0f0f0"}}>
+    <div
+      style={{
+        display: "flex",
+        flexFlow: "column nowrap",
+        height: "100vh",
+        backgroundColor: "#f0f0f0",
+      }}
+    >
       <Header height={51} p="xs" withBorder>
         <Flex direction="row" gap="xs" align="center" h={30}>
           <SegmentedControl
@@ -141,8 +148,8 @@ function App() {
         id="viz-scroller"
         style={{
           direction: rtlLanguages.includes(dataLocale) ? "rtl" : "ltr",
-          overflowY: "scroll",
-          flex: "1 0 auto",
+          overflowY: "auto",
+          flex: "1 0 0",
           padding: "0.75rem",
           boxSizing: "border-box",
         }}
