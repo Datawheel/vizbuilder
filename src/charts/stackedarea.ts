@@ -8,6 +8,7 @@ import type {Datagroup} from "./datagroup";
 
 export interface StackedArea extends BaseChart {
   type: "stackedarea";
+  timeline: NonNullable<BaseChart["timeline"]>;
 }
 
 export function generateStackedareaConfigs(

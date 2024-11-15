@@ -340,6 +340,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   const {locale} = datagroup;
 
+  const measureCaption = values.measure.caption;
   const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
@@ -349,14 +350,16 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       return (
         series.map(series => d[series.level.name]).join("\n") ||
         t("title.measure_on_period", {
-          measure: values.measure.caption,
+          measure: measureCaption,
           period: d[timeline.level.name],
         })
       );
     },
-    groupBy: series.length ? series.map(series => series.name) : undefined,
+    groupBy: series.length
+      ? series.map(series => series.level.name)
+      : () => measureCaption,
     time: timeline.level.name,
-    timeline: true,
+    timeline: false,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
@@ -365,13 +368,13 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     x: timeline.level.name,
     xConfig: {
-      title: timeline.level.caption,
+      title: fullMode ? timeline.level.caption : undefined,
     },
     y: values.measure.name,
     yConfig: {
       scale: "auto",
       tickFormat: (d: number) => measureFormatter(d, locale),
-      title: values.measure.caption,
+      title: measureCaption,
     },
   };
 
@@ -388,15 +391,25 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 
   const config: D3plusConfig = {
     ...d3plusConfigBuilder.common(chart, params),
-    groupBy: series.map(series => series.name),
-    time: timeline?.name,
+    discrete: "x",
+    groupBy: series.map(series => series.level.name),
+    time: timeline.name,
     timeline: false,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
-    totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
+    x: timeline.name,
+    xConfig: {
+      title: fullMode ? timeline.level.caption : undefined,
+    },
+    y: values.measure.name,
+    yConfig: {
+      scale: "auto",
+      tickFormat: (d: number) => measureFormatter(d, locale),
+      title: values.measure.caption,
+    },
   };
 
   return config;
