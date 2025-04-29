@@ -64,3 +64,16 @@ export function buildSeries(axis: CategoryAxis, series: AxisSeries) {
     captions: series.captions,
   };
 }
+
+export function buildSeriesIf(
+  axis: CategoryAxis | undefined,
+  condition: (series: AxisSeries) => boolean,
+) {
+  if (!axis) return undefined;
+  for (let index = axis.levels.length; index > 0; index) {
+    const level = axis.levels[--index];
+    if (condition(level)) {
+      return buildSeries(axis, level);
+    }
+  }
+}

@@ -3,7 +3,7 @@ import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
-import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
+import {type BaseChart, buildDeepestSeries, buildSeries, buildSeriesIf} from "./common";
 import type {Datagroup} from "./datagroup";
 
 // TODO: add criteria
@@ -20,7 +20,7 @@ export function generateBarchartConfigs(
 ): BarChart[] {
   return [
     ...generateHoriBartchartConfigs(datagroup, chartLimits),
-    // ...examineVertBarchartConfigs(datagroup, chartLimits),
+    ...generateVertBarchartConfigs(datagroup, chartLimits),
   ];
 }
 
@@ -154,28 +154,20 @@ export function generateHoriBartchartConfigs(
 /**
  * Requirements:
  * - All levels must have with at least 2 members
- * - If dimensions other than time, measure aggregator must be sum
+ * - When aggregator is not sum, bars are grouped (up to 2 dimensions)
+ * - Time dimension always has priority as first dimension
  *
  * Notes:
  * - Vertical orientation makes more natural to understand time on x-axis
  */
 export function generateVertBarchartConfigs(
   dg: Datagroup,
-  {BARCHART_YEAR_MAX_BARS}: ChartLimits,
+  {BARCHART_YEAR_MAX_BARS, BARCHART_VERTICAL_MAX_GROUPS}: ChartLimits,
 ): BarChart[] {
   const {dataset, timeHierarchy: timeAxis} = dg;
   const chartType = "barchart" as const;
 
   const categoryAxes = Object.values(dg.nonTimeHierarchies);
-
-  const timeline = buildDeepestSeries(timeAxis);
-
-  // Bail if no time dimension present
-  if (!timeAxis || !timeline) return [];
-
-  // Bail if the time level has less than 2 members
-  const deepestTimeLevel = getLast(timeAxis.levels);
-  if (deepestTimeLevel.members.length < 2) return [];
 
   // If all levels, besides the one from time dimension, have only 1 member,
   // then the chart results in a single block
@@ -194,31 +186,97 @@ export function generateVertBarchartConfigs(
       maxValue: range[1],
     };
 
-    return categoryAxes.flatMap(categoryAxis => {
-      const {dimension, hierarchy} = categoryAxis;
-      const keyChain = [
-        chartType,
-        dataset.length,
-        measure.name,
-        dimension.name,
-        hierarchy.name,
-      ];
+    const timeline = buildSeriesIf(timeAxis, series => {
+      const memCount = series.members.length;
+      if (memCount < 2) {
+        console.debug(
+          "[%s] Time series '%s' contains only a single member",
+          chartType,
+          series.name,
+        );
+        return false;
+      }
+      if (memCount < BARCHART_VERTICAL_MAX_GROUPS) {
+        console.debug(
+          "[%s] Time series '%s' contains %d members, limit BARCHART_VERTICAL_MAX_GROUPS = %d",
+          chartType,
+          series.name,
+          memCount,
+          BARCHART_VERTICAL_MAX_GROUPS,
+        );
+        return false;
+      }
+      return true;
+    });
 
-      return categoryAxis.levels.flatMap<BarChart>(axisLevel => {
-        const {members} = axisLevel;
+    if (timeline) {
+      return categoryAxes.flatMap(categoryAxis => {
+        const {dimension, hierarchy} = categoryAxis;
+        const keyChain = [
+          chartType,
+          "horizontal",
+          dataset.length,
+          measure.name,
+          dimension.name,
+          hierarchy.name,
+        ];
 
-        // Bail if amount of segments is out of bounds
-        if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) return [];
+        return categoryAxis.levels.flatMap<BarChart>(axisLevel => {
+          const {members} = axisLevel;
 
-        return {
-          key: shortHash(keyChain.concat().join("|")),
-          type: chartType,
-          datagroup: dg,
-          orientation: "vertical",
-          values,
-          series: [timeline, buildSeries(categoryAxis, axisLevel)],
-          extraConfig: {},
-        };
+          // Bail if amount of segments is out of bounds
+          if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) return [];
+
+          return [
+            {
+              key: shortHash(keyChain.concat().join("|")),
+              type: chartType,
+              datagroup: dg,
+              orientation: "vertical",
+              values,
+              series: [timeline, buildSeries(categoryAxis, axisLevel)],
+              extraConfig: {},
+            },
+          ];
+        });
+      });
+    }
+
+    return [...yieldPartialPermutations(categoryAxes, 2)].flatMap<BarChart>(tuple => {
+      const mainAxis = tuple[0];
+      const otherAxis = tuple[1];
+
+      return mainAxis.levels.flatMap(mainLevel => {
+        const mainMemCount = mainLevel.members.length;
+        if (mainMemCount < 2 || mainMemCount > BARCHART_VERTICAL_MAX_GROUPS) return [];
+
+        return otherAxis.levels.flatMap(otherLevel => {
+          if (otherLevel.members.length < 2) return [];
+
+          const keyChain = [
+            chartType,
+            "vertical",
+            dataset.length,
+            measure.name,
+            mainLevel.name,
+            otherLevel.name,
+          ].join("|");
+
+          return [
+            {
+              key: shortHash(keyChain),
+              type: chartType,
+              datagroup: dg,
+              orientation: "vertical",
+              values,
+              series: [
+                buildSeries(mainAxis, mainLevel),
+                buildSeries(otherAxis, otherLevel),
+              ],
+              extraConfig: {},
+            },
+          ];
+        });
       });
     });
   });

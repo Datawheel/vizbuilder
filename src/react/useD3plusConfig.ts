@@ -213,7 +213,10 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const {locale} = datagroup;
   const [mainSeries, stackedSeries] = series;
 
-  const collate = new Intl.Collator(locale, {numeric: true, ignorePunctuation: true});
+  const collate = new Intl.Collator(locale, {
+    numeric: true,
+    ignorePunctuation: true,
+  });
 
   const measureFormatter = getFormatter(values.measure);
   const measureAggregator =
@@ -231,18 +234,20 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     discrete: chart.orientation === "horizontal" ? "y" : "x",
     groupBy: stackedSeries?.name,
     groupPadding: fullMode ? 5 : 1,
-    label(d) {
-      return isStacked && stackedSeries
-        ? (d[stackedSeries.level.name] as string)
-        : series.map(series => d[series.level.name]).join("\n");
-    },
+    label:
+      isStacked && stackedSeries
+        ? d => d[stackedSeries.level.name] as string
+        : d => series.map(series => d[series.level.name]).join("\n"),
     stacked: isStacked,
-    time: timeline?.name === "Quarter ID" ? timeline.level.name : timeline?.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
   };
+
+  if (timeline) {
+    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+  }
 
   if (orientation === "horizontal") {
     assign(config, {
@@ -269,6 +274,12 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
         tickFormat: (d: number) => measureFormatter(d, locale),
       },
     });
+    if (fullMode && config.groupBy) {
+      assign(config, {
+        barPadding: 3,
+        groupPadding: 20,
+      });
+    }
   }
 
   return config;

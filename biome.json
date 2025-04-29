@@ -12,9 +12,7 @@
         "useExhaustiveDependencies": {
           "level": "error",
           "options": {
-            "hooks": [
-              { "name": "useSettings", "stableResult": true }
-            ]
+            "hooks": [{ "name": "useSettings", "stableResult": true }]
           }
         }
       }
@@ -24,6 +22,7 @@
     "formatter": {
       "arrowParentheses": "asNeeded",
       "bracketSpacing": false,
+      "lineWidth": 90,
       "trailingCommas": "all"
     },
     "jsxRuntime": "reactClassic"

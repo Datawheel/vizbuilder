@@ -67,6 +67,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
     | string[]
     | ((d: DataPoint) => string | number)
     | ((d: DataPoint) => string | number)[];
+  groupPadding?: number; // Padding between groups of bars
   label?: string | ((d: DataPoint) => string);
   legend?: boolean;
   legendConfig?: {
