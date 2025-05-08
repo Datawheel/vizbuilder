@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import {IconWindowMaximize} from "@tabler/icons-react";
-import React, {forwardRef, useMemo} from "react";
+import React, {forwardRef, useCallback, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
 
 import {type Chart, generateCharts} from "../charts/generator";
@@ -59,7 +59,7 @@ export function Vizdebugger(props: VizbuilderProps) {
       charts.map((chart, index) => ({
         chart,
         label: `${chart.key} - ${chart.values.measure.name}`,
-        value: index,
+        value: `${index}`,
       })),
     [charts],
   );
@@ -71,7 +71,7 @@ export function Vizdebugger(props: VizbuilderProps) {
   const [chartIndex, setChartIndex] = useLocalStorage({
     key: "Vizdebugger:chartIndex",
     getInitialValueInEffect: false,
-    defaultValue: 0,
+    defaultValue: "0",
   });
 
   const chart = charts[chartIndex];
@@ -118,7 +118,7 @@ export function Vizdebugger(props: VizbuilderProps) {
               <ActionIcon
                 sx={{position: "absolute", right: 0, bottom: 0, margin: "0.25rem"}}
                 size="xs"
-                onClick={() => setChartIndex(index)}
+                onClick={() => setChartIndex(`${index}`)}
               >
                 <IconWindowMaximize />
               </ActionIcon>
@@ -132,7 +132,10 @@ export function Vizdebugger(props: VizbuilderProps) {
           <Select
             data={chartOptions}
             itemComponent={ChartItem}
-            onChange={setChartIndex}
+            onChange={useCallback(
+              (value: string | null) => setChartIndex(value || "0"),
+              [setChartIndex],
+            )}
             value={chartIndex}
           />
           <Switch label="Featured" checked={fullMode} onChange={setFullMode.toggle} />
