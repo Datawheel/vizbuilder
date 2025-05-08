@@ -120,8 +120,8 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
   );
 
   const aggsEntries = Object.values(datagroup.nonTimeHierarchies).flatMap(hierarchy => {
-    return hierarchy.levels.map(level => {
-      const key = level.name;
+    return hierarchy.levels.map(axis => {
+      const key = axis.name;
       return [
         key,
         (data: AggregatedDataPoint[]) => {
@@ -158,14 +158,14 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
     );
   }
 
+  const legendColumn = series.length > 0 && series[series.length - 1].level.name;
+
   return {
     aggs: aggsEntries.length > 0 ? Object.fromEntries(aggsEntries) : undefined,
     data: datagroup.dataset,
     legend: fullMode,
     legendConfig: {
-      label(d) {
-        return series.length ? d[series[0].level.name] : values.measure.caption;
-      },
+      label: legendColumn ? d => d[legendColumn] : d => values.measure.caption,
     },
     locale: datagroup.locale,
     timeline: fullMode && timeline?.level.name,
@@ -426,13 +426,21 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
+  const commonConfig = d3plusConfigBuilder.common(chart, params);
+
+  const legendColumn = series.length > 0 && series[0].level.name;
+
   const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+    ...commonConfig,
     label: d =>
       series
         .slice(1)
         .map(series => d[series.level.name])
         .join("\n"),
+    legendConfig: {
+      ...commonConfig.legendConfig,
+      label: legendColumn ? d => `${d[legendColumn]}` : d => values.measure.caption,
+    },
     groupBy: series.map(series => series.name),
     sum: values.measure.name,
     threshold: 0.005,
