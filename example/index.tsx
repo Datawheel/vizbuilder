@@ -16,10 +16,10 @@ import {
   defaultTranslation,
 } from "../src/react/TranslationProvider";
 import {Vizbuilder} from "../src/react/Vizbuilder";
+import {Vizdebugger} from "../src/react/Vizdebugger";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
-import {Vizdebugger} from "./Vizdebugger";
 
 const topojsonConfig = Object.fromEntries(
   [

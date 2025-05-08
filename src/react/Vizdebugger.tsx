@@ -12,12 +12,13 @@ import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import {IconWindowMaximize} from "@tabler/icons-react";
 import React, {forwardRef, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
-import {type Chart, generateCharts} from "../src/charts/generator";
-import {useTranslation} from "../src/react";
-import {ErrorBoundary} from "../src/react/ErrorBoundary";
-import type {VizbuilderProps} from "../src/react/Vizbuilder";
-import {useD3plusConfig} from "../src/react/useD3plusConfig";
-import {castArray} from "../src/toolbox/array";
+
+import {type Chart, generateCharts} from "../charts/generator";
+import {castArray} from "../toolbox/array";
+import {ErrorBoundary} from "./ErrorBoundary";
+import {useTranslation} from "./TranslationProvider";
+import type {VizbuilderProps} from "./Vizbuilder";
+import {useD3plusConfig} from "./useD3plusConfig";
 
 export function Vizdebugger(props: VizbuilderProps) {
   const {
