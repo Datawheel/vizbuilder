@@ -232,7 +232,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     ...d3plusConfigBuilder.common(chart, params),
     barPadding: fullMode ? 5 : 1,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
-    groupBy: stackedSeries?.name,
+    groupBy: stackedSeries?.level.name,
     groupPadding: fullMode ? 5 : 1,
     label:
       isStacked && stackedSeries
@@ -331,7 +331,7 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
     ...d3plusConfigBuilder.common(chart, params),
     groupBy: [mainSeries.name],
     label: d => d[mainSeries.level.name] as string,
-    time: timeline?.name,
+    time: timeline?.level.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
@@ -400,7 +400,7 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
     ...d3plusConfigBuilder.common(chart, params),
     discrete: "x",
     groupBy: series.map(series => series.level.name),
-    time: timeline.name,
+    time: timeline.level.name,
     timeline: false,
     title: _buildTitle(t, chart),
     titleConfig: {
@@ -441,11 +441,11 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
       ...commonConfig.legendConfig,
       label: legendColumn ? d => `${d[legendColumn]}` : d => values.measure.caption,
     },
-    groupBy: series.map(series => series.name),
+    groupBy: series.map(series => series.level.name),
     sum: values.measure.name,
     threshold: 0.005,
     thresholdName: series[0].level.name,
-    time: timeline?.name,
+    time: timeline?.level.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
