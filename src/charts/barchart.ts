@@ -200,7 +200,7 @@ export function generateVertBarchartConfigs(
         );
         return false;
       }
-      if (memCount < BARCHART_VERTICAL_MAX_GROUPS) {
+      if (memCount > BARCHART_VERTICAL_MAX_GROUPS) {
         console.debug(
           "[%s] Time series '%s' contains %d members, limit BARCHART_VERTICAL_MAX_GROUPS = %d",
           chartType,
@@ -233,11 +233,12 @@ export function generateVertBarchartConfigs(
             return [];
           }
 
-          if (timeline.members.length * members.length > BARCHART_VERTICAL_TOTAL_BARS) {
+          const totalBars = timeline.members.length * members.length
+          if (totalBars > BARCHART_VERTICAL_TOTAL_BARS) {
             console.debug(
-              "[%s] Series '%s' contains %d members, limit BARCHART_VERTICAL_TOTAL_BARS = %d",
+              "[%s] Attempt to render %d groups of %d bars, limit BARCHART_VERTICAL_TOTAL_BARS = %d",
               chartType,
-              axisLevel.name,
+              timeline.members.length,
               members.length,
               BARCHART_VERTICAL_TOTAL_BARS,
             );
@@ -270,6 +271,18 @@ export function generateVertBarchartConfigs(
         return otherAxis.levels.flatMap(otherLevel => {
           if (otherLevel.members.length < 2) return [];
 
+          const totalBars = mainLevel.members.length * otherLevel.members.length
+          if (totalBars > BARCHART_VERTICAL_TOTAL_BARS) {
+            console.debug(
+              "[%s] Attempt to render %d groups of %d bars, limit BARCHART_VERTICAL_TOTAL_BARS = %d",
+              chartType,
+              mainLevel.members.length,
+              otherLevel.members.length,
+              BARCHART_VERTICAL_TOTAL_BARS,
+            );
+            return [];
+          }
+
           const keyChain = [
             chartType,
             "vertical",
@@ -284,7 +297,7 @@ export function generateVertBarchartConfigs(
               key: shortHash(keyChain),
               type: chartType,
               datagroup: dg,
-              orientation: "vertical",
+              orientation: "vertical" as const,
               values,
               series: [
                 buildSeries(mainAxis, mainLevel),
