@@ -358,8 +358,8 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       return (
         series.map(series => d[series.level.name]).join("\n") ||
         t("title.measure_on_period", {
-          measure: measureCaption,
-          period: d[timeline.level.name],
+          values: measureCaption,
+          time_period: d[timeline.level.name],
         })
       );
     },
@@ -474,9 +474,10 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     return (data?: DataPoint[]): string => {
       if (!timeline || !data) return valuesCaption;
 
-      return t("title.measure_on_period", {
-        measure: valuesCaption,
-        period: getLastTimePeriod(data, timeline),
+      return t("title.measure_over_period", {
+        values: valuesCaption,
+        time: timeline.level.caption,
+        time_period: getLastTimePeriod(data, timeline),
       });
     };
   }
