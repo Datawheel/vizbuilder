@@ -29,7 +29,7 @@ export interface BaseChart {
     dimension: TesseractDimension;
     hierarchy: TesseractHierarchy;
     level: TesseractLevel;
-    captions: {[K: string]: LevelCaption};
+    captions: {[K: string]: LevelCaption | undefined};
     members: string[] | number[] | boolean[];
   }[];
   timeline?: {

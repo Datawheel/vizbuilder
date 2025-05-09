@@ -9,6 +9,7 @@ import {
 import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
+import {ErrorBoundary} from "../src/react";
 import {FormatterProvider} from "../src/react/FormatterProvider";
 import {
   type Translation,
@@ -154,14 +155,16 @@ function App() {
           boxSizing: "border-box",
         }}
       >
-        <Vizwrapper
-          datasets={dataset || []}
-          downloadFormats={["svg", "png"]}
-          topojsonConfig={topojsonConfig}
-          userConfig={() => ({
-            scrollContainer: "#viz-scroller",
-          })}
-        />
+        <ErrorBoundary>
+          <Vizwrapper
+            datasets={dataset || []}
+            downloadFormats={["svg", "png"]}
+            topojsonConfig={topojsonConfig}
+            userConfig={() => ({
+              scrollContainer: "#viz-scroller",
+            })}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

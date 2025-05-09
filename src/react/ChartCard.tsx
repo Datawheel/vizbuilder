@@ -8,7 +8,7 @@ import {
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef} from "react";
-import type {Chart} from "../charts";
+import type {Chart} from "../charts/generator";
 import type {D3plusConfig} from "../d3plus";
 import type {TesseractMeasure} from "../schema";
 import {castArray} from "../toolbox/array";
@@ -55,6 +55,7 @@ export function ChartCard(props: {
   userConfig?: (chart: Chart) => Partial<D3plusConfig>;
 }) {
   const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt} = props;
+  const {dataset} = chart.datagroup;
 
   const {translate} = useTranslation();
 
@@ -70,7 +71,9 @@ export function ChartCard(props: {
   const downloadButtons = useMemo(() => {
     // Sanitize filename for Windows and Unix
     const filename = (
-      typeof config.title === "function" ? config.title() : config.title || ""
+      typeof config.title === "function"
+        ? config.title(dataset)
+        : config.title || ""
     )
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
@@ -101,7 +104,7 @@ export function ChartCard(props: {
         </Button>
       );
     });
-  }, [config, downloadFormats]);
+  }, [config, dataset, downloadFormats]);
 
   const focusButton = useMemo(() => {
     const Icon = isFullMode ? IconArrowsMinimize : IconArrowsMaximize;

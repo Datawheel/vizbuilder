@@ -482,9 +482,9 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   }
 
   const seriesStr = (series: Chart["series"][number]) => {
-    const {members} = series.captions[series.level.name];
+    const {members} = series.captions[series.level.name] || series;
 
-    if (series.members.length < 5) {
+    if (members.length < 5) {
       return t("title.series_members", {
         series: series.level.caption,
         members: _buildTranslatedList(t, members as string[]),

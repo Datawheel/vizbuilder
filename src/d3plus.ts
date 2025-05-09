@@ -65,10 +65,10 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   groupBy?:
     | string
     | string[]
-    | ((d: DataPoint) => string | number)
-    | ((d: DataPoint) => string | number)[];
+    | ((d: P) => string | number)
+    | ((d: P) => string | number)[];
   groupPadding?: number; // Padding between groups of bars
-  label?: string | ((d: DataPoint) => string);
+  label?: string | ((d: P) => string);
   legend?: boolean;
   legendConfig?: {
     label?: DataPointAccessor<string>;
@@ -83,14 +83,14 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   threshold?: number;
   thresholdName?: string;
   time?: string;
-  title?: string | (() => string); // Optional title for the chart
+  title?: string | ((data: P[]) => string); // Optional title for the chart
   titleConfig?: CSSProperties;
   tooltip?: boolean; // Tooltip configuration or custom function
   tooltipConfig?: {
-    title?: (d: DataPoint) => string;
-    body?: (d: DataPoint) => string;
-    thead?: (d: DataPoint) => [string, string][];
-    tbody?: (d: DataPoint) => [string, string][];
+    title?: (d: P) => string;
+    body?: (d: P) => string;
+    thead?: (d: P) => [string, string][];
+    tbody?: (d: P) => [string, string][];
   };
   shapeConfig?: Record<string, string | number>;
   /** Value accessor for treemaps */
