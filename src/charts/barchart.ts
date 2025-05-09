@@ -162,7 +162,11 @@ export function generateHoriBartchartConfigs(
  */
 export function generateVertBarchartConfigs(
   dg: Datagroup,
-  {BARCHART_YEAR_MAX_BARS, BARCHART_VERTICAL_MAX_GROUPS}: ChartLimits,
+  {
+    BARCHART_YEAR_MAX_BARS,
+    BARCHART_VERTICAL_MAX_GROUPS,
+    BARCHART_VERTICAL_TOTAL_BARS,
+  }: ChartLimits,
 ): BarChart[] {
   const {dataset, timeHierarchy: timeAxis} = dg;
   const chartType = "barchart" as const;
@@ -190,7 +194,7 @@ export function generateVertBarchartConfigs(
       const memCount = series.members.length;
       if (memCount < 2) {
         console.debug(
-          "[%s] Time series '%s' contains only a single member",
+          "[%s] Time series '%s' contains a single member",
           chartType,
           series.name,
         );
@@ -225,7 +229,20 @@ export function generateVertBarchartConfigs(
           const {members} = axisLevel;
 
           // Bail if amount of segments is out of bounds
-          if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) return [];
+          if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) {
+            return [];
+          }
+
+          if (timeline.members.length * members.length > BARCHART_VERTICAL_TOTAL_BARS) {
+            console.debug(
+              "[%s] Series '%s' contains %d members, limit BARCHART_VERTICAL_TOTAL_BARS = %d",
+              chartType,
+              axisLevel.name,
+              members.length,
+              BARCHART_VERTICAL_TOTAL_BARS,
+            );
+            return [];
+          }
 
           return [
             {

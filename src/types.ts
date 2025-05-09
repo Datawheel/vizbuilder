@@ -13,6 +13,8 @@ export interface ChartLimits {
   BARCHART_MAX_STACKED_BARS: number;
   /** Maximum number of primary dimensions to show in vertical barcharts */
   BARCHART_VERTICAL_MAX_GROUPS: number;
+  /** Maximum number of total bars to be rendered in vertical barcharts */
+  BARCHART_VERTICAL_TOTAL_BARS: number;
   /** Maximum number of bars in a year barchart */
   BARCHART_YEAR_MAX_BARS: number;
   /** Max number of groups to be rendered in a donut or pie chart */
