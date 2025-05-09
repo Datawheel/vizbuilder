@@ -1,6 +1,7 @@
 import {Chip, Flex, Select, Text} from "@mantine/core";
 import React, {forwardRef, useMemo} from "react";
 import {type TesseractCube, getAnnotation} from "../src/schema";
+import {CubePicker} from "./CubePicker";
 import {useQueries} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
 
@@ -21,41 +22,10 @@ const COLORS = [
   "gray",
 ];
 
-// TODO: offer a fullscreen cube selector
 export function QueryManager() {
   const {currentQuery, setCurrentQuery, updateQuery} = useQueries();
 
   const {cubes, dataLocale} = useTesseract();
-
-  const cubeOptions = useMemo(() => {
-    return Object.values(cubes).map(cube => ({label: cube.name, value: cube.name, cube}));
-  }, [cubes]);
-
-  const CubeItem = useMemo(
-    () =>
-      forwardRef<HTMLDivElement, {label: string; value: string; cube: TesseractCube}>(
-        (props, ref) => {
-          const {cube, label, value, ...others} = props;
-          return (
-            <div ref={ref} {...others}>
-              <Text fw={700}>{cube.name}</Text>
-              {[
-                getAnnotation(cube, "topic", dataLocale),
-                getAnnotation(cube, "subtopic", dataLocale),
-                getAnnotation(cube, "table", dataLocale),
-              ]
-                .filter(Boolean)
-                .map(label => (
-                  <Text key={label} size="xs" sx={{whiteSpace: "nowrap"}}>
-                    {label}
-                  </Text>
-                ))}
-            </div>
-          );
-        },
-      ),
-    [dataLocale],
-  );
 
   const levels = useMemo(() => {
     if (!currentQuery) return [];
@@ -114,14 +84,12 @@ export function QueryManager() {
 
   return (
     <Flex style={{flex: "1 0"}} direction="row" align="center" gap="sm">
-      <Select
-        data={cubeOptions}
-        itemComponent={CubeItem}
+      <CubePicker
+        locale={dataLocale}
         onChange={setCurrentQuery}
-        searchable
+        options={cubes}
+        selected={currentQuery?.cube}
         size="xs"
-        styles={{dropdown: {width: 300}}}
-        value={currentQuery?.cube}
       />
       {levels}
     </Flex>

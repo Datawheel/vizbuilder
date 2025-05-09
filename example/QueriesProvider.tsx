@@ -2,6 +2,7 @@ import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash-es";
 import React, {createContext, useContext, useEffect, useMemo} from "react";
 import type {TesseractCube} from "../src/schema";
+import { castArray } from "../src/toolbox/array";
 
 export interface RequestParams {
   key: string;
@@ -87,7 +88,7 @@ export function QueriesProvider(props: {
         drilldowns: nextRequest.drilldowns.join(","),
         measures: nextRequest.measures.join(","),
       });
-      const url = new URL(search.toString(), location.href);
+      const url = new URL(`?${search.toString()}`, location.href);
       window.history.pushState(value.currentQuery, "", url);
     }
   }, [value.currentQuery]);
@@ -130,5 +131,5 @@ function isSameRequest(a: RequestParams, b: RequestParams): boolean {
 }
 
 function standardizeArray(array: string[]) {
-  return array.sort().toString();
+  return castArray(array).toString().split(",").sort().toString();
 }

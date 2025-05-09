@@ -5,10 +5,14 @@ import {
   Loader,
   MantineProvider,
   SegmentedControl,
+  ThemeIcon,
 } from "@mantine/core";
+import {useNetwork} from "@mantine/hooks";
+import {IconExclamationCircle, IconPlugConnectedX} from "@tabler/icons-react";
 import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
+
 import {ErrorBoundary} from "../src/react";
 import {FormatterProvider} from "../src/react/FormatterProvider";
 import {
@@ -102,6 +106,8 @@ const modeOptions = ["Vizdebugger", "Vizbuilder"];
 const rtlLanguages = ["ar", "he", "fa", "ur", "yi", "dv"];
 
 function App() {
+  const networkStatus = useNetwork();
+
   const [mode, setMode] = useState("Vizdebugger");
 
   const {currentQuery} = useQueries();
@@ -137,11 +143,16 @@ function App() {
           />
           <QueryManager />
           {error && (
-            <Badge color="red" variant="filled" title={error}>
-              Error
-            </Badge>
+            <ThemeIcon size="lg" color="red" title={error}>
+              <IconExclamationCircle />
+            </ThemeIcon>
           )}
           {isLoading && <Loader />}
+          {!networkStatus.online && (
+            <ThemeIcon size="lg" color="green" title="Disconnected">
+              <IconPlugConnectedX />
+            </ThemeIcon>
+          )}
         </Flex>
       </Header>
 

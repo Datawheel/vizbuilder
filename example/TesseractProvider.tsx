@@ -158,7 +158,13 @@ export function useTesseractData(query: RequestParams | undefined) {
         setState({
           error: "",
           isLoading: false,
-          dataset: {columns, data: result.data, locale: dataLocale},
+          dataset: {
+            columns,
+            data: result.data.filter(row =>
+              Object.values(row).every(value => value !== null),
+            ),
+            locale: dataLocale,
+          },
         });
       },
       err => {
