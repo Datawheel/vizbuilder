@@ -385,6 +385,10 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     },
   };
 
+  if (series.length === 0) {
+    config.legend = false;
+  }
+
   return config;
 }
 
