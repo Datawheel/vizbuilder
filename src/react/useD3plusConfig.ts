@@ -245,6 +245,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     },
   };
 
+  // d3plus/d3plus#729
   if (timeline) {
     config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
   }
@@ -310,13 +311,17 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
     ocean: "transparent",
     projectionRotate: [0, 0],
     tiles: false,
-    time: timeline?.level.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
     zoomScroll: false,
   };
+
+  // d3plus/d3plus#729
+  if (timeline) {
+    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+  }
 
   return config;
 }
@@ -331,13 +336,17 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
     ...d3plusConfigBuilder.common(chart, params),
     groupBy: [mainSeries.name],
     label: d => d[mainSeries.level.name] as string,
-    time: timeline?.level.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
     value: values.measure.name,
   };
+
+  // d3plus/d3plus#729
+  if (timeline) {
+    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+  }
 
   return config;
 }
@@ -449,12 +458,16 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
     sum: values.measure.name,
     threshold: 0.005,
     thresholdName: series[0].level.name,
-    time: timeline?.level.name,
     title: _buildTitle(t, chart),
     titleConfig: {
       fontSize: fullMode ? 20 : 10,
     },
   };
+
+  // d3plus/d3plus#729
+  if (timeline) {
+    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+  }
 
   return config;
 }
