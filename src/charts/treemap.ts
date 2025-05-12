@@ -69,7 +69,7 @@ export function generateTreemapConfigs(
       if (
         mainAxis.dimension.name === otherAxis.dimension.name &&
         mainAxis.hierarchy.name === otherAxis.hierarchy.name &&
-        mainAxisLevel.level.depth < otherAxisLevel.level.depth
+        mainAxisLevel.level.depth > otherAxisLevel.level.depth
       )
         return [];
 
