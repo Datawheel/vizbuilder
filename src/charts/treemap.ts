@@ -70,15 +70,23 @@ export function generateTreemapConfigs(
         mainAxis.dimension.name === otherAxis.dimension.name &&
         mainAxis.hierarchy.name === otherAxis.hierarchy.name &&
         mainAxisLevel.level.depth > otherAxisLevel.level.depth
-      )
+      ) {
         return [];
+      }
 
       // Bail if number of shapes to draw exceeds limit
-      if (
-        mainAxisLevel.members.length * otherAxisLevel.members.length >
-        TREE_MAP_SHAPE_MAX
-      )
+      // TODO: recalculate count with threshold enabled
+      const shapeCount = mainAxisLevel.members.length * otherAxisLevel.members.length;
+      if (shapeCount > TREE_MAP_SHAPE_MAX) {
+        console.debug(
+          "[%s] Series '%s' contains %d members, limit TREE_MAP_SHAPE_MAX = %d",
+          chartType,
+          `${mainAxisLevel.name} > ${otherAxisLevel.name}`,
+          shapeCount,
+          TREE_MAP_SHAPE_MAX,
+        );
         return [];
+      }
 
       return {
         key: shortHash(

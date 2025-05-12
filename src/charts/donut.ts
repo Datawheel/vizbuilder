@@ -60,6 +60,16 @@ export function generateDonutConfigs(
       maxValue: range[1],
     };
 
+    // Bail if there are negative values in members
+    if (values.minValue < 0) {
+      console.debug(
+        "[%s] Measure '%s' contains members with negative values",
+        chartType,
+        measure.name,
+      );
+      return [];
+    }
+
     return categoryAxes.flatMap(categoryAxis => {
       const {dimension, hierarchy} = categoryAxis;
       const keyChain = [
