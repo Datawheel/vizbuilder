@@ -48,6 +48,37 @@ type Position = "top" | "right" | "bottom" | "left";
 
 type DataPointAccessor<T> = string | ((d: DataPoint) => T);
 
+export type GeomapConfig<P extends DataPoint = DataPoint> = {
+  /** Allows removing specific geographies from topojson file to improve zooming determination. */
+  fitFilter?:
+    | number
+    | string
+    | ((d: {
+        id?: string;
+        geometry: {type: string; coordinates: unknown[]};
+        properties: Record<string, string>;
+        type: string;
+      }) => boolean);
+  /** Ocean color, can be any CSS value including 'transparent' */
+  ocean?: string;
+  /** Map projection used when displaying topojson and coordinate points */
+  projection?: string | ((x: number, y: number) => [number, number]);
+  /** Outer padding between the edge of the visualization and the shapes drawn */
+  projectionPadding?: number | string;
+  /** Used to shift the centerpoint of a map */
+  projectionRotate?: [number, number];
+  /** URL to the XYZ map tiles to use */
+  tileUrl?: string;
+  /** Toggles the visibility of the map tiles */
+  tiles?: boolean;
+  /** Path to the Topojson file to use */
+  topojson?: string;
+  /** CSS color to fill the map shapes */
+  topojsonFill?: string;
+  topojsonId?: DataPointAccessor<string>;
+  zoom?: false;
+}
+
 export type D3plusConfig<P extends DataPoint = DataPoint> = {
   data: P[] | string;
   locale: string;
@@ -102,34 +133,6 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   yConfig?: AxisConfig;
 
   depth?: number;
-  /** Allows removing specific geographies from topojson file to improve zooming determination. */
-  fitFilter?:
-    | number
-    | string
-    | ((d: {
-        id?: string;
-        geometry: {type: string; coordinates: unknown[]};
-        properties: Record<string, string>;
-        type: string;
-      }) => boolean);
-  /** Ocean color, can be any CSS value including 'transparent' */
-  ocean?: string;
-  /** Map projection used when displaying topojson and coordinate points */
-  projection?: string | ((x: number, y: number) => [number, number]);
-  /** Outer padding between the edge of the visualization and the shapes drawn */
-  projectionPadding?: number | string;
-  /** Used to shift the centerpoint of a map */
-  projectionRotate?: [number, number];
-  /** URL to the XYZ map tiles to use */
-  tileUrl?: string;
-  /** Toggles the visibility of the map tiles */
-  tiles?: boolean;
-  /** Path to the Topojson file to use */
-  topojson?: string;
-  /** CSS color to fill the map shapes */
-  topojsonFill?: string;
-  topojsonId?: string;
-  zoom?: false;
 
   [key: string]: unknown;
-};
+} & GeomapConfig;

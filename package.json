@@ -26,8 +26,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepublishOnly": "tsup",
-    "start": "vite"
+    "start": "vite",
+    "preversion": "tsup",
+    "prepublishOnly": "tsup"
   },
   "keywords": [
     "charts",

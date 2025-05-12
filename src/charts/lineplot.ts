@@ -1,6 +1,6 @@
-import {flatMap, groupBy, sortBy} from "lodash-es";
+import {flatMap, groupBy, has, sortBy} from "lodash-es";
+
 import {shortHash} from "../toolbox/math";
-import {hasProperty} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup} from "./datagroup";
@@ -108,5 +108,5 @@ export function getTopTenByPeriod<T>(
   const lastPeriod = periodList[periodList.length - 1];
   const lastPeriodDataset = sortBy(datasetByPeriod[lastPeriod], measureName).slice(-10);
   const timeElements = groupBy(lastPeriodDataset, mainDrilldownName);
-  return dataset.filter(item => hasProperty(timeElements, item[mainDrilldownName]));
+  return dataset.filter(item => has(timeElements, item[mainDrilldownName]));
 }

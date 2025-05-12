@@ -5,8 +5,7 @@
  * - sorterFactory functions, which generate functions compatible with the Array.prototype.sort method.
  */
 
-import {findFirstNumber} from "./find";
-import {areKindaNumeric} from "./validation";
+import {areKindaNumeric, findFirstNumber} from "./validation";
 
 export function sortNumbers<T>(list: T[], desc = false) {
   const sorterFn = desc ? (a, b) => a - b : (a, b) => b - a;

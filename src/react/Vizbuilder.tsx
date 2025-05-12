@@ -10,6 +10,8 @@ import type {ChartLimits, Dataset} from "../types";
 import {ChartCard} from "./ChartCard";
 import {NonIdealState} from "./NonIdealState";
 
+type AnyCase<T extends string> = Uppercase<T> | Lowercase<T>;
+
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
 
 /** */
@@ -67,7 +69,7 @@ export function Vizbuilder(props: {
    *
    * @default ["SVG", "PNG"]
    */
-  downloadFormats?: ("PNG" | "SVG" | "JPG")[];
+  downloadFormats?: AnyCase<"PNG" | "SVG" | "JPG">[];
 
   /**
    * Custom d3plus configuration to apply when a chart value references a

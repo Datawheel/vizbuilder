@@ -1,5 +1,4 @@
 import {
-  Badge,
   Flex,
   Header,
   Loader,
@@ -13,6 +12,7 @@ import {D3plusContext} from "d3plus-react";
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 
+import type {GeomapConfig} from "../src/d3plus";
 import {ErrorBoundary} from "../src/react";
 import {FormatterProvider} from "../src/react/FormatterProvider";
 import {
@@ -26,7 +26,7 @@ import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
 
-const topojsonConfig = Object.fromEntries(
+const topojsonConfig = Object.fromEntries<GeomapConfig>(
   [
     {
       id: "Province",

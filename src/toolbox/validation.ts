@@ -1,5 +1,14 @@
-import type {Aggregator, TesseractMeasure} from "../schema";
-import {findFirstNumber} from "./find";
+import type {Aggregator} from "../schema";
+
+/**
+ * Returns the first number it finds in a `string`, else returns `elseValue`.
+ * @param string The string to test
+ * @param elseValue A value to return in case the string doesn't contain any
+ */
+export function findFirstNumber(string: string, elseValue?: number) {
+  const match = `${string}`.match(/[0-9\.\,]+/);
+  return match ? Number.parseFloat(match[0]) : elseValue || 0;
+}
 
 export function aggregatorIn<T extends Uppercase<`${Aggregator}`> | "MOE" | "RCA">(
   aggregator: Aggregator | string,
@@ -19,30 +28,6 @@ export function isOneOf<T extends string>(
 }
 
 /**
- * Type guard to establish if an unknown key belongs in a certain object.
- */
-export function isIn<T extends {}>(
-  property: string | number | symbol,
-  container: T,
-): property is keyof T {
-  return Object.prototype.hasOwnProperty.call(container, property);
-}
-
-/**
- * Type guard to establish if a certain key is present in an unknown object.
- */
-export function hasProperty<T extends {}, U extends string | number | symbol>(
-  container: T,
-  property: U,
-): container is T & {[K in U]: unknown} {
-  return (
-    typeof container === "object" &&
-    container != null &&
-    Object.hasOwn(container, property)
-  );
-}
-
-/**
  * Tries to guess if the elements in a list of strings are related to a number.
  * Useful to sort by that number.
  * @param list An array of string to determine
@@ -56,23 +41,33 @@ export function areKindaNumeric(list: string[], tolerance = 0.8) {
 /**
  * Determines if an object is a valid finite number.
  */
-export function isNumeric(n: string): boolean {
-  return !isNaN(Number.parseFloat(n)) && isFinite(n);
+export function isNumeric(n: string | number): boolean {
+  const value = typeof n === "string" ? Number.parseFloat(n) : n;
+  return !Number.isNaN(value) && Number.isFinite(value);
 }
 
 /**
  * Determines whether the data, given a certain measure,
  * is either all negative or all positive (zeroes are ignored)
  */
-export function dataIsSignConsistent(data: object[], measure: TesseractMeasure): boolean {
-  if (!Array.isArray(data) || !data.length) return false;
-  let isPositive = null;
-  return data.every(d => {
-    const val = d[measure.caption];
-    if (isPositive === null) {
-      if (val !== 0) isPositive = val > 0;
-      return true;
+export function dataIsSignConsistent<T extends {}>(data: T[], column: string): boolean {
+  if (!Array.isArray(data) || data.length === 0) return false;
+
+  let isPositive = true;
+  let isNegative = true;
+
+  for (let i = 0; i < data.length; i++) {
+    const value = data[i][column];
+    if (typeof value !== "number") {
+      return false;
     }
-    return isPositive ? val >= 0 : val <= 0;
-  });
+    if (value < 0) {
+      isPositive = false;
+    }
+    if (value > 0) {
+      isNegative = false;
+    }
+  }
+
+  return isPositive || isNegative;
 }
