@@ -70,6 +70,21 @@ export function buildDatagroup(ds: Dataset): Datagroup {
 
   const levelColumns = columnList.filter(column => column.type === "level");
 
+  // Remove rows intended to be excluded from viz by directive
+  const exclusionRules = filterMap(levelColumns, (column): [string, string[]] | null => {
+    const exclude = column.level.annotations.vb_exclude_members?.split(",") || [];
+    return column.isID && exclude.length > 0 ? [column.name, exclude] : null;
+  });
+  const exclusionFilter = exclusionRules.reduce<(row: DataPoint) => boolean>(
+    (fn, rule) => {
+      const [columnID, exclude] = rule;
+      return row => fn(row) && !exclude.includes(`${row[columnID]}`);
+    },
+    () => true,
+  );
+  const dataset = data.filter(exclusionFilter);
+  // TODO: add 'uncategorized' difference rows
+
   const propertyColumns = groupBy(
     columnList.filter(column => column.type === "property"),
     column => column.level.name,
@@ -86,14 +101,14 @@ export function buildDatagroup(ds: Dataset): Datagroup {
 
   // Warning: we are just precalculating here to share on many functions
   // later stages are responsible to check if these sums are meaningful
-  const sumByMemberAnalysis = calculateSumByMember(data, columns);
+  const sumByMemberAnalysis = calculateSumByMember(dataset, columns);
 
   return {
     columns,
-    dataset: data,
+    dataset,
     locale,
     measureColumns: measureColumns.map(column => {
-      const members = getUniqueMembers<number>(data, column.name);
+      const members = getUniqueMembers<number>(dataset, column.name);
       return {
         measure: column.measure,
         parentMeasure: column.parentMeasure,
@@ -126,7 +141,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
           const propColumns = propertyColumns[level.name] || [];
           const captionColumns = captionColumnMap[columnNameWithoutID] || propColumns;
           const sumByMember = sumByMemberAnalysis[column.name];
-          const members = getUniqueMembers<string>(data, column.name).sort(
+          const members = getUniqueMembers<string>(dataset, column.name).sort(
             collator.compare,
           );
 
@@ -140,7 +155,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
             captions: Object.fromEntries(
               captionColumns.map(column => {
                 const entity = column.property || column.level;
-                const members = getUniqueMembers<string>(data, column.name).sort(
+                const members = getUniqueMembers<string>(dataset, column.name).sort(
                   collator.compare,
                 );
                 const type = getTypeFromMembers(members);

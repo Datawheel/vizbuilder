@@ -253,7 +253,10 @@ export interface TesseractCube {
     available_dimensions?: string;
     /** Measures separated by comma */
     available_measures?: string;
-    /** Names of dimensions separated by commas. These dimensions should be hidden by default for drilldown purposes in user-interfaces */
+    /**
+     * Names of dimensions separated by commas.
+     * These dimensions should be hidden by default for drilldown purposes in user-interfaces
+     */
     crosswalk_only_dimensions?: string;
     /** Name of specific data set */
     dataset_name: string;
@@ -262,7 +265,7 @@ export interface TesseractCube {
     /** Dimensions separated by commas that should not be shown in user-interfaces */
     hidden_dimensions: string;
     /** Measures separated by comma that should not be shown in user-interfaces */
-    hidden_measures;
+    hidden_measures: string;
     /** Description of source */
     source_description: string;
     /** Source of data */
@@ -271,8 +274,12 @@ export interface TesseractCube {
     source_link: string;
     /** Subtopic area of dataset (for use in dropdown/variable explorer) */
     subtopic: string;
+    /** Levels separated by comma, to be used by default when a cube is first selected and a request is to be made. */
+    suggested_levels?: string;
     /** General topic area of dataset (for use in dropdown/variable explorer) */
     topic: string;
+    /** List of member IDs separated by comma, to exclude them from the visualizations */
+    vb_exclude_members?: string;
   };
   dimensions: TesseractDimension[];
   measures: TesseractMeasure[];
