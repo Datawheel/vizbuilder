@@ -70,6 +70,6 @@
     "react-inspector": "^6.0.2",
     "tsup": "^8.3.0",
     "typescript": "^5.6.2",
-    "vite": "^5.4.8"
+    "vite": "^6.3.5"
   }
 }
