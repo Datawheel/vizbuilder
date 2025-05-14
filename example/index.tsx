@@ -6,97 +6,55 @@ import {
   SegmentedControl,
   ThemeIcon,
 } from "@mantine/core";
-import {useNetwork} from "@mantine/hooks";
-import {IconExclamationCircle, IconPlugConnectedX} from "@tabler/icons-react";
-import {D3plusContext} from "d3plus-react";
-import React, {useState} from "react";
-import {createRoot} from "react-dom/client";
+import { useNetwork } from "@mantine/hooks";
+import { IconExclamationCircle, IconPlugConnectedX } from "@tabler/icons-react";
+import { D3plusContext } from "d3plus-react";
+import { keyBy } from "lodash-es";
+import React, { useState } from "react";
+import { createRoot } from "react-dom/client";
 
-import type {GeomapConfig} from "../src/d3plus";
-import {ErrorBoundary} from "../src/react";
-import {FormatterProvider} from "../src/react/FormatterProvider";
+import type { GeomapConfig } from "../src/d3plus";
 import {
-  type Translation,
+  ErrorBoundary,
+  FormatterProvider,
   TranslationProvider,
-  defaultTranslation,
-} from "../src/react/TranslationProvider";
-import {Vizbuilder} from "../src/react/Vizbuilder";
-import {Vizdebugger} from "../src/react/Vizdebugger";
-import {useQueries} from "./QueriesProvider";
-import {QueryManager} from "./QueryManager";
-import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
+  Vizbuilder,
+  Vizdebugger,
+} from "../src/react";
+import { useQueries } from "./QueriesProvider";
+import { QueryManager } from "./QueryManager";
+import {
+  TesseractProvider,
+  useTesseract,
+  useTesseractData,
+} from "./TesseractProvider";
+import { translations } from "./translations";
 
-const topojsonConfig = Object.fromEntries<GeomapConfig>(
+const topojsonConfig = keyBy(
   [
     {
       id: "Province",
       name: "مقاطعة",
       topojson: "/topojson/SA_regions.json",
-      topojsonId: d => d.properties.id,
+      topojsonId: (d) => d.properties.id,
     },
     {
       id: "Destination Country",
       name: "دولة",
       topojson: "/topojson/world-50m.json",
-      topojsonId: d => d.id,
+      topojsonId: (d) => d.id,
       projection: "geoMiller",
     },
     {
       id: "Source Country",
       name: "دولة",
       topojson: "/topojson/world-50m.json",
-      topojsonId: d => d.id,
+      topojsonId: (d) => d.id,
       projection: "geoMiller",
     },
-  ].map(item => [item.id, item]),
+  ] as (GeomapConfig & { id: string; name: string })[],
+  (item) => item.id,
 );
-
-const translations: Record<string, Translation> = {
-  en: defaultTranslation,
-  ar: {
-    action_close: "يغلق",
-    action_enlarge: "تكبير",
-    action_fileissue: "قدم مشكلة",
-    action_retry: "أعد المحاولة",
-    aggregator: {
-      sum: "{{measure}}",
-      average: "متوسط {{measure}}",
-      max: "أقصى {{measure}}",
-      min: "أدنى {{measure}}",
-    },
-    chart_labels: {
-      ci: "فاصل الثقة",
-      moe: "هامش الخطأ",
-      source: "مصدر",
-      collection: "مجموعة",
-    },
-    error: {
-      detail: "",
-      message: 'التفاصيل: "{{message}}".',
-      title: "خطأ",
-    },
-    list: {
-      join: "و ",
-      n_more: "{{n}} آخر",
-      n_more_2: "{{n}} آخرين",
-      n_more_plural: "{{n}} آخرون",
-      prefix: "{{list}}",
-      suffix: "{{list}}",
-    },
-    title: {
-      main_on_period: "{{values}} حسب {{series}} في {{time_period}}",
-      main_over_period: "{{values}} حسب {{series}} على مدى {{time}}",
-      main: "{{values}} حسب {{series}}",
-      measure_on_period: "{{values}} في {{time_period}}",
-      measure_over_period: "{{values}} على مدى {{time}}",
-      nonidealstate: "لا نتائج",
-      series_members: "{{series}} ({{members}})",
-      series: "{{series}}",
-      time_range: "في الفترة من {from} إلى {until}",
-      total: "الإجمالي: {{value}}",
-    },
-  },
-};
 
 const container = document.getElementById("app");
 container && mount(container);
@@ -110,11 +68,11 @@ function App() {
 
   const [mode, setMode] = useState("Vizdebugger");
 
-  const {currentQuery} = useQueries();
+  const { currentQuery } = useQueries();
 
-  const {availableDataLocale, dataLocale, setDataLocale} = useTesseract();
+  const { availableDataLocale, dataLocale, setDataLocale } = useTesseract();
 
-  const {dataset, isLoading, error} = useTesseractData(currentQuery);
+  const { dataset, isLoading, error } = useTesseractData(currentQuery);
 
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
@@ -184,14 +142,14 @@ function App() {
 function mount(container) {
   const formatters = {
     Seconds: secondFormatter,
-    Percentage: value => `${value}%`,
-    Rate: value => `${value * 100}%`,
+    Percentage: (value) => `${value}%`,
+    Rate: (value) => `${value * 100}%`,
   };
 
   const root = createRoot(container);
   root.render(
     <MantineProvider withGlobalStyles withNormalizeCSS>
-      <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
+      <D3plusContext.Provider value={{ colorScalePosition: "bottom" }}>
         <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
           <TranslationProvider defaultLocale="en" translations={translations}>
             <FormatterProvider items={formatters}>
