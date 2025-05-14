@@ -7,9 +7,9 @@ import type {ChartType} from "./common";
 import {type Datagroup, buildDatagroup} from "./datagroup";
 import {type DonutChart, generateDonutConfigs} from "./donut";
 import {type ChoroplethMap, generateChoroplethMapConfigs} from "./geomap";
-import {type LinePlot, generateLineplotConfigs } from "./lineplot";
-import {type StackedArea, generateStackedareaConfigs } from "./stackedarea";
-import {type TreeMap, generateTreemapConfigs } from "./treemap";
+import {type LinePlot, generateLineplotConfigs} from "./lineplot";
+import {type StackedArea, generateStackedareaConfigs} from "./stackedarea";
+import {type TreeMap, generateTreemapConfigs} from "./treemap";
 
 export type Chart =
   | BarChart
@@ -57,11 +57,11 @@ export const DEFAULT_DATACAP = 2e4;
 export function generateCharts(
   datasets: Dataset[],
   options: {
-    chartLimits?: ChartLimits;
+    chartLimits?: Partial<ChartLimits>;
     chartTypes?: ChartType[];
     datacap?: number;
     getTopojsonConfig?: (level: TesseractLevel) => Partial<D3plusConfig> | undefined;
-  },
+  } = {},
 ): Chart[] {
   const chartLimits = {...DEFAULT_CHART_LIMITS, ...options.chartLimits};
   const chartTypes = options.chartTypes || (Object.keys(chartGenerator) as ChartType[]);

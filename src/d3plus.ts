@@ -75,9 +75,9 @@ export type GeomapConfig<P extends DataPoint = DataPoint> = {
   topojson?: string;
   /** CSS color to fill the map shapes */
   topojsonFill?: string;
-  topojsonId?: DataPointAccessor<string>;
+  topojsonId?: (obj: TopoJSON.GeometryObject<any>) => string;
   zoom?: false;
-}
+};
 
 export type D3plusConfig<P extends DataPoint = DataPoint> = {
   data: P[] | string;

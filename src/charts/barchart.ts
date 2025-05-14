@@ -233,7 +233,7 @@ export function generateVertBarchartConfigs(
             return [];
           }
 
-          const totalBars = timeline.members.length * members.length
+          const totalBars = timeline.members.length * members.length;
           if (totalBars > BARCHART_VERTICAL_TOTAL_BARS) {
             console.debug(
               "[%s] Attempt to render %d groups of %d bars, limit BARCHART_VERTICAL_TOTAL_BARS = %d",
@@ -271,7 +271,7 @@ export function generateVertBarchartConfigs(
         return otherAxis.levels.flatMap(otherLevel => {
           if (otherLevel.members.length < 2) return [];
 
-          const totalBars = mainLevel.members.length * otherLevel.members.length
+          const totalBars = mainLevel.members.length * otherLevel.members.length;
           if (totalBars > BARCHART_VERTICAL_TOTAL_BARS) {
             console.debug(
               "[%s] Attempt to render %d groups of %d bars, limit BARCHART_VERTICAL_TOTAL_BARS = %d",

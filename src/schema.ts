@@ -351,6 +351,7 @@ export interface TesseractHierarchy {
 export interface TesseractLevel {
   name: string;
   caption: string;
+  count: number;
   annotations: Annotations;
   depth: number;
   properties: TesseractProperty[];

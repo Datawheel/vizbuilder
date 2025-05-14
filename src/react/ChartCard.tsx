@@ -71,9 +71,7 @@ export function ChartCard(props: {
   const downloadButtons = useMemo(() => {
     // Sanitize filename for Windows and Unix
     const filename = (
-      typeof config.title === "function"
-        ? config.title(dataset)
-        : config.title || ""
+      typeof config.title === "function" ? config.title(dataset) : config.title || ""
     )
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
