@@ -1,6 +1,6 @@
 export {generateBarchartConfigs, type BarChart} from "./charts/barchart";
 export type {BaseChart, ChartType} from "./charts/common";
-export type {AxisSeries, CategoryAxis, Datagroup, LevelCaption} from "./charts/datagroup";
+export type {CategoryLevel, CategoryHierarchy, Datagroup, LevelCaption} from "./charts/datagroup";
 export {generateDonutConfigs, type DonutChart} from "./charts/donut";
 export {DEFAULT_CHART_LIMITS, generateCharts, type Chart} from "./charts/generator";
 export {generateChoroplethMapConfigs, type ChoroplethMap} from "./charts/geomap";

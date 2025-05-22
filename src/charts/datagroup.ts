@@ -27,29 +27,32 @@ export interface Datagroup {
   }[];
 
   // We assume a unique time hierarchy in the data
-  timeHierarchy?: CategoryAxis;
+  timeHierarchy?: CategoryHierarchy;
 
   // Keys are Hierarchy names
-  nonTimeHierarchies: {[K: string]: CategoryAxis};
+  nonTimeHierarchies: {[K: string]: CategoryHierarchy};
 }
 
-export interface CategoryAxis {
+export interface CategoryHierarchy {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
-  levels: AxisSeries[];
+  levels: CategoryLevel[];
 }
 
-export interface AxisSeries {
+export interface CategoryLevel {
   name: string;
   type: PrimitiveType;
+  /** The list of available members of this Level in the data. */
   members: string[] | number[] | boolean[];
+  /** Precomputes the sum of all values, grouped by the members of this Level. */
   sumByMember: Record<string | number, {[K: string]: number}>;
-  level: TesseractLevel;
+  entity: TesseractLevel;
   properties: TesseractProperty[];
-  captions: {
-    // Keys are Column.name, not LevelCaption.entity.name
-    [K: string]: LevelCaption;
-  };
+  /**
+   * References to a Level Label and its Properties are stored here.
+   * Keys are Column.name, not LevelCaption.entity.name
+   */
+  captions: {[K: string]: LevelCaption};
 }
 
 export interface LevelCaption {
@@ -122,7 +125,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
   /**
    * We assume all columns in the array belong to the same hierarchy.
    */
-  function adaptLevelList(columns: LevelColumn[]): CategoryAxis {
+  function adaptLevelList(columns: LevelColumn[]): CategoryHierarchy {
     const captionColumnMap = Object.fromEntries(
       filterMap(columns, column => {
         const propColumns = propertyColumns[column.level.name] || [];
@@ -150,7 +153,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
             type: getTypeFromMembers(members),
             members,
             sumByMember,
-            level,
+            entity: level,
             properties: propColumns.map(column => column.property),
             captions: Object.fromEntries(
               captionColumns.map(column => {

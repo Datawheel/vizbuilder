@@ -1,3 +1,4 @@
+import type {DataPoint, TesseractMeasure} from "../schema";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
@@ -21,20 +22,20 @@ export function generateDonutConfigs(
   datagroup: Datagroup,
   {DONUT_SHAPE_MAX}: ChartLimits,
 ): DonutChart[] {
-  const {dataset, timeHierarchy: timeAxis} = datagroup;
+  const {dataset} = datagroup;
   const chartType = "donut" as const;
 
-  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
+  const categoryHierarchies = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildDeepestSeries(timeAxis);
+  const timeline = buildDeepestSeries(datagroup.timeHierarchy);
 
-  return datagroup.measureColumns.flatMap(valueAxis => {
-    const {measure, range} = valueAxis;
+  return datagroup.measureColumns.flatMap(valueColumn => {
+    const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement || "";
 
     // Work only with the mainline measures
-    if (valueAxis.parentMeasure) return [];
+    if (valueColumn.parentMeasure) return [];
 
     // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
     if (
@@ -50,8 +51,6 @@ export function generateDonutConfigs(
       );
       return [];
     }
-
-    // TODO: if percentage, identify which dimensions output 100%
 
     const values = {
       measure,
@@ -69,8 +68,13 @@ export function generateDonutConfigs(
       return [];
     }
 
-    return categoryAxes.flatMap(categoryAxis => {
-      const {dimension, hierarchy} = categoryAxis;
+    // const percentageTest = percentageUnitTester[units];
+    // if (percentageTest && !percentageTest(measure, dataset, range)) {
+    //   return [];
+    // }
+
+    return categoryHierarchies.flatMap(catHierarchy => {
+      const {dimension, hierarchy} = catHierarchy;
       const keyChain = [
         chartType,
         dataset.length,
@@ -79,18 +83,18 @@ export function generateDonutConfigs(
         hierarchy.name,
       ];
 
-      return categoryAxis.levels.flatMap<DonutChart>(axisLevel => {
-        const {level, members} = axisLevel;
+      return catHierarchy.levels.flatMap<DonutChart>(catLevel => {
+        const {members} = catLevel;
 
         // Bail if amount of segments in ring is out of limits
         if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];
 
         return {
-          key: shortHash(keyChain.concat(level.name).join("|")),
+          key: shortHash(keyChain.concat(catLevel.name).join()),
           type: chartType,
           datagroup,
           values,
-          series: [buildSeries(categoryAxis, axisLevel)],
+          series: [buildSeries(catHierarchy, catLevel)],
           timeline,
           extraConfig: {},
         };
@@ -98,3 +102,16 @@ export function generateDonutConfigs(
     });
   });
 }
+
+const percentageUnitTester: {
+  [K: string]: (
+    measure: TesseractMeasure,
+    dataset: DataPoint[],
+    range: [number, number],
+  ) => boolean;
+} = {
+  // Percentage: (measure, dataset, range) => range[1] < 100,
+  // Rate: (measure, dataset, range) => range[1] < 100,
+  "Percentage Base 100": (measure, dataset, range) => range[1] < 100,
+  Share: (measure, dataset, range) => range[0] >= 0 && range[1] <= 100,
+};

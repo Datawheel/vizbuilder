@@ -11,6 +11,7 @@ import {
 import {sortBy} from "lodash-es";
 import {useMemo} from "react";
 import type {BarChart} from "../charts/barchart";
+import type {ChartSeries} from "../charts/common";
 import type {DonutChart} from "../charts/donut";
 import type {Chart} from "../charts/generator";
 import type {ChoroplethMap} from "../charts/geomap";
@@ -26,7 +27,7 @@ import {
 } from "../schema";
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
-import {isOneOf} from "../toolbox/validation";
+import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import {type Formatter, useFormatter} from "./FormatterProvider";
 
 interface ChartBuilderParams {
@@ -120,8 +121,8 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
   );
 
   const aggsEntries = Object.values(datagroup.nonTimeHierarchies).flatMap(hierarchy => {
-    return hierarchy.levels.map(axis => {
-      const key = axis.name;
+    return hierarchy.levels.map(level => {
+      const key = level.name;
       return [
         key,
         (data: AggregatedDataPoint[]) => {
@@ -211,7 +212,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const {datagroup, values, series, timeline, orientation} = chart;
 
   const {locale} = datagroup;
-  const [mainSeries, stackedSeries] = series;
+  const [mainSeries, stackedSeries] = series as [ChartSeries, ChartSeries | undefined];
 
   const collate = new Intl.Collator(locale, {
     numeric: true,
@@ -225,14 +226,14 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const isPercentage = ["Percentage", "Rate"].includes(measureUnits);
 
   const isStacked =
-    (stackedSeries && isOneOf(measureAggregator.toUpperCase(), ["COUNT", "SUM"])) ||
+    (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) ||
     isPercentage;
 
   const config: D3plusConfig = {
     ...d3plusConfigBuilder.common(chart, params),
     barPadding: fullMode ? 5 : 1,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
-    groupBy: stackedSeries?.level.name,
+    groupBy: stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
     groupPadding: fullMode ? 5 : 1,
     label:
       isStacked && stackedSeries
@@ -247,8 +248,15 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
 
   // d3plus/d3plus#729
   if (timeline) {
-    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+    config.time = isOneOf(timeline.name, ["Quarter ID", "Month ID"])
+      ? timeline.level.name
+      : timeline.name;
   }
+
+  const axisSorting =
+    typeof mainSeries.type === "number"
+      ? (a, b) => a[mainSeries.name] - b[mainSeries.name]
+      : (a, b) => collate.compare(a[mainSeries.name], b[mainSeries.name]);
 
   if (orientation === "horizontal") {
     assign(config, {
@@ -261,7 +269,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       yConfig: {
         title: mainSeries.level.caption,
       },
-      ySort: collate.compare,
+      ySort: axisSorting,
     });
   } else {
     assign(config, {
@@ -269,6 +277,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       xConfig: {
         title: mainSeries.level.caption,
       },
+      xSort: axisSorting,
       y: values.measure.name,
       yConfig: {
         title: values.measure.caption,

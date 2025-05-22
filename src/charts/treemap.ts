@@ -21,31 +21,31 @@ export function generateTreemapConfigs(
   datagroup: Datagroup,
   {TREE_MAP_SHAPE_MAX}: ChartLimits,
 ): TreeMap[] {
-  const {dataset, timeHierarchy: timeAxis} = datagroup;
+  const {dataset} = datagroup;
   const chartType = "treemap" as const;
 
-  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
+  const categoryHierarchies = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildDeepestSeries(timeAxis);
+  const timeline = buildDeepestSeries(datagroup.timeHierarchy);
 
   // Pick only levels with member counts above the limit
-  const nonTimeLevels = categoryAxes.flatMap(axis =>
-    filterMap(axis.levels, axisLevel => {
-      if (axisLevel.members.length === 1) return null;
-      return [axis, axisLevel] as const;
+  const nonTimeLevels = categoryHierarchies.flatMap(hierarchy =>
+    filterMap(hierarchy.levels, level => {
+      if (level.members.length === 1) return null;
+      return [hierarchy, level] as const;
     }),
   );
 
   // Bail if time dimension is the only valid dimension
-  if (categoryAxes.length === 0) return [];
+  if (categoryHierarchies.length === 0) return [];
 
-  return datagroup.measureColumns.flatMap(valueAxis => {
-    const {measure, range} = valueAxis;
+  return datagroup.measureColumns.flatMap(valueColumn => {
+    const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement;
 
     // Discard if measure is associated to a parent measure
-    if (valueAxis.parentMeasure) return [];
+    if (valueColumn.parentMeasure) return [];
 
     // Treemaps are valid only with SUM-aggregated measures
     if (!aggregatorIn(aggregator, ["SUM", "COUNT"])) return [];
@@ -62,26 +62,26 @@ export function generateTreemapConfigs(
     const keyChain = [chartType, dataset.length, measure.name];
 
     return [...yieldPartialPermutations(nonTimeLevels, 2)].flatMap<TreeMap>(tuple => {
-      const [mainAxis, mainAxisLevel] = tuple[0];
-      const [otherAxis, otherAxisLevel] = tuple[1];
+      const [mainHierarchy, mainLevel] = tuple[0];
+      const [otherHierarchy, otherLevel] = tuple[1];
 
       // Bail if levels belong to same hierarchy but aren't sorted by depth
       if (
-        mainAxis.dimension.name === otherAxis.dimension.name &&
-        mainAxis.hierarchy.name === otherAxis.hierarchy.name &&
-        mainAxisLevel.level.depth > otherAxisLevel.level.depth
+        mainHierarchy.dimension.name === otherHierarchy.dimension.name &&
+        mainHierarchy.hierarchy.name === otherHierarchy.hierarchy.name &&
+        mainLevel.entity.depth > otherLevel.entity.depth
       ) {
         return [];
       }
 
       // Bail if number of shapes to draw exceeds limit
       // TODO: recalculate count with threshold enabled
-      const shapeCount = mainAxisLevel.members.length * otherAxisLevel.members.length;
+      const shapeCount = mainLevel.members.length * otherLevel.members.length;
       if (shapeCount > TREE_MAP_SHAPE_MAX) {
         console.debug(
           "[%s] Series '%s' contains %d members, limit TREE_MAP_SHAPE_MAX = %d",
           chartType,
-          `${mainAxisLevel.name} > ${otherAxisLevel.name}`,
+          `${mainLevel.name} > ${otherLevel.name}`,
           shapeCount,
           TREE_MAP_SHAPE_MAX,
         );
@@ -89,15 +89,13 @@ export function generateTreemapConfigs(
       }
 
       return {
-        key: shortHash(
-          keyChain.concat(mainAxisLevel.name, otherAxisLevel.name).join("|"),
-        ),
+        key: shortHash(keyChain.concat(mainLevel.name, otherLevel.name).join("|")),
         type: chartType,
         datagroup,
         values,
         series: [
-          buildSeries(mainAxis, mainAxisLevel),
-          buildSeries(otherAxis, otherAxisLevel),
+          buildSeries(mainHierarchy, mainLevel),
+          buildSeries(otherHierarchy, otherLevel),
         ],
         timeline,
         extraConfig: {},

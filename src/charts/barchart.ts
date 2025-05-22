@@ -1,4 +1,4 @@
-import {getLast} from "../toolbox/array";
+import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn} from "../toolbox/validation";
@@ -40,29 +40,25 @@ export function generateHoriBartchartConfigs(
   datagroup: Datagroup,
   {BARCHART_MAX_BARS, BARCHART_MAX_STACKED_BARS}: ChartLimits,
 ): BarChart[] {
-  const {dataset, timeHierarchy: timeAxis} = datagroup;
+  const {dataset} = datagroup;
   const chartType = "barchart" as const;
 
-  const categoryAxes = Object.values(datagroup.nonTimeHierarchies);
+  const categoryHierarchies = Object.values(datagroup.nonTimeHierarchies);
 
-  const timeline = buildDeepestSeries(timeAxis);
+  // In horizontal barcharts, always separate timeline to the interactive dimension
+  const timeline = buildDeepestSeries(datagroup.timeHierarchy);
 
-  return datagroup.measureColumns.flatMap(valueAxis => {
-    const {measure, range} = valueAxis;
+  return datagroup.measureColumns.flatMap(valueColumn => {
+    const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement || "";
 
     // Work only with the mainline measures
-    if (valueAxis.parentMeasure) return [];
-
-    // Do not show any stacked charts if aggregation_method is "NONE"
-    // @see {@link https://github.com/Datawheel/canon/issues/327}
-    // TODO: check applicability? pytesseract doesn't have UNKNOWN aggregator
-    // if (measure.aggregator !== "UNKNOWN") return [];
+    if (valueColumn.parentMeasure) return [];
 
     // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
     if (
-      categoryAxes.length > 1 &&
+      categoryHierarchies.length > 1 &&
       !aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
       !["Percentage", "Rate"].includes(units)
     ) {
@@ -84,65 +80,68 @@ export function generateHoriBartchartConfigs(
       maxValue: range[1],
     };
 
-    const allLevels = categoryAxes
-      .flatMap(categoryAxis =>
-        categoryAxis.levels.map(axisLevel => [categoryAxis, axisLevel] as const),
-      )
-      .filter(tuple => {
-        const {level, members} = tuple[1];
-        if (members.length < 2) {
+    const allLevels = categoryHierarchies.flatMap(catHierarchy =>
+      filterMap(catHierarchy.levels, catLevel => {
+        if (catLevel.members.length < 2) {
           console.debug(
-            "[%s] Level %s contains %d members; needs at least 2",
+            "[%s] Discarding level '%s': needs at least 2 members, has %d",
             chartType,
-            level.name,
-            members.length,
+            catLevel.entity.name,
+            catLevel.members.length,
           );
-          return false;
+          return null;
         }
-        return true;
-      });
+        return [catHierarchy, catLevel] as const;
+      }),
+    );
 
     return [...yieldPartialPermutations(allLevels, 2)].flatMap<BarChart>(tuple => {
       const keyChain = [chartType, dataset.length, measure.name];
 
-      const [mainAxis, mainAxisLevel] = tuple[0];
-      const [otherAxis, otherAxisLevel] = tuple[1];
+      const [mainHierarchy, mainLevel] = tuple[0];
+      const [otherHierarchy, otherLevel] = tuple[1];
 
-      // Bail if the amount of members in main axis is out of limits
-      if (mainAxisLevel.members.length > BARCHART_MAX_BARS) {
+      // Bail if both levels belong to the same dimension and are not in depth order
+      if (
+        mainHierarchy === otherHierarchy &&
+        mainLevel.entity.depth < otherLevel.entity.depth
+      ) {
+        return [];
+      }
+
+      // Bail if the amount of members in main level is out of limits
+      if (mainLevel.members.length > BARCHART_MAX_BARS) {
         console.debug(
           "[%s] Main series '%s' contains %d members; limit BARCHART_MAX_BARS = %d",
           chartType,
-          mainAxisLevel.name,
-          mainAxisLevel.members.length,
+          mainLevel.name,
+          mainLevel.members.length,
           BARCHART_MAX_BARS,
         );
         return [];
       }
 
-      // Bail if the amount of members in stacked axis is out of limits
-      if (otherAxisLevel.members.length > BARCHART_MAX_STACKED_BARS) {
+      // Bail if the amount of members in stacked level is out of limits
+      if (otherLevel.members.length > BARCHART_MAX_STACKED_BARS) {
         console.debug(
           "[%s] Stacked series '%s' contains %d members; limit BARCHART_MAX_STACKED_BARS = %d",
           chartType,
-          otherAxisLevel.name,
-          otherAxisLevel.members.length,
+          otherLevel.name,
+          otherLevel.members.length,
           BARCHART_MAX_STACKED_BARS,
         );
         return [];
       }
 
       return {
-        key: shortHash(
-          keyChain.concat(mainAxisLevel.name, otherAxisLevel.name).join("|"),
-        ),
+        key: shortHash(keyChain.concat(mainLevel.name, otherLevel.name).join()),
         type: chartType,
         datagroup: datagroup,
         orientation: "horizontal",
         values,
         series: [
-          buildSeries(mainAxis, mainAxisLevel),
-          buildSeries(otherAxis, otherAxisLevel),
+          buildSeries(mainHierarchy, mainLevel),
+          buildSeries(otherHierarchy, otherLevel),
         ],
         timeline,
         extraConfig: {},
@@ -168,21 +167,39 @@ export function generateVertBarchartConfigs(
     BARCHART_VERTICAL_TOTAL_BARS,
   }: ChartLimits,
 ): BarChart[] {
-  const {dataset, timeHierarchy: timeAxis} = dg;
+  const {dataset} = dg;
   const chartType = "barchart" as const;
 
-  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+  const categoryHierarchies = Object.values(dg.nonTimeHierarchies);
 
   // If all levels, besides the one from time dimension, have only 1 member,
   // then the chart results in a single block
-  if (categoryAxes.every(axis => axis.levels.every(level => level.members.length === 1)))
+  if (
+    categoryHierarchies.every(hierarchy =>
+      hierarchy.levels.every(level => level.members.length === 1),
+    )
+  ) {
     return [];
+  }
 
-  return dg.measureColumns.flatMap(valueAxis => {
-    const {measure, range} = valueAxis;
+  const timeline = buildSeriesIf(dg.timeHierarchy, series => {
+    const memCount = series.members.length;
+    if (memCount < 2) {
+      console.debug(
+        "[%s] Time series '%s' contains a single member",
+        chartType,
+        series.name,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  return dg.measureColumns.flatMap(valueColumn => {
+    const {measure, range} = valueColumn;
 
     // Work only with the mainline measures
-    if (valueAxis.parentMeasure) return [];
+    if (valueColumn.parentMeasure) return [];
 
     const values = {
       measure,
@@ -190,43 +207,14 @@ export function generateVertBarchartConfigs(
       maxValue: range[1],
     };
 
-    const timeline = buildSeriesIf(timeAxis, series => {
-      const memCount = series.members.length;
-      if (memCount < 2) {
-        console.debug(
-          "[%s] Time series '%s' contains a single member",
-          chartType,
-          series.name,
-        );
-        return false;
-      }
-      if (memCount > BARCHART_VERTICAL_MAX_GROUPS) {
-        console.debug(
-          "[%s] Time series '%s' contains %d members, limit BARCHART_VERTICAL_MAX_GROUPS = %d",
-          chartType,
-          series.name,
-          memCount,
-          BARCHART_VERTICAL_MAX_GROUPS,
-        );
-        return false;
-      }
-      return true;
-    });
-
     if (timeline) {
-      return categoryAxes.flatMap(categoryAxis => {
-        const {dimension, hierarchy} = categoryAxis;
-        const keyChain = [
-          chartType,
-          "horizontal",
-          dataset.length,
-          measure.name,
-          dimension.name,
-          hierarchy.name,
-        ];
+      // In vertical barcharts the time dimension should be the primary series.
+      // If present, mix it with all available levels, and discard from there.
+      return categoryHierarchies.flatMap(catHierarchy => {
+        const keyChain = [chartType, "vertical", dataset.length, measure.name];
 
-        return categoryAxis.levels.flatMap<BarChart>(axisLevel => {
-          const {members} = axisLevel;
+        return catHierarchy.levels.flatMap<BarChart>(catLevel => {
+          const {members} = catLevel;
 
           // Bail if amount of segments is out of bounds
           if (members.length < 2 || members.length > BARCHART_YEAR_MAX_BARS) {
@@ -245,31 +233,33 @@ export function generateVertBarchartConfigs(
             return [];
           }
 
-          return [
-            {
-              key: shortHash(keyChain.concat().join("|")),
-              type: chartType,
-              datagroup: dg,
-              orientation: "vertical",
-              values,
-              series: [timeline, buildSeries(categoryAxis, axisLevel)],
-              extraConfig: {},
-            },
-          ];
+          return {
+            key: shortHash(keyChain.concat(timeline.name, catLevel.name).join()),
+            type: chartType,
+            datagroup: dg,
+            orientation: "vertical",
+            values,
+            series: [timeline, buildSeries(catHierarchy, catLevel)],
+            extraConfig: {},
+          };
         });
       });
     }
 
-    return [...yieldPartialPermutations(categoryAxes, 2)].flatMap<BarChart>(tuple => {
-      const mainAxis = tuple[0];
-      const otherAxis = tuple[1];
+    return [...yieldPartialPermutations(categoryHierarchies, 2)].flatMap(tuple => {
+      const mainHierarchy = tuple[0];
+      const otherHierarchy = tuple[1];
 
-      return mainAxis.levels.flatMap(mainLevel => {
+      return mainHierarchy.levels.flatMap(mainLevel => {
         const mainMemCount = mainLevel.members.length;
-        if (mainMemCount < 2 || mainMemCount > BARCHART_VERTICAL_MAX_GROUPS) return [];
+        if (mainMemCount < 2 || mainMemCount > BARCHART_VERTICAL_MAX_GROUPS) {
+          return [];
+        }
 
-        return otherAxis.levels.flatMap(otherLevel => {
-          if (otherLevel.members.length < 2) return [];
+        return otherHierarchy.levels.flatMap<BarChart>(otherLevel => {
+          if (otherLevel.members.length < 2) {
+            return [];
+          }
 
           const totalBars = mainLevel.members.length * otherLevel.members.length;
           if (totalBars > BARCHART_VERTICAL_TOTAL_BARS) {
@@ -290,22 +280,20 @@ export function generateVertBarchartConfigs(
             measure.name,
             mainLevel.name,
             otherLevel.name,
-          ].join("|");
+          ].join();
 
-          return [
-            {
-              key: shortHash(keyChain),
-              type: chartType,
-              datagroup: dg,
-              orientation: "vertical" as const,
-              values,
-              series: [
-                buildSeries(mainAxis, mainLevel),
-                buildSeries(otherAxis, otherLevel),
-              ],
-              extraConfig: {},
-            },
-          ];
+          return {
+            key: shortHash(keyChain),
+            type: chartType,
+            datagroup: dg,
+            orientation: "vertical" as const,
+            values,
+            series: [
+              buildSeries(mainHierarchy, mainLevel),
+              buildSeries(otherHierarchy, otherLevel),
+            ],
+            extraConfig: {},
+          };
         });
       });
     });

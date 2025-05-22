@@ -1,6 +1,7 @@
 import {flatMap, groupBy, has, sortBy} from "lodash-es";
 
 import {shortHash} from "../toolbox/math";
+import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup} from "./datagroup";
@@ -20,69 +21,74 @@ export function generateLineplotConfigs(
   dg: Datagroup,
   {LINEPLOT_LINE_MAX, LINEPLOT_LINE_POINT_MIN}: ChartLimits,
 ): LinePlot[] {
-  const {dataset, timeHierarchy: timeAxis} = dg;
+  const {dataset} = dg;
   const chartType = "lineplot" as const;
 
-  const categoryAxes = Object.values(dg.nonTimeHierarchies);
+  const categoryHierarchies = Object.values(dg.nonTimeHierarchies);
 
-  const timeline = buildDeepestSeries(timeAxis);
+  const timeline = buildDeepestSeries(dg.timeHierarchy);
 
   // Bail if no time dimension present
-  if (!timeAxis || !timeline) return [];
+  if (!timeline) {
+    return [];
+  }
 
   // Bail if the time level doesn't have enough members to draw a line
-  if (timeline.members.length < LINEPLOT_LINE_POINT_MIN) return [];
+  if (timeline.members.length < LINEPLOT_LINE_POINT_MIN) {
+    return [];
+  }
 
-  const metricChart: LinePlot[] = dg.measureColumns.map(col => {
-    return {
-      key: shortHash([chartType, dataset.length, col.measure.name].join("|")),
-      type: chartType,
-      datagroup: dg,
-      values: {
-        measure: col.measure,
-        minValue: col.range[0],
-        maxValue: col.range[1],
-      },
-      series: [],
-      timeline,
-      extraConfig: {},
+  return dg.measureColumns.flatMap(valueColumn => {
+    const {measure, range} = valueColumn;
+    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+
+    if (valueColumn.parentMeasure) return [];
+
+    const values = {
+      measure,
+      minValue: range[0],
+      maxValue: range[1],
     };
-  });
 
-  return dg.measureColumns
-    .flatMap(valueAxis => {
-      const {measure, range} = valueAxis;
+    const keyChain = [chartType, dataset.length, measure.name];
+    const finalPlots: LinePlot[] = [];
 
-      if (valueAxis.parentMeasure) return [];
-
-      const values = {
-        measure,
-        minValue: range[0],
-        maxValue: range[1],
-      };
-
-      return categoryAxes.flatMap(categoryAxis => {
-        const keyChain = [chartType, dataset.length, measure.name];
-
-        return categoryAxis.levels.flatMap<LinePlot>(axisLevel => {
-          const {level, members} = axisLevel;
-
-          // Pick only levels with member counts within the limit
-          if (members.length < 2 || members.length > LINEPLOT_LINE_MAX) return [];
-
-          return {
-            key: shortHash(keyChain.concat(level.name).join("|")),
-            type: chartType,
-            datagroup: dg,
-            values,
-            series: [buildSeries(categoryAxis, axisLevel)],
-            timeline,
-            extraConfig: {},
-          };
-        });
+    // Create a total sum plot over time if the aggregator allows it
+    if (aggregatorIn(aggregator, ["SUM", "COUNT"])) {
+      finalPlots.push({
+        key: shortHash(keyChain.join()),
+        type: chartType,
+        datagroup: dg,
+        values,
+        series: [],
+        timeline,
+        extraConfig: {},
       });
-    })
-    .concat(metricChart);
+    }
+
+    const categoryLinePlots = categoryHierarchies.flatMap(catHierarchy => {
+      return catHierarchy.levels.flatMap<LinePlot>(catLevel => {
+        const {members} = catLevel;
+
+        // Pick only levels with member counts within the limit
+        if (members.length < 2 || members.length > LINEPLOT_LINE_MAX) {
+          return [];
+        }
+
+        return {
+          key: shortHash(keyChain.concat(catLevel.name).join()),
+          type: chartType,
+          datagroup: dg,
+          values,
+          series: [buildSeries(catHierarchy, catLevel)],
+          timeline,
+          extraConfig: {},
+        };
+      });
+    });
+
+    return finalPlots.concat(categoryLinePlots);
+  });
 }
 
 export function getTopTenByPeriod<T>(

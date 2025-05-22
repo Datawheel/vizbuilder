@@ -5,7 +5,12 @@ import type {
   TesseractLevel,
   TesseractMeasure,
 } from "../schema";
-import type {AxisSeries, CategoryAxis, Datagroup, LevelCaption} from "./datagroup";
+import type {
+  CategoryHierarchy,
+  CategoryLevel,
+  Datagroup,
+  LevelCaption,
+} from "./datagroup";
 
 export type ChartType =
   | "barchart"
@@ -14,6 +19,16 @@ export type ChartType =
   | "lineplot"
   | "stackedarea"
   | "treemap";
+
+export interface ChartSeries {
+  name: string;
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  level: TesseractLevel;
+  type: "string" | "number" | "boolean";
+  members: string[] | number[] | boolean[];
+  captions: {[K: string]: LevelCaption | undefined};
+}
 
 export interface BaseChart {
   key: string;
@@ -24,56 +39,49 @@ export interface BaseChart {
     minValue: number;
     maxValue: number;
   };
-  series: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    captions: {[K: string]: LevelCaption | undefined};
-    members: string[] | number[] | boolean[];
-  }[];
-  timeline?: {
-    name: string;
-    dimension: TesseractDimension;
-    hierarchy: TesseractHierarchy;
-    level: TesseractLevel;
-    members: string[] | number[] | boolean[];
-  };
+  series: ChartSeries[];
+  timeline?: ChartSeries;
   extraConfig: {
     d3plus?: Partial<D3plusConfig>;
   };
 }
 
 /**
- * Generates a Series using the deepest level available on the given CategoryAxis.
+ * Generates a Series using the deepest level available on the given Hierarchy.
  */
-export function buildDeepestSeries(axis: CategoryAxis | undefined) {
-  if (!axis) return undefined;
-  const series = axis.levels[axis.levels.length - 1];
-  return buildSeries(axis, series);
+export function buildDeepestSeries(
+  hierarchy: CategoryHierarchy | undefined,
+): ChartSeries | undefined {
+  if (!hierarchy) return undefined;
+  const series = hierarchy.levels[hierarchy.levels.length - 1];
+  return buildSeries(hierarchy, series);
 }
 
-/** Generates a Series with the provided Axis and AxisLevel. */
-export function buildSeries(axis: CategoryAxis, series: AxisSeries) {
+/** Generates a Series from the provided Hierarchy and Level. */
+export function buildSeries(
+  category: CategoryHierarchy,
+  level: CategoryLevel,
+): ChartSeries {
   return {
-    name: series.name,
-    dimension: axis.dimension,
-    hierarchy: axis.hierarchy,
-    level: series.level,
-    members: series.members,
-    captions: series.captions,
+    name: level.name,
+    dimension: category.dimension,
+    hierarchy: category.hierarchy,
+    level: level.entity,
+    type: level.type,
+    members: level.members,
+    captions: level.captions,
   };
 }
 
 export function buildSeriesIf(
-  axis: CategoryAxis | undefined,
-  condition: (series: AxisSeries) => boolean,
-) {
-  if (!axis) return undefined;
-  for (let index = axis.levels.length; index > 0; index) {
-    const level = axis.levels[--index];
+  hierarchy: CategoryHierarchy | undefined,
+  condition: (level: CategoryLevel) => boolean,
+): ChartSeries | undefined {
+  if (!hierarchy) return undefined;
+  for (let index = hierarchy.levels.length; index > 0; index) {
+    const level = hierarchy.levels[--index];
     if (condition(level)) {
-      return buildSeries(axis, level);
+      return buildSeries(hierarchy, level);
     }
   }
 }
