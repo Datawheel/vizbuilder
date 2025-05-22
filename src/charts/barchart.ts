@@ -95,6 +95,37 @@ export function generateHoriBartchartConfigs(
       }),
     );
 
+    if (allLevels.length === 1) {
+      return allLevels.flatMap<BarChart>(pair => {
+        const [mainHierarchy, mainLevel] = pair;
+
+        // Bail if the amount of members in main level is out of limits
+        if (mainLevel.members.length > BARCHART_MAX_BARS) {
+          console.debug(
+            "[%s] Unique series '%s' contains %d members; limit BARCHART_MAX_BARS = %d",
+            chartType,
+            mainLevel.name,
+            mainLevel.members.length,
+            BARCHART_MAX_BARS,
+          );
+          return [];
+        }
+
+        return {
+          key: shortHash(
+            [chartType, dataset.length, measure.name, mainLevel.name].join(),
+          ),
+          type: chartType,
+          datagroup: datagroup,
+          orientation: "horizontal",
+          values,
+          series: [buildSeries(mainHierarchy, mainLevel)],
+          timeline,
+          extraConfig: {},
+        };
+      });
+    }
+
     return [...yieldPartialPermutations(allLevels, 2)].flatMap<BarChart>(tuple => {
       const keyChain = [chartType, dataset.length, measure.name];
 
