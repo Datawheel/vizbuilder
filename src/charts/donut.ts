@@ -1,5 +1,5 @@
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn} from "../toolbox/validation";
+import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup} from "./datagroup";
@@ -38,9 +38,8 @@ export function generateDonutConfigs(
 
     // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
     if (
-      categoryAxes.length > 1 &&
       !aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
-      !["Percentage", "Rate"].includes(units)
+      !isOneOf(units, ["Percentage", "Percentage Base 100", "Rate"])
     ) {
       console.debug(
         "[%s] Measure '%s' has aggregator '%s' and units '%s'; can't be summed.",
