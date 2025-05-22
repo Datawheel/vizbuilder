@@ -2,7 +2,7 @@ import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash-es";
 import React, {createContext, useContext, useEffect, useMemo} from "react";
 import type {TesseractCube} from "../src/schema";
-import { castArray } from "../src/toolbox/array";
+import {castArray} from "../src/toolbox/array";
 
 export interface RequestParams {
   key: string;
@@ -41,6 +41,28 @@ export function QueriesProvider(props: {
       : [],
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (window.location.search && props.cubes) {
+      const initialParams = new URLSearchParams(window.location.search);
+      const cubeName = initialParams.get("cube") || "";
+      const cube = props.cubes[cubeName];
+      if (cube) {
+        const initialItem: RequestParams = {
+          key: Math.random().toString(16).slice(2, 10),
+          cube: cubeName,
+          drilldowns: standardizeArray(initialParams.getAll("drilldowns")),
+          measures: standardizeArray(initialParams.getAll("measures")),
+        };
+        const nextItems = items
+          .filter(item => item.cube === cubeName)
+          .concat(initialItem);
+        setItems(nextItems);
+        setIndex(nextItems.length - 1);
+      }
+    }
+  }, []);
+
   const value = useMemo((): QueriesContextValue => {
     return {
       queries: items,
@@ -74,7 +96,7 @@ export function QueriesProvider(props: {
         if (obj === items[index]) setIndex(0);
       },
     };
-  }, [index, items, setIndex, setItems]);
+  }, [index, items]);
 
   // Mirror current RequestParams to URLSearchParams
   useEffect(() => {
@@ -125,11 +147,13 @@ export function useQueries() {
 function isSameRequest(a: RequestParams, b: RequestParams): boolean {
   return (
     a.cube === b.cube &&
-    standardizeArray(a.drilldowns || []) === standardizeArray(b.drilldowns || []) &&
-    standardizeArray(a.measures || []) === standardizeArray(b.measures || [])
+    standardizeArray(a.drilldowns).sort().toString() ===
+      standardizeArray(b.drilldowns).sort().toString() &&
+    standardizeArray(a.measures).sort().toString() ===
+      standardizeArray(b.measures).sort().toString()
   );
 }
 
-function standardizeArray(array: string[]) {
-  return castArray(array).toString().split(",").sort().toString();
+function standardizeArray(array: string | string[] | undefined | null) {
+  return castArray(array).toString().split(",");
 }

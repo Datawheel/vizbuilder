@@ -12,7 +12,10 @@
         "useExhaustiveDependencies": {
           "level": "error",
           "options": {
-            "hooks": [{ "name": "useSettings", "stableResult": true }]
+            "hooks": [
+              { "name": "useSettings", "stableResult": true },
+              { "name": "useLocalStorage", "stableResult": [1] }
+            ]
           }
         }
       }
