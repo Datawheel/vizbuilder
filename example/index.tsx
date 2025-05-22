@@ -6,14 +6,14 @@ import {
   SegmentedControl,
   ThemeIcon,
 } from "@mantine/core";
-import { useNetwork } from "@mantine/hooks";
-import { IconExclamationCircle, IconPlugConnectedX } from "@tabler/icons-react";
-import { D3plusContext } from "d3plus-react";
-import { keyBy } from "lodash-es";
-import React, { useState } from "react";
-import { createRoot } from "react-dom/client";
+import {useNetwork} from "@mantine/hooks";
+import {IconExclamationCircle, IconPlugConnectedX} from "@tabler/icons-react";
+import {D3plusContext} from "d3plus-react";
+import {keyBy} from "lodash-es";
+import React, {useState} from "react";
+import {createRoot} from "react-dom/client";
 
-import type { GeomapConfig } from "../src/d3plus";
+import type {GeomapConfig} from "../src/d3plus";
 import {
   ErrorBoundary,
   FormatterProvider,
@@ -21,14 +21,11 @@ import {
   Vizbuilder,
   Vizdebugger,
 } from "../src/react";
-import { useQueries } from "./QueriesProvider";
-import { QueryManager } from "./QueryManager";
-import {
-  TesseractProvider,
-  useTesseract,
-  useTesseractData,
-} from "./TesseractProvider";
-import { translations } from "./translations";
+import {useQueries} from "./QueriesProvider";
+import {QueryManager} from "./QueryManager";
+import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
+import {formatters} from "./formatters";
+import {translations} from "./translations";
 
 const topojsonConfig = keyBy(
   [
@@ -36,24 +33,24 @@ const topojsonConfig = keyBy(
       id: "Province",
       name: "مقاطعة",
       topojson: "/topojson/SA_regions.json",
-      topojsonId: (d) => d.properties.id,
+      topojsonId: d => d.properties.id,
     },
     {
       id: "Destination Country",
       name: "دولة",
       topojson: "/topojson/world-50m.json",
-      topojsonId: (d) => d.id,
+      topojsonId: d => d.id,
       projection: "geoMiller",
     },
     {
       id: "Source Country",
       name: "دولة",
       topojson: "/topojson/world-50m.json",
-      topojsonId: (d) => d.id,
+      topojsonId: d => d.id,
       projection: "geoMiller",
     },
-  ] as (GeomapConfig & { id: string; name: string })[],
-  (item) => item.id,
+  ] as (GeomapConfig & {id: string; name: string})[],
+  item => item.id,
 );
 
 const container = document.getElementById("app");
@@ -68,11 +65,11 @@ function App() {
 
   const [mode, setMode] = useState("Vizdebugger");
 
-  const { currentQuery } = useQueries();
+  const {currentQuery} = useQueries();
 
-  const { availableDataLocale, dataLocale, setDataLocale } = useTesseract();
+  const {availableDataLocale, dataLocale, setDataLocale} = useTesseract();
 
-  const { dataset, isLoading, error } = useTesseractData(currentQuery);
+  const {dataset, isLoading, error} = useTesseractData(currentQuery);
 
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
@@ -140,16 +137,10 @@ function App() {
 }
 
 function mount(container) {
-  const formatters = {
-    Seconds: secondFormatter,
-    Percentage: (value) => `${value}%`,
-    Rate: (value) => `${value * 100}%`,
-  };
-
   const root = createRoot(container);
   root.render(
     <MantineProvider withGlobalStyles withNormalizeCSS>
-      <D3plusContext.Provider value={{ colorScalePosition: "bottom" }}>
+      <D3plusContext.Provider value={{colorScalePosition: "bottom"}}>
         <TesseractProvider serverURL={new URL("/tesseract/", location.href)}>
           <TranslationProvider defaultLocale="en" translations={translations}>
             <FormatterProvider items={formatters}>

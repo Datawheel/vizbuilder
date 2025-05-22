@@ -1,5 +1,24 @@
 import { formatAbbreviate } from "d3plus-format";
 
+export const formatters = {
+  Unit: (value, locale) => unit(value, locale),
+  "Unit Int": (value, locale) => unitInt(value, locale),
+  Rate: (value, locale) => chartPct(value !== null ? value * 100 : null, locale),
+  Percentage: (value, locale) => chartPct(value !== null ? value * 100 : null, locale),
+  Share: (value, locale) => chartPct(value !== null ? value * 100 : null, locale),
+  TONS: (value, locale) => tons(value, locale),
+  "Thousand Unit": (value, locale) => tons(value, locale),
+  "Percentage Base 100": (value, locale) => chartPct(value, locale),
+  "Thousand SAR": (value, locale) => SAR(value * 1e3, locale),
+  "Million SAR": (value, locale) => SAR(value * 1e6, locale),
+  "Billion SAR": (value, locale) => SAR(value * 1e9, locale),
+  KWh: (value, locale) => kwh(value, locale),
+  "Degree Celsius": (value, locale) => degreeCelcius(value, locale),
+  "Cubic Meter": (value, locale) => cubicMeter(value, locale),
+  "Thousand Overnight Stays": (value, locale) => overnightStays(value, locale),
+  "Thousand Tourists": (value, locale) => tourists(value, locale),
+};
+
 export function abbreviate(n, locale) {
   return formatAbbreviate(n, `${locale}-SA`);
 }
