@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import {useDisclosure, useLocalStorage} from "@mantine/hooks";
 import {IconWindowMaximize} from "@tabler/icons-react";
+import {mapValues} from "lodash-es";
 import React, {forwardRef, useCallback, useMemo} from "react";
 import {ObjectInspector} from "react-inspector";
 
@@ -85,6 +86,39 @@ export function Vizdebugger(props: VizbuilderProps) {
     t: translate,
   });
 
+  const columnInfo = useMemo(() => {
+    if (!castArray(props.datasets).length) return [];
+    const {columns, data, locale} = Array.isArray(props.datasets)
+      ? props.datasets[0]
+      : props.datasets;
+    const point = data[data.length - 1];
+    return mapValues(columns, item => {
+      if (item.type === "measure") {
+        return {
+          type: item.type,
+          entities: [item.parentMeasure, item.measure],
+          example: point[item.name],
+        };
+      }
+      if (item.type === "property") {
+        return {
+          type: item.type,
+          entities: [item.dimension, item.hierarchy, item.level, item.property],
+          example: point[item.name],
+        };
+      }
+      if (item.type === "level"){
+        return {
+          type: item.type,
+          isID: item.isID,
+          hasID: item.hasID,
+          entities: [item.dimension, item.hierarchy, item.level],
+          example: point[item.name],
+        };
+      }
+    });
+  }, [props.datasets]);
+
   return (
     <SimpleGrid cols={2}>
       <div>
@@ -94,7 +128,7 @@ export function Vizdebugger(props: VizbuilderProps) {
               Columns
             </Title>
             <Paper shadow="xs" p="xs">
-              <ObjectInspector data={props.datasets} expandLevel={1} />
+              <ObjectInspector data={columnInfo} expandLevel={2} />
             </Paper>
           </div>
 
@@ -103,7 +137,7 @@ export function Vizdebugger(props: VizbuilderProps) {
               d3plus config
             </Title>
             <Paper shadow="xs" p="xs">
-              <ObjectInspector data={chartConfig} />
+              <ObjectInspector data={chartConfig} expandLevel={1} />
             </Paper>
           </div>
         </SimpleGrid>
@@ -134,7 +168,7 @@ export function Vizdebugger(props: VizbuilderProps) {
             itemComponent={ChartItem}
             onChange={useCallback(
               (value: string | null) => setChartIndex(value || "0"),
-              [setChartIndex],
+              [],
             )}
             value={chartIndex}
           />
