@@ -1,9 +1,12 @@
 import {
   ActionIcon,
+  AspectRatio,
+  Box,
   Group,
   Paper,
   Select,
   SimpleGrid,
+  Stack,
   Switch,
   Text,
   Title,
@@ -16,33 +19,15 @@ import {ObjectInspector} from "react-inspector";
 
 import {type Chart, generateCharts} from "../charts/generator";
 import {castArray} from "../toolbox/array";
-import {ErrorBoundary} from "./ErrorBoundary";
-import {useTranslation} from "./TranslationProvider";
+import {ChartCard} from "./ChartCard";
 import type {VizbuilderProps} from "./Vizbuilder";
+import {useVizbuilderContext} from "./VizbuilderProvider";
 import {useD3plusConfig} from "./useD3plusConfig";
 
 export function Vizdebugger(props: VizbuilderProps) {
-  const {
-    datasets,
-    chartLimits,
-    chartTypes,
-    datacap,
-    measureConfig,
-    topojsonConfig,
-    userConfig,
-  } = props;
+  const {datasets} = props;
 
-  // Normalize measureConfig to function type
-  const getMeasureConfig = useMemo(() => {
-    const config = measureConfig || {};
-    return typeof config === "function" ? config : item => config[item.name];
-  }, [measureConfig]);
-
-  // Normalize topojsonConfig to function type
-  const getTopojsonConfig = useMemo(() => {
-    const config = topojsonConfig || {};
-    return typeof config === "function" ? config : item => config[item.name];
-  }, [topojsonConfig]);
+  const {chartLimits, chartTypes, datacap, getTopojsonConfig} = useVizbuilderContext();
 
   const charts = useMemo(
     () =>
@@ -77,15 +62,6 @@ export function Vizdebugger(props: VizbuilderProps) {
 
   const chart = charts[chartIndex];
 
-  const {translate} = useTranslation();
-
-  const [ChartComponent, chartConfig] = useD3plusConfig(chart, {
-    fullMode,
-    showConfidenceInt,
-    getMeasureConfig,
-    t: translate,
-  });
-
   const columnInfo = useMemo(() => {
     if (!castArray(props.datasets).length) return [];
     const {columns, data, locale} = Array.isArray(props.datasets)
@@ -107,7 +83,7 @@ export function Vizdebugger(props: VizbuilderProps) {
           example: point[item.name],
         };
       }
-      if (item.type === "level"){
+      if (item.type === "level") {
         return {
           type: item.type,
           isID: item.isID,
@@ -120,8 +96,8 @@ export function Vizdebugger(props: VizbuilderProps) {
   }, [props.datasets]);
 
   return (
-    <SimpleGrid cols={2}>
-      <div>
+    <Group grow h="100%">
+      <Box h="100%" style={{overflow: "auto"}}>
         <SimpleGrid cols={2}>
           <div>
             <Title order={3} mb="xs">
@@ -132,14 +108,13 @@ export function Vizdebugger(props: VizbuilderProps) {
             </Paper>
           </div>
 
-          <div>
-            <Title order={3} mb="xs">
-              d3plus config
-            </Title>
-            <Paper shadow="xs" p="xs">
-              <ObjectInspector data={chartConfig} expandLevel={1} />
-            </Paper>
-          </div>
+          {chart && (
+            <ChartConfigInspector
+              chart={chart}
+              fullMode={fullMode}
+              showConfidenceInt={showConfidenceInt}
+            />
+          )}
         </SimpleGrid>
 
         <Title order={3} mt="lg" mb="xs">
@@ -159,10 +134,10 @@ export function Vizdebugger(props: VizbuilderProps) {
             </Paper>
           ))}
         </SimpleGrid>
-      </div>
+      </Box>
 
-      <div>
-        <Group grow mb="lg">
+      <Stack h="100%">
+        <Group grow>
           <Select
             data={chartOptions}
             itemComponent={ChartItem}
@@ -179,11 +154,37 @@ export function Vizdebugger(props: VizbuilderProps) {
             onChange={setShowConfidenceInt.toggle}
           />
         </Group>
-        <ErrorBoundary>
-          {ChartComponent && <ChartComponent config={chartConfig} />}
-        </ErrorBoundary>
-      </div>
-    </SimpleGrid>
+
+        {chart && (
+          <AspectRatio ratio={4 / 3} w="100%">
+            <ChartCard
+              chart={chart}
+              isFullMode={fullMode}
+              style={{height: "100%"}}
+            />
+          </AspectRatio>
+        )}
+      </Stack>
+    </Group>
+  );
+}
+
+function ChartConfigInspector(props: {
+  chart: Chart;
+  fullMode: boolean;
+  showConfidenceInt: boolean;
+}) {
+  const {chart, fullMode, showConfidenceInt} = props;
+  const [_, chartConfig] = useD3plusConfig(chart, {fullMode, showConfidenceInt});
+  return (
+    <div>
+      <Title order={3} mb="xs">
+        d3plus config
+      </Title>
+      <Paper shadow="xs" p="xs">
+        <ObjectInspector data={chartConfig} expandLevel={1} />
+      </Paper>
+    </div>
   );
 }
 

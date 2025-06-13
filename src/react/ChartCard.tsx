@@ -9,11 +9,8 @@ import {
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef} from "react";
 import type {Chart} from "../charts/generator";
-import type {D3plusConfig} from "../d3plus";
-import type {TesseractMeasure} from "../schema";
-import {castArray} from "../toolbox/array";
-import {ErrorBoundary} from "./ErrorBoundary";
 import {useTranslation} from "./TranslationProvider";
+import {useVizbuilderContext} from "./VizbuilderProvider";
 import {useD3plusConfig} from "./useD3plusConfig";
 
 const iconByFormat = {
@@ -26,15 +23,6 @@ export function ChartCard(props: {
   /** The information needed to build a specific chart configuration. */
   chart: Chart;
 
-  /**
-   * An accessor that generates custom defined d3plus configs by measure name.
-   * Has priority over all other configs.
-   */
-  measureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
-
-  /** A list of the currently enabled formats to download. Options are "PNG" and "SVG". */
-  downloadFormats?: string[];
-
   /** Flag to render the card in full feature mode. */
   isFullMode?: boolean;
 
@@ -44,28 +32,20 @@ export function ChartCard(props: {
    */
   onFocus?: () => void;
 
-  /** Toggles confidence intervals/margins of error when available. */
-  showConfidenceInt?: boolean;
-
-  /**
-   * A global d3plus config that gets applied on all charts.
-   * Has priority over the individually generated configs per chart,
-   * but can be overridden by internal working configurations.
-   */
-  userConfig?: (chart: Chart) => Partial<D3plusConfig>;
+  style?: React.CSSProperties;
 }) {
-  const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt} = props;
+  const {chart, isFullMode, onFocus} = props;
   const {dataset} = chart.datagroup;
 
   const {translate} = useTranslation();
+
+  const {downloadFormats, ErrorBoundary, showConfidenceInt} = useVizbuilderContext();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const [ChartComponent, config] = useD3plusConfig(chart, {
     fullMode: !!isFullMode,
-    showConfidenceInt: !!showConfidenceInt,
-    getMeasureConfig: props.measureConfig,
-    t: translate,
+    showConfidenceInt,
   });
 
   const downloadButtons = useMemo(() => {
@@ -76,7 +56,7 @@ export function ChartCard(props: {
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
 
-    return castArray(downloadFormats).map(format => {
+    return downloadFormats.map(format => {
       const formatLower = format.toLowerCase();
       const Icon = iconByFormat[formatLower] || IconDownload;
       return (
@@ -124,14 +104,20 @@ export function ChartCard(props: {
   if (!ChartComponent) return null;
 
   return (
-    <Paper h={height} w="100%" style={{overflow: "hidden"}}>
+    <Paper w="100%" style={{overflow: "hidden", height, ...props.style}}>
       <ErrorBoundary>
-        <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
-          <Group position="right" p="xs" spacing="xs" align="center">
+        <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
+          <Group position="right" spacing="xs" align="center">
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
-          <Box style={{flex: "1 1 auto"}} ref={nodeRef} pb="xs" px="xs">
+          <Box
+            style={{flex: "1 1 auto"}}
+            ref={nodeRef}
+            sx={{
+              "& > .viz": {height: "100%"},
+            }}
+          >
             <ChartComponent config={config} />
           </Box>
         </Stack>

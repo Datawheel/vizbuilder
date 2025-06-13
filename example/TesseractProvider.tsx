@@ -98,7 +98,7 @@ export function TesseractProvider(props: {
         }
       },
     };
-  }, [error, fetchSchema, fetchData, schema, setSchema]);
+  }, [error, fetchSchema, fetchData, schema]);
 
   useEffect(() => {
     fetchSchema().then(
@@ -113,7 +113,7 @@ export function TesseractProvider(props: {
         setError(err.message);
       },
     );
-  }, [fetchSchema, setSchema, schema.locale]);
+  }, [fetchSchema, schema.locale]);
 
   return (
     <TesseractContext.Provider value={value}>

@@ -1,6 +1,5 @@
 import type {D3plusConfig} from "../d3plus";
 import {DimensionType, type TesseractLevel} from "../schema";
-import {getLast} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";

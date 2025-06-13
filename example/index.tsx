@@ -19,7 +19,9 @@ import {
   FormatterProvider,
   TranslationProvider,
   Vizbuilder,
+  VizbuilderProvider,
   Vizdebugger,
+  useFormatter,
 } from "../src/react";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
@@ -71,6 +73,8 @@ function App() {
 
   const {dataset, isLoading, error} = useTesseractData(currentQuery);
 
+  const {getFormatter} = useFormatter();
+
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
   return (
@@ -121,16 +125,16 @@ function App() {
           boxSizing: "border-box",
         }}
       >
-        <ErrorBoundary>
-          <Vizwrapper
-            datasets={dataset || []}
-            downloadFormats={["svg", "png"]}
-            topojsonConfig={topojsonConfig}
-            userConfig={() => ({
-              scrollContainer: "#viz-scroller",
-            })}
-          />
-        </ErrorBoundary>
+        <VizbuilderProvider
+          downloadFormats={["svg", "png"]}
+          topojsonConfig={topojsonConfig}
+          postprocessConfig={config => ({...config, scrollContainer: "#viz-scroller"})}
+          getFormatter={getFormatter}
+        >
+          <ErrorBoundary>
+            <Vizwrapper datasets={dataset || []} />
+          </ErrorBoundary>
+        </VizbuilderProvider>
       </div>
     </div>
   );

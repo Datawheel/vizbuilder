@@ -29,8 +29,10 @@ import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import {type Formatter, useFormatter} from "./FormatterProvider";
+import {useTranslation} from "./TranslationProvider";
+import {useVizbuilderContext} from "./VizbuilderProvider";
 
-interface ChartBuilderParams {
+export interface ChartBuilderParams {
   fullMode: boolean;
   getFormatter: (key: string | TesseractMeasure) => Formatter;
   getMeasureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
@@ -48,31 +50,29 @@ export const d3plusConfigBuilder = {
   treemap: buildTreemapConfig,
 };
 
-export const d3plusConfigParams = {
-  translationPath: "",
-};
-
 export function useD3plusConfig(
-  chart: Chart | undefined,
-  params: Omit<ChartBuilderParams, "getFormatter">,
+  chart: Chart,
+  params: Pick<ChartBuilderParams, "fullMode" | "showConfidenceInt">,
 ) {
-  const {fullMode, getMeasureConfig, showConfidenceInt, t} = params;
+  const {fullMode, showConfidenceInt} = params;
 
-  const {getFormatter} = useFormatter();
+  const {t} = useTranslation();
+
+  const {getMeasureConfig, getFormatter, translationNamespace} = useVizbuilderContext();
 
   return useMemo((): [
     React.ComponentType<{config: D3plusConfig}> | null,
     D3plusConfig,
   ] => {
-    if (!chart) return [null, {data: [], locale: ""}];
+    // if (!chart) return [null, {data: [], locale: ""}];
 
     const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
       getMeasureConfig,
       showConfidenceInt,
-      t: d3plusConfigParams.translationPath
-        ? (template, data) => t(`${d3plusConfigParams.translationPath}.${template}`, data)
+      t: translationNamespace
+        ? (template, data) => t(`${translationNamespace}.${template}`, data)
         : t,
     };
 
@@ -98,10 +98,18 @@ export function useD3plusConfig(
     }
 
     return [null, {data: [], locale: ""}];
-  }, [chart, fullMode, getFormatter, getMeasureConfig, showConfidenceInt, t]);
+  }, [
+    chart,
+    fullMode,
+    getFormatter,
+    getMeasureConfig,
+    showConfidenceInt,
+    t,
+    translationNamespace,
+  ]);
 }
 
-function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
+function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConfig {
   const {fullMode, getFormatter, t} = params;
   const {datagroup, series, timeline, values} = chart;
 
@@ -166,13 +174,16 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams) {
     data: datagroup.dataset,
     legend: fullMode,
     legendConfig: {
-      label: legendColumn ? d => d[legendColumn] : d => values.measure.caption,
+      label: legendColumn ? d => d[legendColumn] as string : d => values.measure.caption,
     },
     locale: datagroup.locale,
     timeline: fullMode && timeline?.level.name,
     timelineConfig: {
       brushing: false,
       playButton: false,
+    },
+    titleConfig: {
+      fontSize: fullMode ? 20 : 14,
     },
     tooltip: true,
     tooltipConfig: {
@@ -226,11 +237,11 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const isPercentage = ["Percentage", "Rate"].includes(measureUnits);
 
   const isStacked =
-    (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) ||
-    isPercentage;
+    (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) || isPercentage;
 
-  const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     barPadding: fullMode ? 5 : 1,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
     groupBy: stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
@@ -241,10 +252,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
         : d => series.map(series => d[series.level.name]).join("\n"),
     stacked: isStacked,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
-  };
+  });
 
   // d3plus/d3plus#729
   if (timeline) {
@@ -304,8 +312,9 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
 
   const measureFormatter = getFormatter(values.measure);
 
-  const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     colorScale: values.measure.name,
     colorScaleConfig: {
       axisConfig: {
@@ -321,11 +330,8 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
     projectionRotate: [0, 0],
     tiles: false,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
     zoomScroll: false,
-  };
+  });
 
   // d3plus/d3plus#729
   if (timeline) {
@@ -341,16 +347,14 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
 
   const [mainSeries] = series;
 
-  const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     groupBy: [mainSeries.name],
     label: d => d[mainSeries.level.name] as string,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
     value: values.measure.name,
-  };
+  });
 
   // d3plus/d3plus#729
   if (timeline) {
@@ -369,8 +373,9 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   const measureCaption = values.measure.caption;
   const measureFormatter = getFormatter(values.measure);
 
-  const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     discrete: "x",
     label: (d: DataPoint) => {
       return (
@@ -387,9 +392,6 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     time: timeline.level.name,
     timeline: false,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
     total: false,
     x: timeline.level.name,
     xConfig: {
@@ -401,7 +403,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       tickFormat: (d: number) => measureFormatter(d, locale),
       title: measureCaption,
     },
-  };
+  });
 
   if (series.length === 0) {
     config.legend = false;
@@ -418,16 +420,14 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 
   const measureFormatter = getFormatter(values.measure);
 
-  const config: D3plusConfig = {
-    ...d3plusConfigBuilder.common(chart, params),
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     discrete: "x",
     groupBy: series.map(series => series.level.name),
     time: timeline.level.name,
     timeline: false,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
     value: values.measure.name,
     x: timeline.name,
     xConfig: {
@@ -439,7 +439,7 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
       tickFormat: (d: number) => measureFormatter(d, locale),
       title: values.measure.caption,
     },
-  };
+  });
 
   return config;
 }
@@ -448,19 +448,17 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const commonConfig = d3plusConfigBuilder.common(chart, params);
-
   const legendColumn = series.length > 0 && series[0].level.name;
 
-  const config: D3plusConfig = {
-    ...commonConfig,
+  const config = d3plusConfigBuilder.common(chart, params);
+
+  assign(config, {
     label: d =>
       series
         .slice(1)
         .map(series => d[series.level.name])
         .join("\n"),
     legendConfig: {
-      ...commonConfig.legendConfig,
       label: legendColumn ? d => `${d[legendColumn]}` : d => values.measure.caption,
     },
     groupBy: series.map(series => series.level.name),
@@ -468,10 +466,7 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
     threshold: 0.005,
     thresholdName: series[0].level.name,
     title: _buildTitle(t, chart),
-    titleConfig: {
-      fontSize: fullMode ? 20 : 10,
-    },
-  };
+  });
 
   // d3plus/d3plus#729
   if (timeline) {
