@@ -395,6 +395,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     total: false,
     x: timeline.level.name,
     xConfig: {
+      scale: "time",
       title: fullMode ? timeline.level.caption : undefined,
     },
     y: values.measure.name,
@@ -407,6 +408,11 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   if (series.length === 0) {
     config.legend = false;
+  }
+
+  const timeLevel = timeline.level.name;
+  if (timeLevel === "Month" && (/^\d{4}-\d{2}$/).test(datagroup.dataset[0][timeLevel] as string)) {
+    config.data = datagroup.dataset.map(d => ({...d, [timeLevel]: `${d[timeLevel]}-01 00:00:00`}))
   }
 
   return config;
