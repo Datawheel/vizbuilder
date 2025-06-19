@@ -64,7 +64,7 @@ export function VizbuilderProvider(props: {
    *
    * @see {@link ChartLimits} for details on its properties.
    */
-  chartLimits?: ChartLimits;
+  chartLimits?: Partial<ChartLimits>;
 
   /**
    * A list of the chart types the algorithm will generate.
@@ -115,7 +115,7 @@ export function VizbuilderProvider(props: {
    * Defines a custom component to show in case no valid/useful charts can be
    * generated from the provided parameters.
    */
-  NonIdealState?: React.ComponentType;
+  NonIdealState?: React.ComponentType<any>;
 
   /**
    * Function to access the available value Formatters.
