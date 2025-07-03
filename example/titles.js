@@ -86,7 +86,7 @@ async function main() {
   const results = await Promise.all(dataRequests);
   const listOfTitles = [...new Set(results.flat())].sort().join("\n");
 
-  writeFile("titles.tsv", listOfTitles, "utf-8", err => {
+  writeFile(`titles_${locale}.tsv`, listOfTitles, "utf-8", (err) => {
     if (err) throw err;
     console.log("The file has been saved!");
   });
