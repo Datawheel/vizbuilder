@@ -174,7 +174,9 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
     data: datagroup.dataset,
     legend: fullMode,
     legendConfig: {
-      label: legendColumn ? d => d[legendColumn] as string : d => values.measure.caption,
+      label: legendColumn
+        ? (d: AggregatedDataPoint) => d[legendColumn] as string
+        : () => values.measure.caption,
     },
     locale: datagroup.locale,
     timeline: fullMode && timeline?.level.name,
@@ -368,7 +370,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {locale} = datagroup;
+  const {dataset, locale} = datagroup;
 
   const measureCaption = values.measure.caption;
   const measureFormatter = getFormatter(values.measure);
@@ -377,7 +379,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   assign(config, {
     discrete: "x",
-    label: (d: DataPoint) => {
+    label(d: AggregatedDataPoint) {
       return (
         series.map(series => d[series.level.name]).join("\n") ||
         t("title.measure_on_period", {
@@ -411,8 +413,11 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   }
 
   const timeLevel = timeline.level.name;
-  if (timeLevel === "Month" && (/^\d{4}-\d{2}$/).test(datagroup.dataset[0][timeLevel] as string)) {
-    config.data = datagroup.dataset.map(d => ({...d, [timeLevel]: `${d[timeLevel]}-01 00:00:00`}))
+  if (timeLevel === "Month" && /^\d{4}-\d{2}$/.test(dataset[0][timeLevel] as string)) {
+    config.data = dataset.map(d => ({
+      ...d,
+      [timeLevel]: `${d[timeLevel]}-01 00:00:00`,
+    }));
   }
 
   return config;
@@ -424,6 +429,8 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 
   const {locale} = datagroup;
 
+  const legendColumn = series.length > 0 && series[0].level.name;
+
   const measureFormatter = getFormatter(values.measure);
 
   const config = d3plusConfigBuilder.common(chart, params);
@@ -431,6 +438,17 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
   assign(config, {
     discrete: "x",
     groupBy: series.map(series => series.level.name),
+    label(d: AggregatedDataPoint) {
+      return series
+        .slice(1)
+        .map(series => d[series.level.name] as string)
+        .join("\n");
+    },
+    legendConfig: {
+      label: legendColumn
+        ? (d: AggregatedDataPoint) => d[legendColumn] as string
+        : () => values.measure.caption,
+    },
     time: timeline.level.name,
     timeline: false,
     title: _buildTitle(t, chart),
@@ -459,13 +477,16 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
   const config = d3plusConfigBuilder.common(chart, params);
 
   assign(config, {
-    label: d =>
-      series
+    label(d: AggregatedDataPoint) {
+      return series
         .slice(1)
-        .map(series => d[series.level.name])
-        .join("\n"),
+        .map(series => d[series.level.name] as string)
+        .join("\n");
+    },
     legendConfig: {
-      label: legendColumn ? d => `${d[legendColumn]}` : d => values.measure.caption,
+      label: legendColumn
+        ? (d: AggregatedDataPoint) => d[legendColumn] as string
+        : () => values.measure.caption,
     },
     groupBy: series.map(series => series.level.name),
     sum: values.measure.name,
