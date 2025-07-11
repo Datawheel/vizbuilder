@@ -18,13 +18,6 @@ export function Vizbuilder(props: {
   datasets: Dataset | Dataset[];
 
   /**
-   * Custom className to apply to the component wrapper.
-   *
-   * @default
-   */
-  className?: string;
-
-  /**
    * A ReactNode to render above the main charts area.
    *
    * @default undefined
@@ -37,16 +30,15 @@ export function Vizbuilder(props: {
    * @default undefined
    */
   customFooter?: React.ReactNode;
+
+  className?: string;
+  id?: string;
+  style?: React.CSSProperties;
 }) {
   const {datasets} = props;
 
-  const {
-    chartLimits,
-    chartTypes,
-    datacap,
-    getTopojsonConfig,
-    NonIdealState,
-  } = useVizbuilderContext();
+  const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState} =
+    useVizbuilderContext();
 
   const [currentChart, setCurrentChart] = useState("");
 
@@ -107,7 +99,7 @@ export function Vizbuilder(props: {
   }, [charts, currentChart]);
 
   return (
-    <div className={cls("vb-wrapper", props.className)}>
+    <div className={cls("vb-wrapper", props.className)} id={props.id} style={props.style}>
       {props.customHeader}
       {content}
       {props.customFooter}

@@ -7,7 +7,7 @@ import {castArray} from "../toolbox/array";
 import type {ChartLimits} from "../types";
 import {ErrorBoundary} from "./ErrorBoundary";
 import {type Formatter, defaultFormatters} from "./FormatterProvider";
-import { NonIdealState } from "./NonIdealState";
+import {NonIdealState} from "./NonIdealState";
 import type {ChartBuilderParams} from "./useD3plusConfig";
 
 type Anycase<T extends string> = Uppercase<T> | Lowercase<T>;

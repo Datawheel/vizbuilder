@@ -18,15 +18,15 @@ import {
   ErrorBoundary,
   FormatterProvider,
   TranslationProvider,
+  useFormatter,
   Vizbuilder,
   VizbuilderProvider,
   Vizdebugger,
-  useFormatter,
 } from "../src/react";
+import {formatters} from "./formatters";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
-import {formatters} from "./formatters";
 import {translations} from "./translations";
 
 const topojsonConfig = keyBy(
@@ -115,27 +115,28 @@ function App() {
         </Flex>
       </Header>
 
-      <div
-        id="viz-scroller"
-        style={{
-          direction: rtlLanguages.includes(dataLocale) ? "rtl" : "ltr",
-          overflowY: "auto",
-          flex: "1 0 0",
-          padding: "0.75rem",
-          boxSizing: "border-box",
-        }}
+      <VizbuilderProvider
+        downloadFormats={["svg", "png"]}
+        topojsonConfig={topojsonConfig}
+        postprocessConfig={config => ({
+          ...config,
+          scrollContainer: "#viz-scroller",
+        })}
+        getFormatter={getFormatter}
       >
-        <VizbuilderProvider
-          downloadFormats={["svg", "png"]}
-          topojsonConfig={topojsonConfig}
-          postprocessConfig={config => ({...config, scrollContainer: "#viz-scroller"})}
-          getFormatter={getFormatter}
-        >
-          <ErrorBoundary>
-            <Vizwrapper datasets={dataset || []} />
-          </ErrorBoundary>
-        </VizbuilderProvider>
-      </div>
+        <ErrorBoundary>
+          <Vizwrapper
+            datasets={dataset || []}
+            id="viz-scroller"
+            style={{
+              direction: rtlLanguages.includes(dataLocale) ? "rtl" : "ltr",
+              flex: "1 0 0",
+              height: "calc(100vh - 51px)",
+              boxSizing: "border-box",
+            }}
+          />
+        </ErrorBoundary>
+      </VizbuilderProvider>
     </div>
   );
 }
