@@ -65,6 +65,13 @@ export interface LevelCaption {
 export function buildDatagroup(ds: Dataset): Datagroup {
   const {columns, data, locale} = ds;
 
+  if ("Month" in columns && /^\d{4}-\d{2}$/.test(ds.data[0].Month as string)) {
+    for (let index = 0; index < data.length; index++) {
+      const d = data[index];
+      d["Month ISO"] = `${d.Month}-01T00:00:00`;
+    }
+  }
+
   const collator = new Intl.Collator(locale, {numeric: true, ignorePunctuation: false});
 
   const columnList = Object.values(columns);

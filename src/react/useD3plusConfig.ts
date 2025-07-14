@@ -134,7 +134,9 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
       return [
         key,
         (data: AggregatedDataPoint[]) => {
-          const items = data.map(d => d[key] as string);
+          const items = data
+            .map(d => d[key] as string)
+            .filter((item, index, items) => items.indexOf(item) === index);
           return _buildTranslatedList(t, items, 4);
         },
       ] as const;
@@ -179,7 +181,10 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
         : () => values.measure.caption,
     },
     locale: datagroup.locale,
-    timeline: fullMode && timeline?.level.name,
+    timeline:
+      fullMode &&
+      timeline &&
+      (timeline.level.name === "Month" ? "Month ISO" : timeline.level.name),
     timelineConfig: {
       brushing: false,
       playButton: false,
@@ -243,24 +248,30 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
 
   const config = d3plusConfigBuilder.common(chart, params);
 
+  const labelStack = isStacked ? series.slice(1) : series;
+
   assign(config, {
     barPadding: fullMode ? 5 : 1,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
-    groupBy: stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
+    groupBy:
+      isStacked && stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
     groupPadding: fullMode ? 5 : 1,
-    label:
-      isStacked && stackedSeries
-        ? d => d[stackedSeries.level.name] as string
-        : d => series.map(series => d[series.level.name]).join("\n"),
+    label(d) {
+      return labelStack.map(series => d[series.level.name]).join("\n");
+    },
+    legendConfig: {
+      label(d) {
+        return labelStack.map(series => d[series.level.name]).join("\n");
+      },
+    },
     stacked: isStacked,
     title: _buildTitle(t, chart),
   });
 
   // d3plus/d3plus#729
   if (timeline) {
-    config.time = isOneOf(timeline.name, ["Quarter ID", "Month ID"])
-      ? timeline.level.name
-      : timeline.name;
+    const timeLevelName = timeline.level.name;
+    config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
   const axisSorting =
@@ -282,8 +293,11 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       ySort: axisSorting,
     });
   } else {
+    const mainLevelName =
+      mainSeries.level.name === "Month" ? "Month ISO" : mainSeries.level.name;
     assign(config, {
-      x: mainSeries.level.name,
+      time: mainSeries.dimension.type === DimensionType.TIME ? mainLevelName : undefined,
+      x: mainLevelName,
       xConfig: {
         title: mainSeries.level.caption,
       },
@@ -337,7 +351,8 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
 
   // d3plus/d3plus#729
   if (timeline) {
-    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+    const timeLevelName = timeline.level.name;
+    config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
   return config;
@@ -360,7 +375,8 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
 
   // d3plus/d3plus#729
   if (timeline) {
-    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+    const timeLevelName = timeline.level.name;
+    config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
   return config;
@@ -377,6 +393,9 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   const config = d3plusConfigBuilder.common(chart, params);
 
+  const timeLevelName =
+    timeline.level.name === "Month" ? "Month ISO" : timeline.level.name;
+
   assign(config, {
     discrete: "x",
     label(d: AggregatedDataPoint) {
@@ -391,11 +410,11 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     groupBy: series.length
       ? series.map(series => series.level.name)
       : () => measureCaption,
-    time: timeline.level.name,
+    time: timeLevelName,
     timeline: false,
     title: _buildTitle(t, chart),
     total: false,
-    x: timeline.level.name,
+    x: timeLevelName,
     xConfig: {
       scale: "time",
       title: fullMode ? timeline.level.caption : undefined,
@@ -410,14 +429,6 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   if (series.length === 0) {
     config.legend = false;
-  }
-
-  const timeLevel = timeline.level.name;
-  if (timeLevel === "Month" && /^\d{4}-\d{2}$/.test(dataset[0][timeLevel] as string)) {
-    config.data = dataset.map(d => ({
-      ...d,
-      [timeLevel]: `${d[timeLevel]}-01 00:00:00`,
-    }));
   }
 
   return config;
@@ -435,6 +446,9 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 
   const config = d3plusConfigBuilder.common(chart, params);
 
+  const timeLevelName =
+    timeline.level.name === "Month" ? "Month ISO" : timeline.level.name;
+
   assign(config, {
     discrete: "x",
     groupBy: series.map(series => series.level.name),
@@ -449,11 +463,11 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
         ? (d: AggregatedDataPoint) => d[legendColumn] as string
         : () => values.measure.caption,
     },
-    time: timeline.level.name,
+    time: timeLevelName,
     timeline: false,
     title: _buildTitle(t, chart),
     value: values.measure.name,
-    x: timeline.name,
+    x: timeLevelName,
     xConfig: {
       title: fullMode ? timeline.level.caption : undefined,
     },
@@ -497,7 +511,8 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
 
   // d3plus/d3plus#729
   if (timeline) {
-    config.time = timeline.name === "Quarter ID" ? timeline.level.name : timeline.name;
+    const timeLevelName = timeline.level.name;
+    config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
   return config;

@@ -10,8 +10,8 @@ import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef} from "react";
 import type {Chart} from "../charts/generator";
 import {useTranslation} from "./TranslationProvider";
-import {useVizbuilderContext} from "./VizbuilderProvider";
 import {useD3plusConfig} from "./useD3plusConfig";
+import {useVizbuilderContext} from "./VizbuilderProvider";
 
 const iconByFormat = {
   jpg: IconPhotoDown,
