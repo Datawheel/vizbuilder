@@ -5,7 +5,6 @@ import {generateCharts} from "../charts/generator";
 import {castArray} from "../toolbox/array";
 import type {Dataset} from "../types";
 import {ChartCard} from "./ChartCard";
-import {NonIdealState} from "./NonIdealState";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;

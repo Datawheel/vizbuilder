@@ -107,18 +107,16 @@ export function ChartCard(props: {
 
   return (
     <ErrorBoundary>
-      <Paper w="100%" style={{overflow: "hidden", height, ...props.style}}>
+      <Paper w="100%" style={{height, ...props.style}}>
         <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
           <Group position="right" spacing="xs" align="center">
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
           <Box
-            style={{flex: "1 1 auto"}}
+            style={{flex: "1 1 auto", height: 10}}
             ref={nodeRef}
-            sx={{
-              "& > .viz": {height: "100%"},
-            }}
+            sx={{"& > .viz": {height: "100%"}}}
           >
             <ChartComponent config={config} />
           </Box>
