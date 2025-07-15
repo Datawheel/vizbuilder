@@ -241,7 +241,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const measureAggregator =
     values.measure.annotations.aggregation_method || values.measure.aggregator;
   const measureUnits = values.measure.annotations.units_of_measurement || "";
-  const isPercentage = ["Percentage", "Rate"].includes(measureUnits);
+  const isPercentage = measureUnits.startsWith("Percentage") || measureUnits.startsWith("Rate");
 
   const isStacked =
     (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) || isPercentage;
@@ -295,8 +295,8 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   } else {
     const mainLevelName =
       mainSeries.level.name === "Month" ? "Month ISO" : mainSeries.level.name;
+
     assign(config, {
-      time: mainSeries.dimension.type === DimensionType.TIME ? mainLevelName : undefined,
       x: mainLevelName,
       xConfig: {
         title: mainSeries.level.caption,
@@ -308,6 +308,11 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
         tickFormat: (d: number) => measureFormatter(d, locale),
       },
     });
+
+    if (mainSeries.dimension.type === DimensionType.TIME) {
+      config.time = mainLevelName;
+    }
+
     if (fullMode && config.groupBy) {
       assign(config, {
         barPadding: 3,
