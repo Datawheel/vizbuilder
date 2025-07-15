@@ -49,6 +49,8 @@ export function ChartCard(props: {
   });
 
   const downloadButtons = useMemo(() => {
+    if (!config) return null;
+
     // Sanitize filename for Windows and Unix
     const filename = (
       typeof config.title === "function" ? config.title(dataset) : config.title || ""
@@ -99,13 +101,13 @@ export function ChartCard(props: {
     );
   }, [isFullMode, translate, onFocus]);
 
+  if (!ChartComponent || !config) return null;
+
   const height = isFullMode ? "calc(100vh - 3rem)" : 300;
 
-  if (!ChartComponent) return null;
-
   return (
-    <Paper w="100%" style={{overflow: "hidden", height, ...props.style}}>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <Paper w="100%" style={{overflow: "hidden", height, ...props.style}}>
         <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
           <Group position="right" spacing="xs" align="center">
             {downloadButtons}
@@ -121,8 +123,8 @@ export function ChartCard(props: {
             <ChartComponent config={config} />
           </Box>
         </Stack>
-      </ErrorBoundary>
-    </Paper>
+      </Paper>
+    </ErrorBoundary>
   );
 }
 

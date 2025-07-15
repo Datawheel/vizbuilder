@@ -6,7 +6,7 @@ import type {TesseractLevel, TesseractMeasure} from "../schema";
 import {castArray} from "../toolbox/array";
 import type {ChartLimits} from "../types";
 import {ErrorBoundary} from "./ErrorBoundary";
-import {type Formatter, defaultFormatters} from "./FormatterProvider";
+import {defaultFormatters, type Formatter} from "./FormatterProvider";
 import {NonIdealState} from "./NonIdealState";
 import type {ChartBuilderParams} from "./useD3plusConfig";
 
@@ -23,10 +23,10 @@ export interface VizbuilderContextValue {
   getMeasureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
   getTopojsonConfig: (level: TesseractLevel) => Partial<D3plusConfig>;
   postprocessConfig: (
-    config: Partial<D3plusConfig>,
+    config: D3plusConfig,
     chart: Chart,
     params: ChartBuilderParams,
-  ) => Partial<D3plusConfig>;
+  ) => D3plusConfig | false;
   showConfidenceInt: boolean;
   translationNamespace: string;
 }
@@ -138,10 +138,10 @@ export function VizbuilderProvider(props: {
    * chart configs have been resolved, so is able to overwrite everything.
    */
   postprocessConfig?: (
-    config: Partial<D3plusConfig>,
+    config: D3plusConfig,
     chart: Chart,
     params: ChartBuilderParams,
-  ) => Partial<D3plusConfig>;
+  ) => D3plusConfig | false;
 
   /**
    * Custom d3plus configuration to apply when a chart series references a

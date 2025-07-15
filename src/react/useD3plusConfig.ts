@@ -28,7 +28,7 @@ import {
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
-import {type Formatter, useFormatter} from "./FormatterProvider";
+import type {Formatter} from "./FormatterProvider";
 import {useTranslation} from "./TranslationProvider";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
@@ -58,14 +58,13 @@ export function useD3plusConfig(
 
   const {t} = useTranslation();
 
-  const {getMeasureConfig, getFormatter, translationNamespace} = useVizbuilderContext();
+  const {getMeasureConfig, getFormatter, translationNamespace, postprocessConfig} =
+    useVizbuilderContext();
 
   return useMemo((): [
     React.ComponentType<{config: D3plusConfig}> | null,
-    D3plusConfig,
+    D3plusConfig | false,
   ] => {
-    // if (!chart) return [null, {data: [], locale: ""}];
-
     const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
@@ -77,24 +76,29 @@ export function useD3plusConfig(
     };
 
     if (chart.type === "barchart") {
-      return [BarChartComponent, d3plusConfigBuilder.barchart(chart, params)];
+      const config = d3plusConfigBuilder.barchart(chart, params);
+      return [BarChartComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "choropleth") {
       const config = d3plusConfigBuilder.choropleth(chart, params);
       if (chart.extraConfig.d3plus) assign(config, chart.extraConfig.d3plus);
-      return [ChoroplethComponent, config];
+      return [ChoroplethComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "donut") {
-      return [DonutComponent, d3plusConfigBuilder.donut(chart, params)];
+      const config = d3plusConfigBuilder.donut(chart, params);
+      return [DonutComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "lineplot") {
-      return [LinePlotComponent, d3plusConfigBuilder.lineplot(chart, params)];
+      const config = d3plusConfigBuilder.lineplot(chart, params);
+      return [LinePlotComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "stackedarea") {
-      return [StackedAreaComponent, d3plusConfigBuilder.stackedarea(chart, params)];
+      const config = d3plusConfigBuilder.stackedarea(chart, params);
+      return [StackedAreaComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "treemap") {
-      return [TreeMapComponent, d3plusConfigBuilder.treemap(chart, params)];
+      const config = d3plusConfigBuilder.treemap(chart, params);
+      return [TreeMapComponent, postprocessConfig(config, chart, params)];
     }
 
     return [null, {data: [], locale: ""}];
@@ -103,6 +107,7 @@ export function useD3plusConfig(
     fullMode,
     getFormatter,
     getMeasureConfig,
+    postprocessConfig,
     showConfidenceInt,
     t,
     translationNamespace,
@@ -241,7 +246,8 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   const measureAggregator =
     values.measure.annotations.aggregation_method || values.measure.aggregator;
   const measureUnits = values.measure.annotations.units_of_measurement || "";
-  const isPercentage = measureUnits.startsWith("Percentage") || measureUnits.startsWith("Rate");
+  const isPercentage =
+    measureUnits.startsWith("Percentage") || measureUnits.startsWith("Rate");
 
   const isStacked =
     (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) || isPercentage;
