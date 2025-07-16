@@ -5,6 +5,7 @@ import {generateCharts} from "../charts/generator";
 import {castArray} from "../toolbox/array";
 import type {Dataset} from "../types";
 import {ChartCard} from "./ChartCard";
+import {ErrorBoundary} from "./ErrorBoundary";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
@@ -36,8 +37,14 @@ export function Vizbuilder(props: {
 }) {
   const datasets = useMemo(() => castArray(props.datasets), [props.datasets]);
 
-  const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState} =
-    useVizbuilderContext();
+  const {
+    chartLimits,
+    chartTypes,
+    datacap,
+    getTopojsonConfig,
+    ViewErrorComponent,
+    NonIdealState,
+  } = useVizbuilderContext();
 
   const [chartIndex, setChartIndex] = useState(-1);
 
@@ -52,18 +59,15 @@ export function Vizbuilder(props: {
     });
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
-  if (charts.length === 0) {
-    if (datasets.length > 0 && datasets[0].data.length === 1) {
-      return <NonIdealState status="one-row" />;
+  const content = useMemo(() => {
+    if (charts.length === 0) {
+      if (datasets.length > 0 && datasets[0].data.length === 1) {
+        return <NonIdealState status="one-row" />;
+      }
+      return <NonIdealState status="empty" />;
     }
-    return <NonIdealState status="empty" />;
-  }
 
-  const chart = charts[chartIndex];
-
-  return (
-    <div className={cls("vb-wrapper", props.className)} id={props.id} style={props.style}>
-      {props.customHeader}
+    return (
       <SimpleGrid
         breakpoints={[
           {minWidth: "xs", cols: 1},
@@ -74,14 +78,22 @@ export function Vizbuilder(props: {
         className={cls("vb-scrollcontainer", {unique: charts.length === 1})}
       >
         {charts.map((chart, index) => (
-          <ChartCard
-            key={chart.key}
-            chart={chart}
-            onFocus={() => setChartIndex(index)}
-          />
+          <ChartCard key={chart.key} chart={chart} onFocus={() => setChartIndex(index)} />
         ))}
       </SimpleGrid>
+    );
+  }, [NonIdealState, charts, datasets]);
+
+  const chart = charts[chartIndex];
+
+  return (
+    <div className={cls("vb-wrapper", props.className)} id={props.id} style={props.style}>
+      {props.customHeader}
+
+      <ErrorBoundary ErrorContent={ViewErrorComponent}>{content}</ErrorBoundary>
+
       {props.customFooter}
+
       <Modal
         centered
         onClose={closeModal}

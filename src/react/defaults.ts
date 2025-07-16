@@ -23,7 +23,7 @@ export const defaultFormatters = {
   },
 };
 
-export type TranslationDict = typeof defaultTranslation;
+export type Translation = typeof defaultTranslation;
 
 export const defaultTranslation = {
   action_close: "Close",

@@ -116,15 +116,10 @@ function App() {
       <VizbuilderProvider
         downloadFormats={["svg", "png"]}
         topojsonConfig={topojsonConfig}
-        postprocessConfig={config => ({
-          ...config,
-          scrollContainer: "#viz-scroller",
-        })}
         getFormatter={getFormatter}
       >
         <Vizwrapper
           datasets={dataset || []}
-          id="viz-scroller"
           style={{
             flex: "1 0 0",
             height: "100%",

@@ -207,6 +207,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
     },
     total: !timeline && fullMode,
     totalFormat: d => t("title.total", {value: measureFormatter(d, locale)}),
+    scrollContainer: ".vb-wrapper .vb-scrollcontainer",
   };
 }
 

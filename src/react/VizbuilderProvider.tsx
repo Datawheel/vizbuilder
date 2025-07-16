@@ -1,5 +1,6 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
 import {translateFunctionFactory} from "@datawheel/use-translation";
+import {identity} from "lodash-es";
 import React, {createContext, useContext, useMemo} from "react";
 import type {ChartType} from "../charts/common";
 import {type Chart, DEFAULT_CHART_LIMITS} from "../charts/generator";
@@ -54,13 +55,15 @@ const defaults: VizbuilderContextValue = {
   },
   getTopojsonConfig: () => ({}),
   NonIdealState: NonIdealState,
-  postprocessConfig: config => config,
+  postprocessConfig: identity,
   showConfidenceInt: false,
   translate: translateFunctionFactory(defaultTranslation),
   ViewErrorComponent: () => null,
 };
 
 const VizbuilderContext = createContext(defaults);
+
+export type VizbuilderProviderProps = React.ComponentProps<typeof VizbuilderProvider>;
 
 export function VizbuilderProvider(props: {
   /**
