@@ -1,3 +1,5 @@
+import type {TranslateFunction} from "@datawheel/use-translation";
+import {translateFunctionFactory} from "@datawheel/use-translation";
 import React, {createContext, useContext, useMemo} from "react";
 import type {ChartType} from "../charts/common";
 import {type Chart, DEFAULT_CHART_LIMITS} from "../charts/generator";
@@ -5,22 +7,25 @@ import type {D3plusConfig} from "../d3plus";
 import type {TesseractLevel, TesseractMeasure} from "../schema";
 import {castArray} from "../toolbox/array";
 import type {ChartLimits} from "../types";
-import {ErrorBoundary} from "./ErrorBoundary";
-import {defaultFormatters, type Formatter} from "./FormatterProvider";
+import {defaultFormatters, defaultTranslation} from "./defaults";
+import type {ErrorContentProps} from "./ErrorBoundary";
 import {NonIdealState} from "./NonIdealState";
+import {ReportIssueCard} from "./ReportIssue";
 import type {ChartBuilderParams} from "./useD3plusConfig";
 
 type Anycase<T extends string> = Uppercase<T> | Lowercase<T>;
+
+export type Formatter = (value: number, locale?: string) => string;
 
 export interface VizbuilderContextValue {
   chartLimits: ChartLimits;
   chartTypes: ChartType[];
   datacap: number;
   downloadFormats: ("PNG" | "SVG" | "JPG")[];
-  ErrorBoundary: React.ComponentType<{children: React.ReactNode}>;
-  NonIdealState: React.ComponentType;
+  CardErrorComponent: React.ComponentType<ErrorContentProps>;
+  ViewErrorComponent: React.ComponentType<ErrorContentProps>;
+  NonIdealState: React.ComponentType<{status: "loading" | "empty" | "one-row"}>;
   getFormatter: (key: string | TesseractMeasure) => Formatter;
-  getMeasureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
   getTopojsonConfig: (level: TesseractLevel) => Partial<D3plusConfig>;
   postprocessConfig: (
     config: D3plusConfig,
@@ -28,18 +33,15 @@ export interface VizbuilderContextValue {
     params: ChartBuilderParams,
   ) => D3plusConfig | false;
   showConfidenceInt: boolean;
-  translationNamespace: string;
+  translate: TranslateFunction;
 }
 
 const defaults: VizbuilderContextValue = {
+  CardErrorComponent: ReportIssueCard,
   chartLimits: DEFAULT_CHART_LIMITS,
   chartTypes: ["barchart", "choropleth", "donut", "lineplot", "stackedarea", "treemap"],
   datacap: 20000,
   downloadFormats: ["SVG", "PNG"],
-  ErrorBoundary: ErrorBoundary,
-  NonIdealState: NonIdealState,
-  showConfidenceInt: false,
-  translationNamespace: "",
   getFormatter: key => {
     if (typeof key === "string") {
       return defaultFormatters[key] || defaultFormatters.identity;
@@ -50,9 +52,12 @@ const defaults: VizbuilderContextValue = {
       defaultFormatters[name] || defaultFormatters[key.name] || defaultFormatters.identity
     );
   },
-  getMeasureConfig: () => ({}),
   getTopojsonConfig: () => ({}),
+  NonIdealState: NonIdealState,
   postprocessConfig: config => config,
+  showConfidenceInt: false,
+  translate: translateFunctionFactory(defaultTranslation),
+  ViewErrorComponent: () => null,
 };
 
 const VizbuilderContext = createContext(defaults);
@@ -102,14 +107,16 @@ export function VizbuilderProvider(props: {
   showConfidenceInt?: boolean;
 
   /**
-   * Defines a path namespace for the translation keys to be used by the package.
+   * Specifies a component to render instead of the content in case an Error
+   * inside a ChartCard can't be recovered.
    */
-  translationNamespace?: string;
+  CardErrorComponent?: React.ComponentType<ErrorContentProps>;
 
   /**
-   * Defines a custom Error Boundary component around ChartCards.
+   * Specifies a component to render instead of the content in case an Error
+   * inside the general app can't be recovered.
    */
-  ErrorBoundary?: React.ComponentType<{children: React.ReactNode}>;
+  ViewErrorComponent?: React.ComponentType<ErrorContentProps>;
 
   /**
    * Defines a custom component to show in case no valid/useful charts can be
@@ -123,14 +130,6 @@ export function VizbuilderProvider(props: {
    * function should return the Formatter function to apply format to a value.
    */
   getFormatter?: (key: string | TesseractMeasure) => Formatter;
-
-  /**
-   * Custom d3plus configuration to apply when a chart value references a
-   * specified measures.
-   */
-  measureConfig?:
-    | {[K: string]: Partial<D3plusConfig>}
-    | ((measure: TesseractMeasure) => Partial<D3plusConfig>);
 
   /**
    * Custom d3plus configuration to apply to all generated charts.
@@ -152,6 +151,12 @@ export function VizbuilderProvider(props: {
   topojsonConfig?:
     | {[K: string]: Partial<D3plusConfig>}
     | ((level: TesseractLevel) => Partial<D3plusConfig>);
+
+  /**
+   * A function to interpolate the applicaiton strings into sentences in the
+   * correct language for the user.
+   */
+  translate?: TranslateFunction;
 }) {
   const chartTypes = castArray(props.chartTypes || defaults.chartTypes).join(",");
 
@@ -159,45 +164,40 @@ export function VizbuilderProvider(props: {
     props.downloadFormats || defaults.downloadFormats,
   ).join(",");
 
-  const measureConfig = props.measureConfig || defaults.getMeasureConfig;
-
   const topojsonConfig = props.topojsonConfig || defaults.getTopojsonConfig;
 
   const postprocessConfig = props.postprocessConfig || defaults.postprocessConfig;
 
   const value = useMemo<VizbuilderContextValue>(() => {
     return {
+      CardErrorComponent: props.CardErrorComponent || defaults.CardErrorComponent,
       chartLimits: {...defaults.chartLimits, ...props.chartLimits},
       chartTypes: chartTypes.split(",") as ChartType[],
       datacap: props.datacap || defaults.datacap,
       downloadFormats: downloadFormats.split(",") as ("SVG" | "PNG" | "JPG")[],
-      showConfidenceInt: props.showConfidenceInt || defaults.showConfidenceInt,
-      translationNamespace: props.translationNamespace || defaults.translationNamespace,
-      ErrorBoundary: props.ErrorBoundary || defaults.ErrorBoundary,
-      NonIdealState: props.NonIdealState || defaults.NonIdealState,
       getFormatter: props.getFormatter || defaults.getFormatter,
-      getMeasureConfig:
-        typeof measureConfig === "function"
-          ? measureConfig
-          : item => measureConfig[item.name],
       getTopojsonConfig:
         typeof topojsonConfig === "function"
           ? topojsonConfig
           : item => topojsonConfig[item.name],
+      NonIdealState: props.NonIdealState || defaults.NonIdealState,
       postprocessConfig: postprocessConfig,
+      showConfidenceInt: props.showConfidenceInt || defaults.showConfidenceInt,
+      translate: props.translate || defaults.translate,
+      ViewErrorComponent: props.ViewErrorComponent || defaults.ViewErrorComponent,
     };
   }, [
     chartTypes,
     downloadFormats,
-    measureConfig,
     postprocessConfig,
+    props.CardErrorComponent,
     props.chartLimits,
     props.datacap,
-    props.ErrorBoundary,
-    props.NonIdealState,
     props.getFormatter,
+    props.NonIdealState,
     props.showConfidenceInt,
-    props.translationNamespace,
+    props.translate,
+    props.ViewErrorComponent,
     topojsonConfig,
   ]);
 

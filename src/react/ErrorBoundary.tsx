@@ -1,98 +1,45 @@
-import {Button, Flex, Group, Paper, Text, Title} from "@mantine/core";
-import {IconBrandGithub} from "@tabler/icons-react";
 import React, {Component} from "react";
-import {TranslationConsumer, useTranslation} from "./TranslationProvider";
 
-interface Props {
-  children: React.ReactNode;
+export interface ErrorContentProps {
+  errorClass: string;
+  errorMessage: string;
+  onClear: () => void;
 }
 
 interface State {
-  message: string;
-  name: string;
+  errorClass: string;
+  errorMessage: string;
+}
+
+interface Props {
+  children: React.ReactNode;
+  ErrorContent: React.ComponentType<ErrorContentProps>;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  static getDerivedStateFromError(error: Error) {
-    return {message: error.message, name: error.name};
+  static getDerivedStateFromError(error: Error): State {
+    return {errorMessage: error.message, errorClass: error.name};
   }
 
-  state: State = {
-    message: "",
-    name: "",
+  state = {
+    errorClass: "",
+    errorMessage: "",
   };
 
-  clearError = () => this.setState({message: "", name: ""});
+  clearError = () => this.setState({errorMessage: "", errorClass: ""});
 
   render() {
-    const {message, name} = this.state;
+    const {errorMessage, errorClass} = this.state;
 
-    if (!message) {
-      return this.props.children;
-    }
+    if (!errorMessage) return this.props.children;
 
+    const {ErrorContent} = this.props;
     return (
-      <TranslationConsumer>
-        {({translate: t}) => {
-          const detailText = t("error.detail");
-
-          return (
-            <Paper w="100%">
-              <Flex
-                p="xl"
-                align="center"
-                justify="center"
-                direction="column"
-                className="chart-card error"
-              >
-                <Title order={3}>{t("error.title")}</Title>
-                {detailText.length ? <Text>{detailText}</Text> : null}
-                <Text>{t("error.message", {message})}</Text>
-                <Group spacing="xs" my="sm">
-                  <Button onClick={this.clearError} size="xs" variant="light">
-                    {t("action_retry")}
-                  </Button>
-                  <IssueButton error={name} message={message} />
-                </Group>
-              </Flex>
-            </Paper>
-          );
-        }}
-      </TranslationConsumer>
+      <ErrorContent
+        errorClass={errorClass}
+        errorMessage={errorMessage}
+        onClear={this.clearError}
+      />
     );
   }
-}
-
-function IssueButton(props: {error: string; message?: string}) {
-  const {error, message} = props;
-
-  const {translate: t} = useTranslation();
-  const location = typeof window === "object" ? window.location : {href: "<SSR>"};
-
-  const issueParams = new URLSearchParams({
-    title: `[report/vizbuilder] ${error}`,
-    body: [
-      `**URL**: ${location.href}`,
-      `**Error**: ${error}`,
-      message ? `**Error details:** ${message}\n` : "",
-      "**Detail of the issue:**\n",
-    ].join("\n"),
-  });
-
-  return (
-    // biome-ignore lint/a11y/useSemanticElements: component not recognized by biome
-    <Button
-      component="a"
-      href={`https://github.com/Datawheel/vizbuilder/issues/new?${issueParams}`}
-      leftIcon={<IconBrandGithub size="1rem" />}
-      rel="noopener noreferrer"
-      role="button"
-      size="xs"
-      tabIndex={0}
-      target="_blank"
-      variant="subtle"
-    >
-      {t("action_fileissue")}
-    </Button>
-  );
 }

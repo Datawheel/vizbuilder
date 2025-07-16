@@ -41,7 +41,7 @@ export function QueriesProvider(props: {
       : [],
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: This is a onMount effect
   useEffect(() => {
     if (window.location.search && props.cubes) {
       const initialParams = new URLSearchParams(window.location.search);
@@ -72,7 +72,7 @@ export function QueriesProvider(props: {
         if (index > -1) setIndex(index);
         else {
           setIndex(items.length);
-          setItems([...items, emptyRequestParams(key)]);
+          setItems([...items, emptyRequestParams(props.cubes[key])]);
         }
       },
       clearQueries() {
@@ -80,7 +80,7 @@ export function QueriesProvider(props: {
         setIndex(-1);
       },
       createQuery(key: string) {
-        setItems([...items, emptyRequestParams(key)]);
+        setItems([...items, emptyRequestParams(props.cubes[key])]);
         setIndex(items.length);
       },
       updateQuery(key: string, params: Partial<RequestParams>) {
@@ -96,7 +96,7 @@ export function QueriesProvider(props: {
         if (obj === items[index]) setIndex(0);
       },
     };
-  }, [index, items]);
+  }, [index, items, props.cubes]);
 
   // Mirror current RequestParams to URLSearchParams
   useEffect(() => {
@@ -119,20 +119,10 @@ export function QueriesProvider(props: {
     <QueriesContext.Provider value={value}>{props.children}</QueriesContext.Provider>
   );
 
-  function emptyRequestParams(cubeName: string): RequestParams {
-    const cube = props.cubes[cubeName];
-    return {
-      key: cube.name,
-      cube: cube.name,
-      drilldowns: [],
-      measures: cube.measures.map(item => item.name),
-    };
-  }
-
   function randomRequestParams(): RequestParams {
     const cubes = Object.values(props.cubes);
     const cube = cubes[Math.floor(Math.random() * cubes.length)];
-    return emptyRequestParams(cube.name);
+    return emptyRequestParams(cube);
   }
 }
 
@@ -156,4 +146,13 @@ function isSameRequest(a: RequestParams, b: RequestParams): boolean {
 
 function standardizeArray(array: string | string[] | undefined | null) {
   return castArray(array).toString().split(",");
+}
+
+function emptyRequestParams(cube: TesseractCube): RequestParams {
+  return {
+    key: cube.name,
+    cube: cube.name,
+    drilldowns: [],
+    measures: cube.measures.map(item => item.name),
+  };
 }

@@ -9,7 +9,7 @@ import {
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef} from "react";
 import type {Chart} from "../charts/generator";
-import {useTranslation} from "./TranslationProvider";
+import {ErrorBoundary} from "./ErrorBoundary";
 import {useD3plusConfig} from "./useD3plusConfig";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
@@ -18,6 +18,8 @@ const iconByFormat = {
   png: IconPhotoDown,
   svg: IconVectorTriangle,
 };
+
+const rtlLanguages = ["ar", "he", "fa", "ur", "yi", "dv"];
 
 export function ChartCard(props: {
   /** The information needed to build a specific chart configuration. */
@@ -37,26 +39,19 @@ export function ChartCard(props: {
   const {chart, isFullMode, onFocus} = props;
   const {dataset} = chart.datagroup;
 
-  const {translate} = useTranslation();
-
-  const {downloadFormats, ErrorBoundary, showConfidenceInt} = useVizbuilderContext();
+  const {CardErrorComponent, downloadFormats, translate} = useVizbuilderContext();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
-  const [ChartComponent, config] = useD3plusConfig(chart, {
-    fullMode: !!isFullMode,
-    showConfidenceInt,
-  });
+  const [ChartComponent, config] = useD3plusConfig(chart, {fullMode: !!isFullMode});
 
   const downloadButtons = useMemo(() => {
     if (!config) return null;
 
-    // Sanitize filename for Windows and Unix
-    const filename = (
-      typeof config.title === "function" ? config.title(dataset) : config.title || ""
-    )
-      .replace(/[^\w]/g, "_")
-      .replace(/[_]+/g, "_");
+    const title =
+      typeof config.title === "function" ? config.title(dataset) : config.title;
+    // Sanitize title as filename
+    const filename = (title || "").replace(/[^\w]/g, "_").replace(/[_]+/g, "_");
 
     return downloadFormats.map(format => {
       const formatLower = format.toLowerCase();
@@ -104,10 +99,17 @@ export function ChartCard(props: {
   if (!ChartComponent || !config) return null;
 
   const height = isFullMode ? "calc(100vh - 3rem)" : 300;
+  const baseLocale = chart.datagroup.locale.slice(0, 2);
 
   return (
-    <ErrorBoundary>
-      <Paper w="100%" style={{height, ...props.style}}>
+    <ErrorBoundary ErrorContent={CardErrorComponent}>
+      <Paper
+        style={{
+          direction: rtlLanguages.includes(baseLocale) ? "rtl" : "ltr",
+          height,
+          ...props.style,
+        }}
+      >
         <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
           <Group position="right" spacing="xs" align="center">
             {downloadButtons}

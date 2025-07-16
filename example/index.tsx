@@ -1,4 +1,5 @@
 import {
+  AppShell,
   Flex,
   Header,
   Loader,
@@ -14,19 +15,14 @@ import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 
 import type {GeomapConfig} from "../src/d3plus";
-import {
-  ErrorBoundary,
-  FormatterProvider,
-  TranslationProvider,
-  useFormatter,
-  Vizbuilder,
-  VizbuilderProvider,
-  Vizdebugger,
-} from "../src/react";
+import {Vizbuilder, VizbuilderProvider, Vizdebugger} from "../src/react";
+
+import {FormatterProvider, useFormatter} from "./FormatterProvider";
 import {formatters} from "./formatters";
 import {useQueries} from "./QueriesProvider";
 import {QueryManager} from "./QueryManager";
 import {TesseractProvider, useTesseract, useTesseractData} from "./TesseractProvider";
+import {TranslationProvider} from "./TranslationProvider";
 import {translations} from "./translations";
 
 const topojsonConfig = keyBy(
@@ -60,8 +56,6 @@ container && mount(container);
 
 const modeOptions = ["Vizdebugger", "Vizbuilder"];
 
-const rtlLanguages = ["ar", "he", "fa", "ur", "yi", "dv"];
-
 function App() {
   const networkStatus = useNetwork();
 
@@ -77,44 +71,48 @@ function App() {
 
   const Vizwrapper = mode === "Vizbuilder" ? Vizbuilder : Vizdebugger;
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexFlow: "column nowrap",
-        height: "100vh",
-        backgroundColor: "#f0f0f0",
-      }}
-    >
-      <Header height={51} p="xs" withBorder>
-        <Flex direction="row" gap="xs" align="center" h={30}>
-          <SegmentedControl
-            color="blue"
-            data={modeOptions}
-            value={mode}
-            onChange={setMode}
-          />
-          <SegmentedControl
-            tt="uppercase"
-            data={availableDataLocale}
-            value={dataLocale}
-            onChange={setDataLocale}
-          />
-          <QueryManager />
-          {error && (
-            <ThemeIcon size="lg" color="red" title={error}>
-              <IconExclamationCircle />
-            </ThemeIcon>
-          )}
-          {isLoading && <Loader />}
-          {!networkStatus.online && (
-            <ThemeIcon size="lg" color="green" title="Disconnected">
-              <IconPlugConnectedX />
-            </ThemeIcon>
-          )}
-        </Flex>
-      </Header>
+  const header = (
+    <Header height={50} p="xs" withBorder zIndex={0}>
+      <Flex direction="row" gap="xs" align="center" h={30}>
+        <SegmentedControl
+          color="blue"
+          data={modeOptions}
+          value={mode}
+          onChange={setMode}
+        />
+        <SegmentedControl
+          tt="uppercase"
+          data={availableDataLocale}
+          value={dataLocale}
+          onChange={setDataLocale}
+        />
+        <QueryManager />
+        {error && (
+          <ThemeIcon size="lg" color="red" title={error}>
+            <IconExclamationCircle />
+          </ThemeIcon>
+        )}
+        {isLoading && <Loader />}
+        {!networkStatus.online && (
+          <ThemeIcon size="lg" color="green" title="Disconnected">
+            <IconPlugConnectedX />
+          </ThemeIcon>
+        )}
+      </Flex>
+    </Header>
+  );
 
+  return (
+    <AppShell
+      padding="xs"
+      header={header}
+      styles={theme => ({
+        main: {
+          backgroundColor:
+            theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.colors.gray[1],
+        },
+      })}
+    >
       <VizbuilderProvider
         downloadFormats={["svg", "png"]}
         topojsonConfig={topojsonConfig}
@@ -124,20 +122,17 @@ function App() {
         })}
         getFormatter={getFormatter}
       >
-        <ErrorBoundary>
-          <Vizwrapper
-            datasets={dataset || []}
-            id="viz-scroller"
-            style={{
-              direction: rtlLanguages.includes(dataLocale) ? "rtl" : "ltr",
-              flex: "1 0 0",
-              height: "calc(100vh - 51px)",
-              boxSizing: "border-box",
-            }}
-          />
-        </ErrorBoundary>
+        <Vizwrapper
+          datasets={dataset || []}
+          id="viz-scroller"
+          style={{
+            flex: "1 0 0",
+            height: "100%",
+            boxSizing: "border-box",
+          }}
+        />
       </VizbuilderProvider>
-    </div>
+    </AppShell>
   );
 }
 
@@ -156,19 +151,4 @@ function mount(container) {
       </D3plusContext.Provider>
     </MantineProvider>,
   );
-}
-
-function secondFormatter(value: number) {
-  const days = Math.floor(value / 86400);
-  const hours = Math.floor(value / 3600) % 24;
-  const mins = Math.floor(value / 60) % 60;
-  const secs = Math.floor(value) % 60;
-  return [
-    days > 0 ? `${days}d` : "",
-    days > 0 || hours > 0 ? `${hours}h` : "",
-    days > 0 || hours > 0 || mins > 0 ? `${mins}m` : "",
-    `${Math.floor(secs) !== secs ? secs.toFixed(3) : secs}s`,
-  ]
-    .filter(Boolean)
-    .join("");
 }

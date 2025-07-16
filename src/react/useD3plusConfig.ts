@@ -28,14 +28,11 @@ import {
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
-import type {Formatter} from "./FormatterProvider";
-import {useTranslation} from "./TranslationProvider";
-import {useVizbuilderContext} from "./VizbuilderProvider";
+import {type Formatter, useVizbuilderContext} from "./VizbuilderProvider";
 
 export interface ChartBuilderParams {
   fullMode: boolean;
   getFormatter: (key: string | TesseractMeasure) => Formatter;
-  getMeasureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
   showConfidenceInt: boolean;
   t: TranslateFunction;
 }
@@ -50,15 +47,10 @@ export const d3plusConfigBuilder = {
   treemap: buildTreemapConfig,
 };
 
-export function useD3plusConfig(
-  chart: Chart,
-  params: Pick<ChartBuilderParams, "fullMode" | "showConfidenceInt">,
-) {
-  const {fullMode, showConfidenceInt} = params;
+export function useD3plusConfig(chart: Chart, params: {fullMode: boolean}) {
+  const {fullMode} = params;
 
-  const {t} = useTranslation();
-
-  const {getMeasureConfig, getFormatter, translationNamespace, postprocessConfig} =
+  const {getFormatter, postprocessConfig, showConfidenceInt, translate} =
     useVizbuilderContext();
 
   return useMemo((): [
@@ -68,11 +60,8 @@ export function useD3plusConfig(
     const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
-      getMeasureConfig,
       showConfidenceInt,
-      t: translationNamespace
-        ? (template, data) => t(`${translationNamespace}.${template}`, data)
-        : t,
+      t: translate,
     };
 
     if (chart.type === "barchart") {
@@ -102,16 +91,7 @@ export function useD3plusConfig(
     }
 
     return [null, {data: [], locale: ""}];
-  }, [
-    chart,
-    fullMode,
-    getFormatter,
-    getMeasureConfig,
-    postprocessConfig,
-    showConfidenceInt,
-    t,
-    translationNamespace,
-  ]);
+  }, [chart, fullMode, getFormatter, postprocessConfig, showConfidenceInt, translate]);
 }
 
 function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConfig {

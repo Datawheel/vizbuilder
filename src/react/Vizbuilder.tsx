@@ -34,34 +34,36 @@ export function Vizbuilder(props: {
   id?: string;
   style?: React.CSSProperties;
 }) {
-  const {datasets} = props;
+  const datasets = useMemo(() => castArray(props.datasets), [props.datasets]);
 
   const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState} =
     useVizbuilderContext();
 
-  const [currentChart, setCurrentChart] = useState("");
+  const [chartIndex, setChartIndex] = useState(-1);
 
-  // Compute possible charts
+  const closeModal = useCallback(() => setChartIndex(-1), []);
+
   const charts = useMemo(() => {
-    const charts = generateCharts(castArray(datasets), {
+    return generateCharts(datasets, {
       chartLimits,
       chartTypes,
       datacap,
       getTopojsonConfig,
     });
-    return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
-  const content = useMemo(() => {
-    const chartList = Object.values(charts);
-
-    if (chartList.length === 0) {
-      return <NonIdealState />;
+  if (charts.length === 0) {
+    if (datasets.length > 0 && datasets[0].data.length === 1) {
+      return <NonIdealState status="one-row" />;
     }
+    return <NonIdealState status="empty" />;
+  }
 
-    const isSingleChart = chartList.length === 1;
+  const chart = charts[chartIndex];
 
-    return (
+  return (
+    <div className={cls("vb-wrapper", props.className)} id={props.id} style={props.style}>
+      {props.customHeader}
       <SimpleGrid
         breakpoints={[
           {minWidth: "xs", cols: 1},
@@ -69,43 +71,21 @@ export function Vizbuilder(props: {
           {minWidth: "lg", cols: 3},
           {minWidth: "xl", cols: 4},
         ]}
-        className={cls("vb-scrollcontainer", {unique: isSingleChart})}
+        className={cls("vb-scrollcontainer", {unique: charts.length === 1})}
       >
-        {chartList.map(chart => (
+        {charts.map((chart, index) => (
           <ChartCard
             key={chart.key}
             chart={chart}
-            onFocus={() => setCurrentChart(chart.key)}
+            onFocus={() => setChartIndex(index)}
           />
         ))}
       </SimpleGrid>
-    );
-  }, [charts, NonIdealState]);
-
-  const focusContent = useMemo(() => {
-    const chart = charts[currentChart];
-
-    if (!chart) return null;
-
-    return (
-      <ChartCard
-        key={`${chart.key}-focus`}
-        chart={chart}
-        onFocus={() => setCurrentChart("")}
-        isFullMode
-      />
-    );
-  }, [charts, currentChart]);
-
-  return (
-    <div className={cls("vb-wrapper", props.className)} id={props.id} style={props.style}>
-      {props.customHeader}
-      {content}
       {props.customFooter}
       <Modal
         centered
-        onClose={useCallback(() => setCurrentChart(""), [])}
-        opened={currentChart !== ""}
+        onClose={closeModal}
+        opened={chartIndex !== -1}
         padding={0}
         size="calc(100vw - 3rem)"
         styles={{
@@ -114,7 +94,14 @@ export function Vizbuilder(props: {
         }}
         withCloseButton={false}
       >
-        {focusContent}
+        {chart && (
+          <ChartCard
+            key={`${chart.key}-focus`}
+            chart={chart}
+            onFocus={closeModal}
+            isFullMode
+          />
+        )}
       </Modal>
     </div>
   );
