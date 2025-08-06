@@ -26,8 +26,14 @@ import type {VizbuilderProps} from "./Vizbuilder";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
 export function Vizdebugger(props: VizbuilderProps) {
-  const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState, ViewErrorComponent} =
-    useVizbuilderContext();
+  const {
+    chartLimits,
+    chartTypes,
+    datacap,
+    getTopojsonConfig,
+    NonIdealState,
+    ViewErrorComponent,
+  } = useVizbuilderContext();
 
   const datasets = useMemo(() => castArray(props.datasets), [props.datasets]);
 

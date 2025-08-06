@@ -261,12 +261,8 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
-  const axisSorting =
-    typeof mainSeries.type === "number"
-      ? (a, b) => a[mainSeries.name] - b[mainSeries.name]
-      : (a, b) => collate.compare(a[mainSeries.name], b[mainSeries.name]);
-
   if (orientation === "horizontal") {
+    const sortKey = mainSeries.name;
     assign(config, {
       x: values.measure.name,
       xConfig: {
@@ -277,7 +273,10 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       yConfig: {
         title: mainSeries.level.caption,
       },
-      ySort: axisSorting,
+      ySort:
+        typeof mainSeries.type === "number"
+          ? (a, b) => a[sortKey] - b[sortKey]
+          : (a, b) => collate.compare(a[sortKey], b[sortKey]),
     });
   } else {
     const mainLevelName =
@@ -288,7 +287,6 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       xConfig: {
         title: mainSeries.level.caption,
       },
-      xSort: axisSorting,
       y: values.measure.name,
       yConfig: {
         title: values.measure.caption,
