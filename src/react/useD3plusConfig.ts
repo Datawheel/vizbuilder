@@ -100,6 +100,8 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
 
   const {locale} = datagroup;
 
+  const listFormatter = new Intl.ListFormat(locale, {style: "long", type: "conjunction"});
+
   const measureFormatter = getFormatter(values.measure);
   const {caption: meaCaption, name: meaName} = values.measure;
 
@@ -122,7 +124,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
           const items = data
             .map(d => d[key] as string)
             .filter((item, index, items) => items.indexOf(item) === index);
-          return _buildTranslatedList(t, items, 4);
+          return listFormatter.format(trimList(t, items, 4));
         },
       ] as const;
     });
@@ -139,15 +141,13 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
               ...new Set(data.map(d => d[level.name] as number)),
             ].sort();
             if (uniqueValues.length === 1) return uniqueValues[0].toString();
-            if (_isIntegerSequence(uniqueValues))
+            if (_isIntegerSequence(uniqueValues)) {
               return t("title.range", {
                 from: uniqueValues[0],
                 to: getLast(uniqueValues),
               });
-            return _buildTranslatedList(
-              t,
-              uniqueValues.map(i => `${i}`),
-            );
+            }
+            return listFormatter.format(uniqueValues.map(i => `${i}`));
           },
         ] as const;
       }),
@@ -200,7 +200,9 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
           const value = d[name];
           return [
             caption,
-            Array.isArray(value) ? _buildTranslatedList(t, value, 5) : (value as string),
+            Array.isArray(value)
+              ? listFormatter.format(trimList(t, value, 5))
+              : (value as string),
           ];
         }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
       },
@@ -515,6 +517,11 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   const valuesKey = `aggregator.${aggregator.toLowerCase()}`;
   const valuesCaption = t(valuesKey, {measure: measure.caption});
 
+  const listFormatter = new Intl.ListFormat(chart.datagroup.locale, {
+    style: "long",
+    type: "conjunction",
+  });
+
   const getLastTimePeriod = (
     data: DataPoint[] | undefined,
     series: NonNullable<Chart["timeline"]>,
@@ -541,7 +548,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     if (members.length < 5) {
       return t("title.series_members", {
         series: series.level.caption,
-        members: _buildTranslatedList(t, members as string[]),
+        members: listFormatter.format(members as string[]),
       });
     }
 
@@ -553,7 +560,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   return (data?: DataPoint[]): string => {
     const config = {
       values: valuesCaption.endsWith(valuesKey) ? measure.caption : valuesCaption,
-      series: _buildTranslatedList(t, series.map(seriesStr), 4),
+      series: listFormatter.format(trimList(t, series.map(seriesStr), 4)),
       time: timeline?.level.caption,
       time_period: timeline ? getLastTimePeriod(data, timeline) : "",
     };
@@ -577,37 +584,12 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
  * Concatenates a list of strings, by offering the possibility to use special
  * syntax for the first and last items.
  */
-function _buildTranslatedList(
-  t: TranslateFunction,
-  array: string[],
-  limit = array.length,
-) {
-  if (array.length === 0) {
-    return "";
-  }
-  if (array.length === 1) {
-    return array[0];
-  }
-
-  let list = array;
+function trimList(t: TranslateFunction, list: string[], limit = list.length) {
   if (list.length > limit) {
     const final = t("list.n_more", {n: list.length - limit});
-    list = list.slice(0, limit - 1).concat(final);
+    return list.slice(0, limit - 1).concat(final);
   }
-
-  return t("list.suffix", {
-    n: list.length,
-    nlessone: list.length - 1,
-    item: getLast<unknown>(list),
-    rest: t("list.prefix", {
-      n: list.length - 1,
-      nlessone: list.length - 2,
-      item: list[0],
-      rest: list.slice(1, -1).join(t("list.join")),
-      list: list.slice(0, -1).join(t("list.join")),
-    }),
-    list: list.join(t("list.join")),
-  });
+  return list;
 }
 
 function _isIntegerSequence(list: number[]) {

@@ -3,15 +3,11 @@
     "allowSyntheticDefaultImports": true,
     "checkJs": true,
     "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "lib": ["DOM", "DOM.Iterable", "ES2021"],
     "moduleResolution": "node",
     "outDir": "dist",
     "strictNullChecks": true,
     "target": "ES2016"
   },
-  "include": [
-    "example",
-    "src",
-    "d3plus.d.ts"
-  ]
+  "include": ["example", "src", "d3plus.d.ts"]
 }

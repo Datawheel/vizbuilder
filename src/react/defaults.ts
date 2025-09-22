@@ -48,9 +48,6 @@ export const defaultTranslation = {
     title: "Error",
   },
   list: {
-    join: ", ",
-    suffix: "{{rest}}, and {{item}}",
-    prefix: "{{list}}",
     n_more: "{{n}} more",
   },
   title: {
