@@ -51,14 +51,19 @@ export const defaultTranslation = {
     n_more: "{{n}} more",
   },
   title: {
+    main: "{{values}} by {{series}}",
     main_on_period: "{{values}} by {{series}} on {{time_period}}",
     main_over_period: "{{values}} by {{series}} over {{time}}",
-    main: "{{values}} by {{series}}",
     measure_on_period: "{{values}} on {{time_period}}",
     measure_over_period: "{{values}} over {{time}}",
     nonidealstate: "No results",
-    series_members: "{{series}} ({{members}})",
+    scale_day: "Daily",
+    scale_month: "Monthly",
+    scale_quarter: "Quarterly",
+    scale_week: "Weekly",
+    scale_year: "Yearly",
     series: "{{series}}",
+    series_members: "{{series}} ({{members}})",
     time_range: "in {{from}}-{{to}}",
     total: "Total: {{value}}",
   },
@@ -67,6 +72,6 @@ export const defaultTranslation = {
     title_loading: "Generating charts...",
     title_empty: "No results",
     description_empty:
-      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again."
-  }
+      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
+  },
 };

@@ -536,6 +536,8 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
         values: valuesCaption,
         time: timeline.level.caption,
         time_period: getLastTimePeriod(data, timeline),
+        // @ts-expect-error
+        time_scale: t(`title.scale_${timeline.level.scale || timeline.level.time_scale}`),
       });
     };
   }
@@ -561,6 +563,8 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
       series: listFormatter.format(trimList(t, series.map(seriesStr), 4)),
       time: timeline?.level.caption,
       time_period: timeline ? getLastTimePeriod(data, timeline) : "",
+      // @ts-expect-error
+      time_scale: t(`title.scale_${timeline.level.scale || timeline.level.time_scale}`),
     };
 
     // time is on the axis, so multiple periods are shown at once
