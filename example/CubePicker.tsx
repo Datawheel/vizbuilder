@@ -1,21 +1,22 @@
+import type {TesseractCube} from "@datawheel/logiclayer-client";
 import {
   Button,
   Divider,
+  getSize,
   type MantineSize,
   Modal,
   Paper,
+  rem,
   SelectChevronIcon,
   SimpleGrid,
   Text,
   UnstyledButton,
-  getSize,
-  rem,
 } from "@mantine/core";
 import {useDisclosure} from "@mantine/hooks";
 import {IconCube} from "@tabler/icons-react";
 import {groupBy} from "lodash-es";
-import React, {Fragment, forwardRef, useMemo} from "react";
-import {type TesseractCube, getAnnotation} from "../src/schema";
+import React, {Fragment, useMemo} from "react";
+import {getAnnotation} from "../src/toolbox/tesseract";
 
 const iconSizes = {
   xs: rem(14),
@@ -71,7 +72,9 @@ export function CubePicker(props: {
                     <Paper
                       withBorder
                       p="sm"
-                      sx={selected === cube.name ? {backgroundColor: "#d0ebff"} : undefined}
+                      sx={
+                        selected === cube.name ? {backgroundColor: "#d0ebff"} : undefined
+                      }
                     >
                       <Text truncate fw={700}>
                         {cube.name}

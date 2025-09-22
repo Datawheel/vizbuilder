@@ -1,7 +1,7 @@
+import type {TesseractCube} from "@datawheel/logiclayer-client";
 import {useLocalStorage} from "@mantine/hooks";
 import {clamp} from "lodash-es";
 import React, {createContext, useContext, useEffect, useMemo} from "react";
-import type {TesseractCube} from "../src/schema";
 import {castArray} from "../src/toolbox/array";
 
 export interface RequestParams {

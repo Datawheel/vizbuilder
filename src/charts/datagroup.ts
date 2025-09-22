@@ -1,18 +1,18 @@
-import {groupBy, mapValues, max, min} from "lodash-es";
 import {
-  type DataPoint,
   DimensionType,
   type TesseractDimension,
   type TesseractHierarchy,
   type TesseractLevel,
   type TesseractMeasure,
   type TesseractProperty,
-} from "../schema";
+} from "@datawheel/logiclayer-client";
+import {groupBy, mapValues, max, min} from "lodash-es";
 import {filterMap} from "../toolbox/array";
 import type {Column, LevelColumn} from "../toolbox/columns";
 import {isOneOf} from "../toolbox/validation";
 import type {Dataset} from "../types";
 
+export type DataPoint = Record<string, unknown>;
 export type PrimitiveType = "string" | "number" | "boolean";
 
 export interface Datagroup {

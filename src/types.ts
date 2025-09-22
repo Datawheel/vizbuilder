@@ -1,6 +1,7 @@
+import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import type {TranslateFunction} from "@datawheel/use-translation";
+import type {DataPoint} from "./charts/datagroup";
 import type {D3plusConfig} from "./d3plus";
-import type {DataPoint, TesseractMeasure} from "./schema";
 import type {Column} from "./toolbox/columns";
 
 /**

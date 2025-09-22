@@ -1,4 +1,4 @@
-import type {DataPoint} from "../schema";
+import type {DataPoint} from "../charts/datagroup";
 
 /**
  * Serializes a list of strings into an abbreviated, comma-separated enumeration

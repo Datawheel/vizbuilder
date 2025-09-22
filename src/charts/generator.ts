@@ -1,15 +1,15 @@
+import type {TesseractLevel} from "@datawheel/logiclayer-client";
 import type {D3plusConfig} from "../d3plus";
-import type {TesseractLevel} from "../schema";
 import {filterMap} from "../toolbox/array";
 import type {ChartLimits, Dataset} from "../types";
 import {type BarChart, generateBarchartConfigs} from "./barchart";
 import type {ChartType} from "./common";
-import {type Datagroup, buildDatagroup} from "./datagroup";
+import {buildDatagroup, type Datagroup} from "./datagroup";
 import {type DonutChart, generateDonutConfigs} from "./donut";
 import {type ChoroplethMap, generateChoroplethMapConfigs} from "./geomap";
-import {type LinePlot, generateLineplotConfigs} from "./lineplot";
-import {type StackedArea, generateStackedareaConfigs} from "./stackedarea";
-import {type TreeMap, generateTreemapConfigs} from "./treemap";
+import {generateLineplotConfigs, type LinePlot} from "./lineplot";
+import {generateStackedareaConfigs, type StackedArea} from "./stackedarea";
+import {generateTreemapConfigs, type TreeMap} from "./treemap";
 
 export type Chart =
   | BarChart

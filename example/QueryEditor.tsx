@@ -1,6 +1,7 @@
+import type {TesseractDimension, TesseractMeasure} from "@datawheel/logiclayer-client";
 import {MultiSelect, Select, Stack, Text} from "@mantine/core";
 import React, {useCallback, useMemo, useRef} from "react";
-import {type TesseractDimension, type TesseractMeasure, getAnnotation } from "../src/schema";
+import {getAnnotation} from "../src/toolbox/tesseract";
 import type {RequestParams} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
 

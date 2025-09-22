@@ -1,4 +1,25 @@
-import type {TesseractCube, TesseractDimension, TesseractMeasure} from "../schema";
+import type {
+  Annotations,
+  TesseractCube,
+  TesseractDimension,
+  TesseractMeasure,
+} from "@datawheel/logiclayer-client";
+
+/**
+ * Retrieves a localized annotation value.
+ */
+export function getAnnotation<T extends Annotations, K extends string>(
+  entity: {annotations: T},
+  annotation: K,
+  locale = "en",
+): T[K] {
+  const ann = entity.annotations;
+  return (
+    (ann[`${annotation}_${locale}`] as T[K]) ||
+    (ann[`${annotation}_${locale.slice(0, 2)}`] as T[K]) ||
+    ann[annotation]
+  );
+}
 
 export function yieldMeasures(
   cube: TesseractCube,

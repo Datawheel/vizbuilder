@@ -1,3 +1,4 @@
+import type {TesseractLevel, TesseractMeasure} from "@datawheel/logiclayer-client";
 import type {TranslateFunction} from "@datawheel/use-translation";
 import {translateFunctionFactory} from "@datawheel/use-translation";
 import {identity} from "lodash-es";
@@ -5,7 +6,6 @@ import React, {createContext, useContext, useMemo} from "react";
 import type {ChartType} from "../charts/common";
 import {type Chart, DEFAULT_CHART_LIMITS} from "../charts/generator";
 import type {D3plusConfig} from "../d3plus";
-import type {TesseractLevel, TesseractMeasure} from "../schema";
 import {castArray} from "../toolbox/array";
 import type {ChartLimits} from "../types";
 import {defaultFormatters, defaultTranslation} from "./defaults";

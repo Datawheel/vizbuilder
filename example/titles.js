@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { translateFunctionFactory } from "@datawheel/use-translation";
-import { writeFile } from "node:fs";
+import {writeFile} from "node:fs";
+import {translateFunctionFactory} from "@datawheel/use-translation";
 
-import { buildColumn, generateCharts } from "../dist/index.esm.js";
-import { d3plusConfigBuilder } from "../dist/react.esm.js";
-import { DimensionType } from "../dist/schema.esm.js";
+import {buildColumn, generateCharts} from "../dist/index.esm.js";
+import {d3plusConfigBuilder} from "../dist/react.esm.js";
 import * as formatters from "./formatters.js";
-import { translations } from "./translations.js";
+import {translations} from "./translations.js";
+import {DimensionType} from "@datawheel/logiclayer-client";
 
 const serverURL = "https://api.datasaudi.datawheel.us/tesseract/";
 const locale = "ar";
@@ -30,19 +30,19 @@ async function main() {
   const semaphore = new Semaphore(8);
 
   const schemaResponse = await fetch(schemaEndpoint);
-  /** @type {import("../dist/schema").TesseractSchema} */
+  /** @type {import("@datawheel/logiclayer-client").TesseractSchemaResponse} */
   const schema = await schemaResponse.json();
 
   const dataRequests = schema.cubes
-    .filter((cube) => !cube.annotations.hide_in_ui)
+    .filter(cube => !cube.annotations.hide_in_ui)
     .sort((a, b) => "".localeCompare.call(a.name, b.name))
-    .map(async (cube) => {
+    .map(async cube => {
       await semaphore.acquire();
 
       const levels =
         cube.annotations.suggested_levels?.split(",") ||
         defaultDrilldowns(cube.dimensions);
-      const measures = cube.measures.map((item) => item.name);
+      const measures = cube.measures.map(item => item.name);
 
       const search = new URLSearchParams({
         cube: cube.name,
@@ -53,44 +53,40 @@ async function main() {
 
       console.log("Fetching", search.toString());
       const response = await fetch(`${dataEndpoint}?${search}`);
-      /** @type {import("../dist/schema").TesseractDataResponse} */
+      /** @type {import("@datawheel/logiclayer-client").TesseractDataResponse} */
       const result = await response.json();
       if (response.status !== 200 || result.error)
-        throw new Error(
-          JSON.stringify({ ...result, params: search.toString() }),
-        );
+        throw new Error(JSON.stringify({...result, params: search.toString()}));
 
-      const columns = result.columns.map((column) => {
+      const columns = result.columns.map(column => {
         const meta = buildColumn(cube, column, result.columns);
         return [column, meta];
       });
       const charts = generateCharts(
-        [{ locale, data: result.data, columns: Object.fromEntries(columns) }],
-        { chartLimits },
+        [{locale, data: result.data, columns: Object.fromEntries(columns)}],
+        {chartLimits},
       );
       const params = {
         fullMode: false,
         showConfidenceInt: false,
         getFormatter(key) {
-          return formatters[key] || ((i) => i);
+          return formatters[key] || (i => i);
         },
         t: translateFunctionFactory(translations[locale]),
       };
 
       semaphore.release();
 
-      return charts.map((chart) => {
+      return charts.map(chart => {
         const config = d3plusConfigBuilder[chart.type](chart, params);
-        return [search.toString(), chart.type, config.title(result.data)].join(
-          "\t",
-        );
+        return [search.toString(), chart.type, config.title(result.data)].join("\t");
       });
     });
 
   const results = await Promise.all(dataRequests);
   const listOfTitles = [...new Set(results.flat())].sort().join("\n");
 
-  writeFile("titles.tsv", listOfTitles, "utf-8", (err) => {
+  writeFile("titles.tsv", listOfTitles, "utf-8", err => {
     if (err) throw err;
     console.log("The file has been saved!");
   });
@@ -108,7 +104,7 @@ class Semaphore {
       this.available--;
       return Promise.resolve();
     }
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.queue.push(resolve);
     });
   }
@@ -124,30 +120,29 @@ class Semaphore {
   }
 }
 
-/** @param {import("../dist/schema").TesseractDimension[]} dimensions */
+/** @param {import("@datawheel/logiclayer-client").TesseractDimension[]} dimensions */
 function defaultDrilldowns(dimensions) {
-  /** @type {[string, DimensionType, number][]} */
+  /** @type {[string, `${DimensionType}`, number][]} */
   const levels = [];
 
   for (const dim of dimensions) {
     if (dim.type === DimensionType.TIME || levels.length < 4) {
       const hie =
-        dim.hierarchies.find((hie) => hie.name === dim.default_hierarchy) ||
+        dim.hierarchies.find(hie => hie.name === dim.default_hierarchy) ||
         dim.hierarchies[0];
       const index = dim.type === DimensionType.GEO ? hie.levels.length - 1 : 0;
       const level = hie.levels[index];
-      levels.push([level.name, dim.type, level.count]);
+      levels.push([level.name, dim.type, level.count || 0]);
     }
   }
 
   while (levels.reduce((sum, item) => sum + item[2], 0) > 5e6) {
     const index =
-      levels.findIndex((item) => item[1] === DimensionType.GEO) ||
-      levels.length - 1;
+      levels.findIndex(item => item[1] === DimensionType.GEO) || levels.length - 1;
     levels.splice(index, 1);
   }
 
-  return levels.map((item) => item[0]);
+  return levels.map(item => item[0]);
 }
 
 main();

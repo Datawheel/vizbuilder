@@ -1,4 +1,4 @@
-import type {Aggregator} from "../schema";
+import type {Aggregator} from "@datawheel/logiclayer-client";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -6,7 +6,7 @@ import type {Aggregator} from "../schema";
  * @param elseValue A value to return in case the string doesn't contain any
  */
 export function findFirstNumber(string: string, elseValue?: number) {
-  const match = `${string}`.match(/[0-9\.\,]+/);
+  const match = `${string}`.match(/[0-9.,]+/);
   return match ? Number.parseFloat(match[0]) : elseValue || 0;
 }
 
@@ -32,7 +32,7 @@ export function isOneOf<T extends string>(
  * Useful to sort by that number.
  * @param list An array of string to determine
  */
-export function areKindaNumeric(list: string[], tolerance = 0.8) {
+export function areKindaNumeric(list: number[] | string[], tolerance = 0.8) {
   const numericReducer = (sum, item) =>
     sum + (isNumeric(findFirstNumber(item, Number.NaN)) ? 1 : 0);
   return list.reduce(numericReducer, 0) / list.length > tolerance;

@@ -1,6 +1,6 @@
+import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {format, formatAbbreviate} from "d3plus-format";
 import React, {createContext, useContext, useMemo, useRef, useState} from "react";
-import type {TesseractMeasure} from "../src/schema";
 
 /**
  * A function that converts a numeric value into a stylized string.

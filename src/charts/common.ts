@@ -1,10 +1,10 @@
-import type {D3plusConfig} from "../d3plus";
 import type {
   TesseractDimension,
   TesseractHierarchy,
   TesseractLevel,
   TesseractMeasure,
-} from "../schema";
+} from "@datawheel/logiclayer-client";
+import type {D3plusConfig} from "../d3plus";
 import type {
   CategoryHierarchy,
   CategoryLevel,

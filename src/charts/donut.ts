@@ -1,9 +1,9 @@
-import type {DataPoint, TesseractMeasure} from "../schema";
+import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
-import type {Datagroup} from "./datagroup";
+import type {Datagroup, DataPoint} from "./datagroup";
 
 export interface DonutChart extends BaseChart {
   type: "donut";

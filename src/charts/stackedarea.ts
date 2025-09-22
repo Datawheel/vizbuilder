@@ -1,4 +1,3 @@
-import {Aggregator} from "../schema";
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";

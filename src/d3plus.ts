@@ -1,5 +1,5 @@
 import type {CSSProperties} from "react";
-import type {DataPoint} from "./schema";
+import type {DataPoint} from "./charts/datagroup";
 
 interface AxisConfig {
   barConfig?: Record<string, string | number>;

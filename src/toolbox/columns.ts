@@ -1,13 +1,12 @@
-import {
-  type TesseractCube,
-  type TesseractDimension,
-  type TesseractHierarchy,
-  type TesseractLevel,
-  type TesseractMeasure,
-  type TesseractProperty,
-  getAnnotation,
-} from "../schema";
-import {yieldLevels, yieldMeasures, yieldProperties} from "./tesseract";
+import type {
+  TesseractCube,
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+  TesseractMeasure,
+  TesseractProperty,
+} from "@datawheel/logiclayer-client";
+import {getAnnotation, yieldLevels, yieldMeasures, yieldProperties} from "./tesseract";
 
 export type Column = MeasureColumn | LevelColumn | PropertyColumn;
 

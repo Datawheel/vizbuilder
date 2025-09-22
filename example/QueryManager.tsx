@@ -1,6 +1,5 @@
-import {Chip, Flex, Select, Text} from "@mantine/core";
-import React, {forwardRef, useMemo} from "react";
-import {type TesseractCube, getAnnotation} from "../src/schema";
+import {Chip, Flex} from "@mantine/core";
+import React, {useMemo} from "react";
 import {CubePicker} from "./CubePicker";
 import {useQueries} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
