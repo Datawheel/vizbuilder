@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/vizbuilder",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "A React component that generates multiple kinds of charts from a tesseract-olap dataset.",
   "readme": "README.md",
   "exports": {
