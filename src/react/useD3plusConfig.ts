@@ -528,16 +528,21 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     return getLast([...new Set(data.map(d => d[series.level.name]))].sort());
   };
 
+  const getProp = <T extends {}>(obj: T, keys: string[]): string | undefined => {
+    const key = keys.shift();
+    return key ? obj[key] || getProp(obj, keys) : undefined;
+  };
+
   if (series.length === 0) {
     return (data?: DataPoint[]): string => {
       if (!timeline || !data) return valuesCaption;
 
+      const level_scale = getProp(timeline.level, ["scale", "time_scale"]);
       return t("title.measure_over_period", {
         values: valuesCaption,
         time: timeline.level.caption,
         time_period: getLastTimePeriod(data, timeline),
-        // @ts-expect-error
-        time_scale: t(`title.scale_${timeline.level.scale || timeline.level.time_scale}`),
+        time_scale: level_scale ? t(`title.scale_${level_scale}`) : "",
       });
     };
   }
@@ -563,8 +568,9 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
       series: listFormatter.format(trimList(t, series.map(seriesStr), 4)),
       time: timeline?.level.caption,
       time_period: timeline ? getLastTimePeriod(data, timeline) : "",
-      // @ts-expect-error
-      time_scale: t(`title.scale_${timeline.level.scale || timeline.level.time_scale}`),
+      time_scale: timeline
+        ? t(`title.scale_${getProp(timeline.level, ["scale", "time_scale"])}`)
+        : "",
     };
 
     // time is on the axis, so multiple periods are shown at once
