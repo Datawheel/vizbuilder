@@ -120,7 +120,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
         key,
         (data: AggregatedDataPoint[]) => {
           const items = data
-            .map(d => d[key] as string)
+            .map(d => (d[key] ?? "").toString())
             .filter((item, index, items) => items.indexOf(item) === index);
           return listFormatter.format(trimList(t, items, 4));
         },
@@ -199,7 +199,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
           return [
             caption,
             Array.isArray(value)
-              ? listFormatter.format(trimList(t, value, 5))
+              ? listFormatter.format(trimList(t, value.map(String), 5))
               : (value as string),
           ];
         }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
