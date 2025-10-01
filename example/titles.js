@@ -10,7 +10,7 @@ import {translations} from "./translations.js";
 import {DimensionType} from "@datawheel/logiclayer-client";
 
 const serverURL = "https://api.datasaudi.datawheel.us/tesseract/";
-const locale = "ar";
+const locale = "en";
 const chartLimits = {
   BARCHART_MAX_BARS: 20,
   BARCHART_YEAR_MAX_BARS: 20,
