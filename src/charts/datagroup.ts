@@ -62,7 +62,7 @@ export interface LevelCaption {
 }
 
 /** */
-export function buildDatagroup(ds: Dataset): Datagroup {
+export function buildDatagroup(ds: Dataset): Datagroup | undefined {
   const {columns, data, locale} = ds;
 
   if ("Month" in columns && /^\d{4}-\d{2}$/.test(ds.data[0].Month as string)) {
@@ -95,6 +95,7 @@ export function buildDatagroup(ds: Dataset): Datagroup {
     () => true,
   );
   const dataset = data.filter(exclusionFilter);
+  if (dataset.length === 0) return undefined;
   // TODO: add 'uncategorized' difference rows
 
   const propertyColumns = groupBy(

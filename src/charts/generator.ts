@@ -77,7 +77,7 @@ export function generateCharts(
       return filterMap(chartTypes, chartType => {
         const generator = chartGenerator[chartType];
         try {
-          return generator ? generator(datagroup, chartLimits, chartProps) : null;
+          return datagroup && generator ? generator(datagroup, chartLimits, chartProps) : null;
         } catch (err) {
           console.error(err);
           return null;
