@@ -120,7 +120,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
         key,
         (data: AggregatedDataPoint[]) => {
           const items = data
-            .map(d => (d[key] ?? "").toString())
+            .map(d => String(d[key] ?? ""))
             .filter((item, index, items) => items.indexOf(item) === index);
           return listFormatter.format(trimList(t, items, 4));
         },
@@ -145,7 +145,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
                 to: getLast(uniqueValues),
               });
             }
-            return listFormatter.format(uniqueValues.map(i => `${i}`));
+            return listFormatter.format(uniqueValues.map(String));
           },
         ] as const;
       }),
@@ -553,7 +553,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
     if (members.length < 5) {
       return t("title.series_members", {
         series: series.level.caption,
-        members: listFormatter.format(members as string[]),
+        members: listFormatter.format(members.map(String) as string[]),
       });
     }
 
