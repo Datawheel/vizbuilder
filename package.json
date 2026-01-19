@@ -37,7 +37,7 @@
   "homepage": "https://github.com/Datawheel/vizbuilder",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Datawheel/vizbuilder.git"
+    "url": "git+https://github.com/Datawheel/vizbuilder.git"
   },
   "dependencies": {
     "@datawheel/logiclayer-client": "^0.1.5",
