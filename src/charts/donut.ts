@@ -1,4 +1,5 @@
 import type {TesseractMeasure} from "@datawheel/logiclayer-client";
+import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn, isOneOf} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
@@ -33,15 +34,13 @@ export function generateDonutConfigs(
     const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement || "";
+    const isPercentage = ["Percentage", "Rate"].some(token => units.includes(token));
 
     // Work only with the mainline measures
     if (valueColumn.parentMeasure) return [];
 
     // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
-    if (
-      !aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
-      !isOneOf(units, ["Percentage", "Percentage Base 100", "Rate"])
-    ) {
+    if (!aggregatorIn(aggregator, ["SUM", "COUNT"]) && !isPercentage) {
       console.debug(
         "[%s] Measure '%s' has aggregator '%s' and units '%s'; can't be summed.",
         chartType,
@@ -68,37 +67,65 @@ export function generateDonutConfigs(
       return [];
     }
 
+    const allLevels = categoryHierarchies.flatMap(catHierarchy =>
+      filterMap(catHierarchy.levels, catLevel => {
+        if (catLevel.members.length < 2) {
+          console.debug(
+            "[%s] Discarding level '%s': needs at least 2 members, has %d",
+            chartType,
+            catLevel.entity.name,
+            catLevel.members.length,
+          );
+          return null;
+        }
+        if (catLevel.members.length > DONUT_SHAPE_MAX) {
+          console.debug(
+            "[%s] Discarding level '%s': surpasses the limit of %d members, has %d",
+            chartType,
+            catLevel.entity.name,
+            DONUT_SHAPE_MAX,
+            catLevel.members.length,
+          );
+          return null;
+        }
+        return [catHierarchy, catLevel] as const;
+      }),
+    );
+
+    if (isPercentage && allLevels.length > 1) {
+      console.debug(
+        "[%s] Discarding multilevel '%s': Percentages can't be summed",
+        chartType,
+        allLevels.map(entry => entry[1].name).join("-"),
+      );
+      return [];
+    }
+
     // const percentageTest = percentageUnitTester[units];
     // if (percentageTest && !percentageTest(measure, dataset, range)) {
     //   return [];
     // }
 
-    return categoryHierarchies.flatMap(catHierarchy => {
-      const {dimension, hierarchy} = catHierarchy;
+    return allLevels.map(entry => {
+      const [catHierarchy, catLevel] = entry;
       const keyChain = [
         chartType,
         dataset.length,
         measure.name,
-        dimension.name,
-        hierarchy.name,
+        catHierarchy.dimension.name,
+        catHierarchy.hierarchy.name,
+        catLevel.name,
       ];
 
-      return catHierarchy.levels.flatMap<DonutChart>(catLevel => {
-        const {members} = catLevel;
-
-        // Bail if amount of segments in ring is out of limits
-        if (members.length < 2 || members.length > DONUT_SHAPE_MAX) return [];
-
-        return {
-          key: shortHash(keyChain.concat(catLevel.name).join()),
-          type: chartType,
-          datagroup,
-          values,
-          series: [buildSeries(catHierarchy, catLevel)],
-          timeline,
-          extraConfig: {},
-        };
-      });
+      return {
+        key: shortHash(keyChain.join()),
+        type: chartType,
+        datagroup,
+        values,
+        series: [buildSeries(catHierarchy, catLevel)],
+        timeline,
+        extraConfig: {},
+      };
     });
   });
 }
