@@ -228,6 +228,8 @@ export function generateVertBarchartConfigs(
 
   return dg.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
+    const units = measure.annotations.units_of_measurement || "";
+    const isPercentage = ["Percentage", "Rate"].some(token => units.includes(token));
 
     // Work only with the mainline measures
     if (valueColumn.parentMeasure) return [];
@@ -238,7 +240,26 @@ export function generateVertBarchartConfigs(
       maxValue: range[1],
     };
 
+    // TODO: migrate loop inside if(timeline) to use this, like in generateHoriBartchartConfigs
+    const allLevels = categoryHierarchies.flatMap(catHierarchy =>
+      filterMap(catHierarchy.levels, catLevel => {
+        if (catLevel.members.length < 2) {
+          console.debug(
+            "[%s] Discarding level '%s': needs at least 2 members, has %d",
+            chartType,
+            catLevel.entity.name,
+            catLevel.members.length,
+          );
+          return null;
+        }
+        return [catHierarchy, catLevel] as const;
+      }),
+    );
+
     if (timeline) {
+      // Percentages can't be summed if split in more than 1 dimension
+      if (allLevels.length > 1 && isPercentage) return [];
+
       // In vertical barcharts the time dimension should be the primary series.
       // If present, mix it with all available levels, and discard from there.
       return categoryHierarchies.flatMap(catHierarchy => {

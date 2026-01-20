@@ -1,6 +1,7 @@
 import {DimensionType, type TesseractMeasure} from "@datawheel/logiclayer-client";
 import type {TranslateFunction} from "@datawheel/use-translation";
-import {assign} from "d3plus-common";
+import {flatRollup, sum} from "d3-array";
+import {assign, RESET as D3PLUS_RESET} from "d3plus-common";
 import {
   BarChart as BarChartComponent,
   Geomap as ChoroplethComponent,
@@ -263,11 +264,19 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
 
   if (orientation === "horizontal") {
     const sortKey = mainSeries.name;
+
+    const isAround100 = flatRollup(
+      datagroup.dataset,
+      group => sum(group, item => item[values.measure.name]),
+      item => item[mainSeries.level.name],
+    ).every(category => category[1] > 99.5 && category[1] < 100.5);
+
     assign(config, {
       x: values.measure.name,
       xConfig: {
         title: values.measure.caption,
         tickFormat: (d: number) => measureFormatter(d, locale),
+        domain: isPercentage && isAround100 ? [0, 100] : D3PLUS_RESET,
       },
       y: mainSeries.level.name,
       yConfig: {
@@ -282,6 +291,12 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     const mainLevelName =
       mainSeries.level.name === "Month" ? "Month ISO" : mainSeries.level.name;
 
+    const isAround100 = flatRollup(
+      datagroup.dataset,
+      group => sum(group, item => item[values.measure.name]),
+      item => item[mainLevelName],
+    ).every(category => category[1] > 99.5 && category[1] < 100.5);
+
     assign(config, {
       x: mainLevelName,
       xConfig: {
@@ -291,6 +306,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       yConfig: {
         title: values.measure.caption,
         tickFormat: (d: number) => measureFormatter(d, locale),
+        domain: isPercentage && isAround100 ? [0, 100] : D3PLUS_RESET,
       },
     });
 
