@@ -7,7 +7,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   release:
@@ -18,8 +18,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
       - run: npm ci
 
