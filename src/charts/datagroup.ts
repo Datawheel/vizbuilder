@@ -83,19 +83,16 @@ export function buildDatagroup(ds: Dataset): Datagroup | undefined {
   const levelColumns = columnList.filter(column => column.type === "level");
 
   // Remove rows intended to be excluded from viz by directive
-  const exclusionRules = filterMap(levelColumns, (column): [string, string[]] | null => {
-    const exclude = column.level.annotations.vb_exclude_members?.split(",") || [];
-    return column.isID && exclude.length > 0 ? [column.name, exclude] : null;
-  });
-  const exclusionFilter = exclusionRules.reduce<(row: DataPoint) => boolean>(
-    (fn, rule) => {
-      const [columnID, exclude] = rule;
-      return row => fn(row) && !exclude.includes(`${row[columnID]}`);
-    },
-    () => true,
-  );
-  const dataset = data.filter(exclusionFilter);
-  if (dataset.length === 0) return undefined;
+  const dataset = levelColumns.reduce((data, column) => {
+    const idsToExclude = column.level.annotations.vb_exclude_members?.split(",") || [];
+    if (column.isID && idsToExclude.length > 0) {
+      const filteredData = data.filter(
+        row => !idsToExclude.includes(`${row[column.name]}`),
+      );
+      if (filteredData.length > 0) return filteredData;
+    }
+    return data;
+  }, data);
   // TODO: add 'uncategorized' difference rows
 
   const propertyColumns = groupBy(
