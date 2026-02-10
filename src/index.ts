@@ -1,9 +1,14 @@
-export {generateBarchartConfigs, type BarChart} from "./charts/barchart";
+export {type BarChart, generateBarchartConfigs} from "./charts/barchart";
 export type {BaseChart, ChartType} from "./charts/common";
-export type {CategoryLevel, CategoryHierarchy, Datagroup, LevelCaption} from "./charts/datagroup";
-export {generateDonutConfigs, type DonutChart} from "./charts/donut";
-export {DEFAULT_CHART_LIMITS, generateCharts, type Chart} from "./charts/generator";
-export {generateChoroplethMapConfigs, type ChoroplethMap} from "./charts/geomap";
+export type {
+  CategoryHierarchy,
+  CategoryLevel,
+  Datagroup,
+  LevelCaption,
+} from "./charts/datagroup";
+export {type DonutChart, generateDonutConfigs} from "./charts/donut";
+export {type Chart, DEFAULT_CHART_LIMITS, generateCharts} from "./charts/generator";
+export {type ChoroplethMap, generateChoroplethMapConfigs} from "./charts/geomap";
 export {generateLineplotConfigs, type LinePlot} from "./charts/lineplot";
 export {generateStackedareaConfigs, type StackedArea} from "./charts/stackedarea";
 export {generateTreemapConfigs, type TreeMap} from "./charts/treemap";
