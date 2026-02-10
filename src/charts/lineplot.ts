@@ -54,7 +54,7 @@ export function generateLineplotConfigs(
     const finalPlots: LinePlot[] = [];
 
     // Create a total sum plot over time if the aggregator allows it
-    if (aggregatorIn(aggregator, ["SUM", "COUNT"])) {
+    if (aggregatorIn(aggregator, ["SUM", "COUNT"]) || categoryHierarchies.length === 0) {
       finalPlots.push({
         key: shortHash(keyChain.join()),
         type: chartType,
