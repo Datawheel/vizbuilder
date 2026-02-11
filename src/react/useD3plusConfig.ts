@@ -365,8 +365,8 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
 }
 
 export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) {
-  const {datagroup, series, timeline, values} = chart;
-  const {fullMode, getFormatter, t} = params;
+  const {series, timeline, values} = chart;
+  const {t} = params;
 
   const [mainSeries] = series;
 
@@ -392,7 +392,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   const {datagroup, series, timeline, values} = chart;
   const {fullMode, getFormatter, t} = params;
 
-  const {dataset, locale} = datagroup;
+  const {locale} = datagroup;
 
   const measureCaption = values.measure.caption;
   const measureFormatter = getFormatter(values.measure);
@@ -489,8 +489,8 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 }
 
 export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
-  const {datagroup, series, timeline, values} = chart;
-  const {fullMode, getFormatter, t} = params;
+  const {series, timeline, values} = chart;
+  const {t} = params;
 
   const legendColumn = series.length > 0 && series[0].level.name;
 

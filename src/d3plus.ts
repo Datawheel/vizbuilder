@@ -1,4 +1,5 @@
 import type {CSSProperties} from "react";
+import type {GeometryObject} from "topojson-specification";
 import type {DataPoint} from "./charts/datagroup";
 
 interface AxisConfig {
@@ -48,17 +49,9 @@ type Position = "top" | "right" | "bottom" | "left";
 
 type DataPointAccessor<T> = string | ((d: DataPoint) => T);
 
-export type GeomapConfig<P extends DataPoint = DataPoint> = {
+export type GeomapConfig = {
   /** Allows removing specific geographies from topojson file to improve zooming determination. */
-  fitFilter?:
-    | number
-    | string
-    | ((d: {
-        id?: string;
-        geometry: {type: string; coordinates: unknown[]};
-        properties: Record<string, string>;
-        type: string;
-      }) => boolean);
+  fitFilter?: number | string | ((d: GeometryObject<{[k: string]: unknown}>) => boolean);
   /** Ocean color, can be any CSS value including 'transparent' */
   ocean?: string;
   /** Map projection used when displaying topojson and coordinate points */
@@ -75,7 +68,7 @@ export type GeomapConfig<P extends DataPoint = DataPoint> = {
   topojson?: string;
   /** CSS color to fill the map shapes */
   topojsonFill?: string;
-  topojsonId?: (obj: TopoJSON.GeometryObject<any>) => string;
+  topojsonId?: (obj: GeometryObject<{[k: string]: unknown}>) => string;
   zoom?: false;
 };
 
@@ -83,7 +76,7 @@ export type D3plusConfig<P extends DataPoint = DataPoint> = {
   data: P[] | string;
   locale: string;
 
-  aggs?: Record<keyof P, (d: P[keyof P]) => number | string>;
+  aggs?: {[k: string]: (d: DataPoint[]) => unknown};
   barPadding?: number; // Padding between bars
   colorScale?: string | ((d: number) => string); // Color scale or custom color function
   colorScaleConfig?: {

@@ -38,18 +38,9 @@ describe("generateCharts - BarChart", () => {
     });
 
     const charts = generateCharts([dataset], {chartLimits: {BARCHART_MAX_BARS: 20}});
-    const barCharts = charts.filter(c => c.type === "barchart");
-    // Should be filtered out or not generated
-    // Actually generator usually filters internally? Or returns empty?
-    // Let's see behavior. If it generates but ranks low, that's one thing.
-    // But barchart generator has a hard limit check usually.
-
-    // In barchart.ts: if (groups.length > limits.BARCHART_MAX_BARS) return [];
-
-    const validBarCharts = barCharts.filter(c => c.series.length > 0); // simplistic check
-    // Wait, generator returns Chart[]
+    const barChartCount = charts.filter(c => c.type === "barchart").length;
 
     // We expect it to be empty if the rule is strict.
-    expect(barCharts.length).toBe(0);
+    expect(barChartCount).toBe(0);
   });
 });

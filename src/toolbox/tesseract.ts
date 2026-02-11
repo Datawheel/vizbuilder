@@ -72,7 +72,7 @@ export function yieldDimensions(
       return {value: undefined, done: true};
     },
     [Symbol.iterator]() {
-      return this.next();
+      return this;
     },
   };
 }

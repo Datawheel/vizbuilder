@@ -1,15 +1,10 @@
 {
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "checkJs": true,
-    "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ES2021"],
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
-    "outDir": "dist",
-    "strictNullChecks": true,
-    "target": "ES2016"
-  },
-  "include": ["example", "src", "d3plus.d.ts"],
-  "exclude": ["dist", "node_modules"]
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+  }
 }

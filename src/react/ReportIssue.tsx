@@ -1,6 +1,5 @@
 import {Button, Flex, Group, Paper, Text, Title} from "@mantine/core";
 import {IconBrandGithub} from "@tabler/icons-react";
-import React from "react";
 import type {ErrorContentProps} from "./ErrorBoundary";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 

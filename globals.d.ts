@@ -1,3 +1,5 @@
+declare var global: any;
+
 declare module "d3plus-common" {
   export const RESET: string;
 

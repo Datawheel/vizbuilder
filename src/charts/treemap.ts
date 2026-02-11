@@ -42,7 +42,6 @@ export function generateTreemapConfigs(
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
-    const units = measure.annotations.units_of_measurement;
 
     // Discard if measure is associated to a parent measure
     if (valueColumn.parentMeasure) return [];

@@ -1,7 +1,7 @@
+import {resolve} from "node:path";
 import react from "@vitejs/plugin-react";
-import {defineConfig} from "vitest/config";
 import dts from "vite-plugin-dts";
-import { resolve } from "node:path";
+import {defineConfig} from "vitest/config";
 
 /**
  * Replace the target URL of the backend server in this file
@@ -14,7 +14,7 @@ const headers = {};
 // ensure the target URL ends with a trailing slash
 url.pathname = `${url.pathname}/`.replace(/\/{2,}/g, "/");
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({mode}) => ({
   plugins: [
     react(),
     dts({
@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => ({
         react: resolve(__dirname, "src/react/index.ts"),
       },
       formats: ["es", "cjs"],
-      fileName: (format, entryName) => `${entryName}.${format === "es" ? "esm" : "cjs"}.js`,
+      fileName: (format, entryName) =>
+        `${entryName}.${format === "es" ? "esm" : "cjs"}.js`,
     },
     rollupOptions: {
       external: [
@@ -65,7 +66,7 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/setupTests.ts",
-    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"]
+    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
   },
   server: {
     proxy: {
@@ -76,8 +77,8 @@ export default defineConfig(({ mode }) => ({
         headers,
         rewrite: path => path.replace(/^\/tesseract\//, url.pathname),
         secure: false,
-        target: url.origin
-      }
-    }
-  }
+        target: url.origin,
+      },
+    },
+  },
 }));

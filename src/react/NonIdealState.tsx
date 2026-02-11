@@ -1,6 +1,6 @@
 import {Center, Flex, Loader, Text, Title} from "@mantine/core";
 import {IconCircleOff} from "@tabler/icons-react";
-import React, {useMemo} from "react";
+import {useMemo} from "react";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
 export function NonIdealState(props: {status: "loading" | "empty" | "one-row"}) {

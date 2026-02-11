@@ -125,7 +125,7 @@ export function VizbuilderProvider(props: {
    * Defines a custom component to show in case no valid/useful charts can be
    * generated from the provided parameters.
    */
-  NonIdealState?: React.ComponentType<any>;
+  NonIdealState?: React.ComponentType<{status: "loading" | "empty" | "one-row"}>;
 
   /**
    * Function to access the available value Formatters.

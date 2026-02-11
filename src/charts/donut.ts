@@ -1,7 +1,7 @@
 import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn, isOneOf} from "../toolbox/validation";
+import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup, DataPoint} from "./datagroup";
@@ -130,7 +130,7 @@ export function generateDonutConfigs(
   });
 }
 
-const percentageUnitTester: {
+export const percentageUnitTester: {
   [K: string]: (
     measure: TesseractMeasure,
     dataset: DataPoint[],

@@ -1,5 +1,4 @@
 import {render, screen} from "@testing-library/react";
-import React from "react";
 import {beforeAll, describe, expect, it, vi} from "vitest";
 import type {Dataset} from "../types";
 import {Vizbuilder} from "./Vizbuilder";

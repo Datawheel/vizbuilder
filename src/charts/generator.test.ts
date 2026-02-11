@@ -1,36 +1,9 @@
 import {describe, expect, it, vi} from "vitest";
-import type {Column} from "../toolbox/columns";
 import type {Dataset} from "../types";
-import {DEFAULT_CHART_LIMITS, generateCharts} from "./generator";
+import {generateCharts} from "./generator";
 
 // Mock the console.error to avoid noise in test output
 vi.spyOn(console, "error").mockImplementation(() => {});
-
-const mockColumn: Column = {
-  type: "measure",
-  name: "Population",
-  isID: false,
-  hasID: false,
-  dimension: {
-    name: "Population",
-    type: "measure",
-    hierarchy: "Population",
-    level: "Population",
-  } as any, // Simplified mock
-};
-
-const mockLevelColumn: Column = {
-  type: "level",
-  name: "Year",
-  isID: false,
-  hasID: false,
-  dimension: {
-    name: "Year",
-    type: "time",
-    hierarchy: "Year",
-    level: "Year",
-  } as any,
-};
 
 describe("generateCharts", () => {
   it("should return an empty array if empty datasets are provided", () => {
