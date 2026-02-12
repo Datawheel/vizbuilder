@@ -18,7 +18,8 @@ export default defineConfig(({mode}) => ({
   plugins: [
     react(),
     dts({
-      insertTypesEntry: true,
+      tsconfigPath: "./tsconfig.app.json",
+      rollupTypes: true,
       exclude: ["**/*.test.ts", "**/*.test.tsx", "src/setupTests.ts", "example/**"],
     }),
   ],
