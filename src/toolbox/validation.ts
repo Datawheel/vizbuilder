@@ -1,4 +1,4 @@
-import type {Aggregator} from "@datawheel/logiclayer-client";
+import type {Aggregator, TesseractMeasure} from "@datawheel/logiclayer-client";
 
 /**
  * Returns the first number it finds in a `string`, else returns `elseValue`.
@@ -10,6 +10,24 @@ export function findFirstNumber(string: string, elseValue?: number) {
   return match ? Number.parseFloat(match[0]) : elseValue || 0;
 }
 
+/**
+ * Checks if a Tesseract measure is summable.
+ * This is determined by checking its units of measurement against a list of
+ * non-summable unit keywords.
+ * @param measure The measure to check.
+ * @returns A boolean indicating if the measure is summable.
+ */
+export function isSummableMeasure(measure: TesseractMeasure): boolean {
+  const units = measure.annotations.units_of_measurement || "";
+  return !["Percentage", "Rate", "Growth"].some(token => units.includes(token));
+}
+
+/**
+ * Typeguard to check if an aggregator is part of a certain set.
+ * @param aggregator The aggregator to check.
+ * @param set The list of aggregators to check against.
+ * @returns A boolean indicating if the aggregator is in the set.
+ */
 export function aggregatorIn<T extends Uppercase<`${Aggregator}`> | "MOE" | "RCA">(
   aggregator: Aggregator | string,
   set: T[],

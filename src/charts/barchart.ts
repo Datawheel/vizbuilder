@@ -1,7 +1,7 @@
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn} from "../toolbox/validation";
+import {aggregatorIn, isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries, buildSeriesIf} from "./common";
 import type {Datagroup} from "./datagroup";
@@ -228,8 +228,7 @@ export function generateVertBarchartConfigs(
 
   return dg.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const units = measure.annotations.units_of_measurement || "";
-    const isPercentage = ["Percentage", "Rate"].some(token => units.includes(token));
+    const isSummable = isSummableMeasure(measure);
 
     // Work only with the mainline measures
     if (valueColumn.parentMeasure) return [];
@@ -257,11 +256,12 @@ export function generateVertBarchartConfigs(
     );
 
     if (timeline) {
-      // Percentages can't be summed if split in more than 1 dimension
-      if (allLevels.length > 1 && isPercentage) return [];
+      // In timeline mode, X axis will be used by time dimension and Y axis by measure
+      // If there are more dimensions, ensure they can be summed, or bail
+      // Note: dimensions with a single member were discarded in the allLevels loop
+      if (allLevels.length > 0 && !isSummable) return [];
 
-      // In vertical barcharts the time dimension should be the primary series.
-      // If present, mix it with all available levels, and discard from there.
+      // If the measures can be summed across a certain dimension, apply stackability
       return categoryHierarchies.flatMap(catHierarchy => {
         const keyChain = [chartType, "vertical", dataset.length, measure.name];
 

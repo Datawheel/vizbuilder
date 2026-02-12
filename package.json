@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "tsc -b && vite build",
-    "start": "vite ./example/",
+    "dev": "vite ./example/ --config ./vite.config.ts",
     "lint": "biome lint ./src",
     "format": "biome format --write ./src",
     "preversion": "npm run build",
