@@ -65,6 +65,7 @@ export interface LevelCaption {
 export function buildDatagroup(ds: Dataset): Datagroup | undefined {
   const {columns, data, locale} = ds;
 
+  // TODO: recognize 'month' from level.scale
   if ("Month" in columns && /^\d{4}-\d{2}$/.test(ds.data[0].Month as string)) {
     const exampleValue = `${ds.data[0].Month}`;
     const [separator] = exampleValue.match(/[-/_]/) || [""];

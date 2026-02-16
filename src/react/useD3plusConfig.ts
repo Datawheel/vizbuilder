@@ -24,7 +24,7 @@ import type {TreeMap} from "../charts/treemap";
 import type {D3plusConfig} from "../d3plus";
 import {filterMap, getLast} from "../toolbox/array";
 import {type Column, getColumnEntity} from "../toolbox/columns";
-import {aggregatorIn, isOneOf} from "../toolbox/validation";
+import {isOneOf, isSummableMeasure} from "../toolbox/validation";
 import {type Formatter, useVizbuilderContext} from "./VizbuilderProvider";
 
 export type AggregatedDataPoint = Record<string, unknown | unknown[]>;
@@ -157,7 +157,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
 
   return {
     aggs: aggsEntries.length > 0 ? Object.fromEntries(aggsEntries) : undefined,
-    data: datagroup.dataset,
+    data: datagroup.dataset.filter(row => row[meaName] != null),
     legend: fullMode,
     legendConfig: {
       label: legendColumn
@@ -225,25 +225,22 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
   });
 
   const measureFormatter = getFormatter(values.measure);
-  const measureAggregator =
-    values.measure.annotations.aggregation_method || values.measure.aggregator;
+  const isSummable = isSummableMeasure(values.measure);
   const measureUnits = values.measure.annotations.units_of_measurement || "";
   const isPercentage =
     measureUnits.startsWith("Percentage") || measureUnits.startsWith("Rate");
 
-  const isStacked =
-    (stackedSeries && aggregatorIn(measureAggregator, ["COUNT", "SUM"])) || isPercentage;
+  const isStacked = stackedSeries && isSummable;
 
   const config = d3plusConfigBuilder.common(chart, params);
 
-  const labelStack = isStacked ? series.slice(1) : series;
+  const labelStack = stackedSeries ? series.slice(1) : series;
 
   assign(config, {
-    barPadding: fullMode ? 5 : 1,
+    barPadding: fullMode ? 1 : 0,
     discrete: chart.orientation === "horizontal" ? "y" : "x",
-    groupBy:
-      isStacked && stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
-    groupPadding: fullMode ? 5 : 1,
+    groupBy: stackedSeries ? stackedSeries.level.name : mainSeries.level.name,
+    groupPadding: fullMode ? 10 : 2,
     label(d) {
       return labelStack.map(series => d[series.level.name]).join("\n");
     },

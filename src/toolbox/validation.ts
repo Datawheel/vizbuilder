@@ -19,7 +19,7 @@ export function findFirstNumber(string: string, elseValue?: number) {
  */
 export function isSummableMeasure(measure: TesseractMeasure): boolean {
   const units = measure.annotations.units_of_measurement || "";
-  return !["Percentage", "Rate", "Growth"].some(token => units.includes(token));
+  return !["Percentage", "Rate", "Ratio", "Growth"].some(token => units.includes(token));
 }
 
 /**

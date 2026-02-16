@@ -13,6 +13,8 @@ import {ErrorBoundary} from "./ErrorBoundary";
 import {useD3plusConfig} from "./useD3plusConfig";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
+ChartCard.displayName = "Vizbuilder.ChartCard";
+
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,

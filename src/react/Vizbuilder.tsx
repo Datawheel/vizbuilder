@@ -8,6 +8,8 @@ import {ChartCard} from "./ChartCard";
 import {ErrorBoundary} from "./ErrorBoundary";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
+Vizbuilder.displayName = "Vizbuilder";
+
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
 
 /** */

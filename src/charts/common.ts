@@ -43,6 +43,7 @@ export interface BaseChart {
   timeline?: ChartSeries;
   extraConfig: {
     d3plus?: Partial<D3plusConfig>;
+    isolatedMember?: [CategoryLevel, number | string];
   };
 }
 
