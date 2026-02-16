@@ -164,9 +164,7 @@ export function useTesseractData(query: RequestParams | undefined) {
           isLoading: false,
           dataset: {
             columns,
-            data: result.data.filter(row =>
-              Object.values(row).every(value => value !== null),
-            ),
+            data: result.data,
             locale: dataLocale,
           },
         });

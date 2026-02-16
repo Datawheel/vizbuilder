@@ -47,12 +47,22 @@ export function QueriesProvider(props: {
       const initialParams = new URLSearchParams(window.location.search);
       const cubeName = initialParams.get("cube") || "";
       const cube = props.cubes[cubeName];
+      const hierarchies = cube.dimensions.flatMap(dim => dim.hierarchies);
+      const drilldowns = standardizeArray(initialParams.getAll("drilldowns")).filter(dd =>
+        hierarchies.some(hie => hie.levels.some(lvl => lvl.name === dd)),
+      );
       if (cube) {
         const initialItem: RequestParams = {
           key: Math.random().toString(16).slice(2, 10),
           cube: cubeName,
-          drilldowns: standardizeArray(initialParams.getAll("drilldowns")),
-          measures: standardizeArray(initialParams.getAll("measures")),
+          // drilldowns: standardizeArray(initialParams.getAll("drilldowns")),
+          drilldowns:
+            drilldowns.length > 0
+              ? drilldowns
+              : cube.dimensions.flatMap(dim => {
+                  return dim.hierarchies[0].levels.map(lvl => lvl.name);
+                }),
+          measures: cube.measures.map(item => item.name),
         };
         const nextItems = items
           .filter(item => item.cube === cubeName)
@@ -108,7 +118,6 @@ export function QueriesProvider(props: {
       const search = new URLSearchParams({
         cube: nextRequest.cube,
         drilldowns: nextRequest.drilldowns.join(","),
-        measures: nextRequest.measures.join(","),
       });
       const url = new URL(`?${search.toString()}`, location.href);
       window.history.pushState(value.currentQuery, "", url);

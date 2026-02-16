@@ -107,6 +107,10 @@ function App() {
       padding="xs"
       header={header}
       styles={theme => ({
+        root: {
+          height: "100vh",
+          overflow: "auto",
+        },
         main: {
           backgroundColor:
             theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.colors.gray[1],
@@ -117,6 +121,10 @@ function App() {
         downloadFormats={["svg", "png"]}
         topojsonConfig={topojsonConfig}
         getFormatter={getFormatter}
+        postprocessConfig={config => ({
+          ...config,
+          scrollContainer: ".mantine-AppShell-root",
+        })}
       >
         <Vizwrapper
           datasets={dataset || []}
