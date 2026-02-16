@@ -9,15 +9,17 @@ import type {Column} from "./toolbox/columns";
  */
 export interface ChartLimits {
   /** Maximum number of bars in barchart */
-  BARCHART_MAX_BARS: number;
-  /** Maximum number of series stacked in the single bar */
+  BARCHART_MAX_GROUPS: number;
+  /** Maximum number of members stacked in the single bar */
   BARCHART_MAX_STACKED_BARS: number;
+  /** Maximum number of members on each non-stacked group */
+  BARCHART_MAX_GROUPED_BARS: number;
   /** Maximum number of primary dimensions to show in vertical barcharts */
   BARCHART_VERTICAL_MAX_GROUPS: number;
+  /** Maximum number of time members to show in X-axis */
+  BARCHART_VERTICAL_MAX_PERIODS: number;
   /** Maximum number of total bars to be rendered in vertical barcharts */
   BARCHART_VERTICAL_TOTAL_BARS: number;
-  /** Maximum number of bars in a year barchart */
-  BARCHART_YEAR_MAX_BARS: number;
   /** Max number of groups to be rendered in a donut or pie chart */
   DONUT_SHAPE_MAX: number;
   /** Minimum number of data points in groupto render a line in lineplot */

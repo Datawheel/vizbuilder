@@ -314,7 +314,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     if (fullMode && config.groupBy) {
       assign(config, {
         barPadding: 3,
-        groupPadding: 20,
+        groupPadding: 10,
       });
     }
   }

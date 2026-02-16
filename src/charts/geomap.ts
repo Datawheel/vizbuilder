@@ -73,6 +73,7 @@ export function generateChoroplethMapConfigs(
                   datagroup: {...dg, dataset},
                   values,
                   series: [buildSeries(geoHierarchy, geoLevel)],
+                  timeline,
                   extraConfig: {
                     isolatedMember: [allowedLevel, member],
                     d3plus: d3plusConfig,

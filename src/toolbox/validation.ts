@@ -18,8 +18,14 @@ export function findFirstNumber(string: string, elseValue?: number) {
  * @returns A boolean indicating if the measure is summable.
  */
 export function isSummableMeasure(measure: TesseractMeasure): boolean {
+  const aggregator = measure.annotations.aggregation_method || measure.aggregator;
   const units = measure.annotations.units_of_measurement || "";
-  return !["Percentage", "Rate", "Ratio", "Growth"].some(token => units.includes(token));
+  return (
+    aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
+    !["Percentage", "Rate", "Ratio", "Index", "Growth"].some(token =>
+      units.includes(token),
+    )
+  );
 }
 
 /**
