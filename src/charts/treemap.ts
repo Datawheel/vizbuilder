@@ -3,6 +3,7 @@ import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
+import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup} from "./datagroup";
 
@@ -23,6 +24,7 @@ export function generateTreemapConfigs(
 ): TreeMap[] {
   const {dataset} = datagroup;
   const chartType = "treemap" as const;
+  const eligibility = new ChartEligibility(chartType);
 
   const categoryHierarchies = Object.values(datagroup.nonTimeHierarchies);
 
@@ -76,14 +78,12 @@ export function generateTreemapConfigs(
       // Bail if number of shapes to draw exceeds limit
       // TODO: recalculate count with threshold enabled
       const shapeCount = mainLevel.members.length * otherLevel.members.length;
-      if (shapeCount > TREE_MAP_SHAPE_MAX) {
-        console.debug(
-          "[%s] Series '%s' contains %d members, limit TREE_MAP_SHAPE_MAX = %d",
-          chartType,
-          `${mainLevel.name} > ${otherLevel.name}`,
-          shapeCount,
-          TREE_MAP_SHAPE_MAX,
-        );
+      if (
+        eligibility.bailIf(
+          shapeCount > TREE_MAP_SHAPE_MAX,
+          `Series ${mainLevel.name} > ${otherLevel.name} contains ${shapeCount} members (TREE_MAP_SHAPE_MAX = ${TREE_MAP_SHAPE_MAX})`,
+        )
+      ) {
         return [];
       }
 

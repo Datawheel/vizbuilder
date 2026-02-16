@@ -3,6 +3,7 @@ import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
 import {aggregatorIn} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
+import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup, DataPoint} from "./datagroup";
 
@@ -25,6 +26,7 @@ export function generateDonutConfigs(
 ): DonutChart[] {
   const {dataset} = datagroup;
   const chartType = "donut" as const;
+  const eligibility = new ChartEligibility(chartType);
 
   const categoryHierarchies = Object.values(datagroup.nonTimeHierarchies);
 
@@ -40,14 +42,12 @@ export function generateDonutConfigs(
     if (valueColumn.parentMeasure) return [];
 
     // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
-    if (!aggregatorIn(aggregator, ["SUM", "COUNT"]) && !isPercentage) {
-      console.debug(
-        "[%s] Measure '%s' has aggregator '%s' and units '%s'; can't be summed.",
-        chartType,
-        measure.name,
-        aggregator,
-        units,
-      );
+    if (
+      eligibility.bailIf(
+        !aggregatorIn(aggregator, ["SUM", "COUNT"]) && !isPercentage,
+        `Measure '${measure.name}' has aggregator '${aggregator}' and units '${units}'; can't be summed.`,
+      )
+    ) {
       return [];
     }
 
@@ -58,46 +58,45 @@ export function generateDonutConfigs(
     };
 
     // Bail if there are negative values in members
-    if (values.minValue < 0) {
-      console.debug(
-        "[%s] Measure '%s' contains members with negative values",
-        chartType,
-        measure.name,
-      );
+    if (
+      eligibility.bailIf(
+        values.minValue < 0,
+        `Measure '${measure.name}' contains members with negative values`,
+      )
+    ) {
       return [];
     }
 
     const allLevels = categoryHierarchies.flatMap(catHierarchy =>
       filterMap(catHierarchy.levels, catLevel => {
-        if (catLevel.members.length < 2) {
-          console.debug(
-            "[%s] Discarding level '%s': needs at least 2 members, has %d",
-            chartType,
-            catLevel.entity.name,
-            catLevel.members.length,
-          );
+        if (
+          eligibility.bailIf(
+            catLevel.members.length < 2,
+            `Discarding level '${catLevel.entity.name}': needs at least 2 members, has ${catLevel.members.length}`,
+          )
+        ) {
           return null;
         }
-        if (catLevel.members.length > DONUT_SHAPE_MAX) {
-          console.debug(
-            "[%s] Discarding level '%s': surpasses the limit of %d members, has %d",
-            chartType,
-            catLevel.entity.name,
-            DONUT_SHAPE_MAX,
-            catLevel.members.length,
-          );
+        if (
+          eligibility.bailIf(
+            catLevel.members.length > DONUT_SHAPE_MAX,
+            `Discarding level '${catLevel.entity.name}': surpasses the limit of ${DONUT_SHAPE_MAX} members, has ${catLevel.members.length}`,
+          )
+        ) {
           return null;
         }
         return [catHierarchy, catLevel] as const;
       }),
     );
 
-    if (isPercentage && allLevels.length > 1) {
-      console.debug(
-        "[%s] Discarding multilevel '%s': Percentages can't be summed",
-        chartType,
-        allLevels.map(entry => entry[1].name).join("-"),
-      );
+    if (
+      eligibility.bailIf(
+        isPercentage && allLevels.length > 1,
+        `Discarding multilevel '${allLevels
+          .map(entry => entry[1].name)
+          .join("-")}': Percentages can't be summed`,
+      )
+    ) {
       return [];
     }
 
