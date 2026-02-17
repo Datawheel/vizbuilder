@@ -526,7 +526,12 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   const {measure} = values;
   const aggregator = measure.annotations.aggregation_method || measure.aggregator;
   const valuesKey = `aggregator.${aggregator.toLowerCase()}`;
-  const valuesCaption = t(valuesKey, {measure: measure.caption});
+  const valuesText = t(valuesKey, {measure: measure.caption});
+  const valuesCaption =
+    valuesText.toLowerCase().startsWith(`${aggregator} ${aggregator} `) ||
+    valuesText.toLowerCase().includes(valuesKey)
+      ? measure.caption
+      : valuesText;
 
   const listFormatter = new Intl.ListFormat(chart.datagroup.locale, {
     style: "long",
@@ -577,7 +582,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
 
   return (data?: DataPoint[]): string => {
     const config = {
-      values: valuesCaption.endsWith(valuesKey) ? measure.caption : valuesCaption,
+      values: valuesCaption ? measure.caption : valuesCaption,
       series: listFormatter.format(trimList(t, series.map(seriesStr), 4)),
       time: timeline?.level.caption,
       time_period: timeline ? getLastTimePeriod(data, timeline) : "",
