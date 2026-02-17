@@ -1,7 +1,7 @@
 import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn} from "../toolbox/validation";
+import {isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
@@ -36,26 +36,24 @@ export function generateDonutConfigs(
     const {measure, range} = valueColumn;
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement || "";
-    const isPercentage = ["Percentage", "Rate"].some(token => units.includes(token));
-
-    // Work only with the mainline measures
-    if (valueColumn.parentMeasure) return [];
-
-    // Bail if the measure can't be summed, or doesn't represent percentage, rate, or proportion
-    if (
-      eligibility.bailIf(
-        !aggregatorIn(aggregator, ["SUM", "COUNT"]) && !isPercentage,
-        `Measure '${measure.name}' has aggregator '${aggregator}' and units '${units}'; can't be summed.`,
-      )
-    ) {
-      return [];
-    }
-
+    const keyChain = [chartType, dataset.length, measure.name];
     const values = {
       measure,
       minValue: range[0],
       maxValue: range[1],
     };
+
+    // Work only with the mainline measures
+    if (valueColumn.parentMeasure) return [];
+
+    if (
+      eligibility.bailIf(
+        !isSummableMeasure(measure),
+        `Values in measure '${measure.name}' can't be summed (${aggregator} / ${units})`,
+      )
+    ) {
+      return [];
+    }
 
     // Bail if there are negative values in members
     if (
@@ -72,15 +70,7 @@ export function generateDonutConfigs(
         if (
           eligibility.bailIf(
             catLevel.members.length < 2,
-            `Discarding level '${catLevel.entity.name}': needs at least 2 members, has ${catLevel.members.length}`,
-          )
-        ) {
-          return null;
-        }
-        if (
-          eligibility.bailIf(
-            catLevel.members.length > DONUT_SHAPE_MAX,
-            `Discarding level '${catLevel.entity.name}': surpasses the limit of ${DONUT_SHAPE_MAX} members, has ${catLevel.members.length}`,
+            `Level '${catLevel.entity.name}' has ${catLevel.members.length} member; at least 2 required`,
           )
         ) {
           return null;
@@ -91,33 +81,29 @@ export function generateDonutConfigs(
 
     if (
       eligibility.bailIf(
-        isPercentage && allLevels.length > 1,
+        allLevels.length > 1 && !isSummableMeasure(measure),
         `Discarding multilevel '${allLevels
           .map(entry => entry[1].name)
-          .join("-")}': Percentages can't be summed`,
+          .join("-")}', measure '${measure.name}' can't be summed`,
       )
     ) {
       return [];
     }
 
-    // const percentageTest = percentageUnitTester[units];
-    // if (percentageTest && !percentageTest(measure, dataset, range)) {
-    //   return [];
-    // }
-
-    return allLevels.map(entry => {
+    return allLevels.flatMap(entry => {
       const [catHierarchy, catLevel] = entry;
-      const keyChain = [
-        chartType,
-        dataset.length,
-        measure.name,
-        catHierarchy.dimension.name,
-        catHierarchy.hierarchy.name,
-        catLevel.name,
-      ];
+
+      if (
+        eligibility.bailIf(
+          catLevel.members.length > DONUT_SHAPE_MAX,
+          `Level '${catLevel.entity.name}' has ${catLevel.members.length}, limit DONUT_SHAPE_MAX = ${DONUT_SHAPE_MAX}`,
+        )
+      ) {
+        return [];
+      }
 
       return {
-        key: shortHash(keyChain.join()),
+        key: shortHash(keyChain.concat(catLevel.name).join()),
         type: chartType,
         datagroup,
         values,
