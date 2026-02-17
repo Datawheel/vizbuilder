@@ -38,8 +38,6 @@ declare module "@datawheel/logiclayer-client" {
     suggested_levels?: string;
     /** General topic area of dataset (for use in dropdown/variable explorer) */
     topic: string;
-    /** List of member IDs separated by comma, to exclude them from the visualizations */
-    vb_exclude_members?: string;
   }
 
   interface MeasureAnnotations {
@@ -83,5 +81,10 @@ declare module "@datawheel/logiclayer-client" {
     dim_type?: string;
     /** Boolean to inform whether the user must cut or drilldown on this dimension when using this cube */
     is_required?: "true" | "false";
+  }
+
+  interface LevelAnnotations {
+    /** List of member IDs separated by comma, to exclude them from the visualizations */
+    vb_exclude_members?: string;
   }
 }

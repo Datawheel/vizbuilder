@@ -17,6 +17,7 @@ export function getAnnotation<T extends Annotations, K extends string>(
   return (
     (ann[`${annotation}_${locale}`] as T[K]) ||
     (ann[`${annotation}_${locale.slice(0, 2)}`] as T[K]) ||
+    (ann[`${annotation}_en`] as T[K]) ||
     ann[annotation]
   );
 }
