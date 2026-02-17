@@ -67,7 +67,7 @@ export default defineConfig(({mode}) => ({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/setupTests.ts",
-    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
   },
   server: {
     proxy: {
