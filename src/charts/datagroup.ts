@@ -61,19 +61,22 @@ export interface LevelCaption {
   members: string[] | number[] | boolean[];
 }
 
-/** */
-export function buildDatagroup(ds: Dataset): Datagroup | undefined {
-  const {columns, data, locale} = ds;
-
+export function injectMonthISO(dataset: DataPoint[]): void {
+  const sample = dataset[0];
   // TODO: recognize 'month' from level.scale
-  if ("Month" in columns && /^\d{4}-\d{2}$/.test(ds.data[0].Month as string)) {
-    const exampleValue = `${ds.data[0].Month}`;
+  if (sample && sample.Month && /^\d{4}-\d{2}$/.test(sample.Month as string)) {
+    const exampleValue = `${sample.Month}`;
     const [separator] = exampleValue.match(/[-/_]/) || [""];
-    for (let index = 0; index < data.length; index++) {
-      const d = data[index];
+    for (let index = 0; index < dataset.length; index++) {
+      const d = dataset[index];
       d["Month ISO"] = `${d.Month}${separator}01T00:00:00`;
     }
   }
+}
+
+/** */
+export function buildDatagroup(ds: Dataset): Datagroup | undefined {
+  const {columns, data, locale} = ds;
 
   const collator = new Intl.Collator(locale, {numeric: true, ignorePunctuation: false});
 

@@ -157,7 +157,7 @@ function buildCommonConfig(chart: Chart, params: ChartBuilderParams): D3plusConf
 
   return {
     aggs: aggsEntries.length > 0 ? Object.fromEntries(aggsEntries) : undefined,
-    data: datagroup.dataset.filter(row => row[meaName] != null),
+    data: datagroup.dataset,
     legend: fullMode,
     legendConfig: {
       label: legendColumn

@@ -1,10 +1,11 @@
 import type {TesseractLevel} from "@datawheel/logiclayer-client";
+import {keyBy} from "lodash-es";
 import type {D3plusConfig} from "../d3plus";
 import {filterMap} from "../toolbox/array";
 import type {ChartLimits, Dataset} from "../types";
 import {type BarChart, generateBarchartConfigs} from "./barchart";
 import type {ChartType} from "./common";
-import {buildDatagroup, type Datagroup} from "./datagroup";
+import {buildDatagroup, type Datagroup, injectMonthISO} from "./datagroup";
 import {type DonutChart, generateDonutConfigs} from "./donut";
 import {type ChoroplethMap, generateChoroplethMapConfigs} from "./geomap";
 import {generateLineplotConfigs, type LinePlot} from "./lineplot";
@@ -71,22 +72,49 @@ export function generateCharts(
     getTopojsonConfig: options.getTopojsonConfig || (() => undefined),
   };
 
-  return datasets
-    .filter(dataset => dataset.data.length > 0 && dataset.locale)
-    .flatMap(dataset => {
-      const datagroup = buildDatagroup(dataset);
-      return filterMap(chartTypes, chartType => {
-        const generator = chartGenerator[chartType];
-        try {
-          return datagroup && generator
-            ? generator(datagroup, chartLimits, chartProps)
-            : null;
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      }).flat();
-    });
+  return (
+    datasets
+      // Remove datasets with no data or no specified locale (required for labels)
+      .filter(dataset => dataset.data.length > 0 && dataset.locale)
+      // Split each measure on its own Dataset object, filter nulls per measure
+      .flatMap((dataset): Dataset[] => {
+        injectMonthISO(dataset.data);
+        const columns = Object.values(dataset.columns);
+        const measureColumns = columns.filter(column => column.type === "measure");
+        return filterMap(measureColumns, column => {
+          if (column.parentMeasure) return null;
+          const {name: measureName} = column;
+          const measureFamily = filterMap(measureColumns, column =>
+            (column.parentMeasure || column).name === measureName ? column.name : null,
+          );
+          const filteredColumns = keyBy(
+            columns.filter(
+              column => column.type !== "measure" || measureFamily.includes(column.name),
+            ),
+            "name",
+          );
+          return {
+            columns: filteredColumns,
+            data: dataset.data.filter(row => row[measureName] != null),
+            locale: dataset.locale,
+          };
+        });
+      })
+      .flatMap(dataset => {
+        const datagroup = buildDatagroup(dataset);
+        return filterMap(chartTypes, chartType => {
+          const generator = chartGenerator[chartType];
+          try {
+            return datagroup && generator
+              ? generator(datagroup, chartLimits, chartProps)
+              : null;
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        }).flat();
+      })
+  );
 }
 
 generateCharts.generators = chartGenerator;
