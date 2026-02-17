@@ -1,6 +1,7 @@
-import {Chip, Flex} from "@mantine/core";
-import React, {useMemo} from "react";
-import {CubePicker} from "./CubePicker";
+import {Button, Chip, Flex, rem, SelectChevronIcon} from "@mantine/core";
+import {IconCube} from "@tabler/icons-react";
+import {useMemo} from "react";
+import {FullscreenSearch} from "./FullscreenSearch";
 import {useQueries} from "./QueriesProvider";
 import {useTesseract} from "./TesseractProvider";
 
@@ -83,13 +84,22 @@ export function QueryManager() {
 
   return (
     <Flex style={{flex: "1 0"}} direction="row" align="center" gap="sm">
-      <CubePicker
+      <FullscreenSearch
+        list={Object.values(cubes)}
         locale={dataLocale}
-        onChange={setCurrentQuery}
-        options={cubes}
-        selected={currentQuery?.cube}
-        size="xs"
-      />
+        onSelect={cube => setCurrentQuery(cube.name)}
+      >
+        <Button
+          variant="default"
+          size="xs"
+          uppercase
+          leftIcon={<IconCube size={rem(16)} />}
+          rightIcon={<SelectChevronIcon size="md" error={!currentQuery} />}
+          maw={300}
+        >
+          {currentQuery?.cube || "<None>"}
+        </Button>
+      </FullscreenSearch>
       {levels}
     </Flex>
   );
