@@ -41,7 +41,6 @@ export function generateLineplotConfigs(
 
   return dg.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const keyChain = [chartType, dataset.length, measure.name];
     const finalPlots: LinePlot[] = [];
     const values = {
