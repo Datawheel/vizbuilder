@@ -8,7 +8,7 @@ import {buildColumn} from "../src/toolbox/columns";
 
 describe("generateCharts", async () => {
   const locale = "en";
-  const url = new URL("https://datasaudi-pytesseract-feb.datawheel.us/tesseract/");
+  const url = new URL("https://api.datasaudi.datawheel.us/tesseract/");
   const client = new TesseractModuleClient(url);
 
   const schema = await client.fetchSchema({locale});

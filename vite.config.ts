@@ -7,7 +7,7 @@ import {defineConfig} from "vitest/config";
  * Replace the target URL of the backend server in this file
  * to make vite proxy the requests and avoid CORS issues.
  */
-const url = new URL("https://datasaudi-pytesseract-feb.datawheel.us/tesseract/");
+const url = new URL("https://api.datasaudi.datawheel.us/tesseract/");
 // const url = new URL("https://api-ts-dev.datausa.io/tesseract/");
 const headers = {};
 
