@@ -209,9 +209,15 @@ export function generateVertBarchartConfigs(
 
   const timeline = buildSeriesIf(dg.timeHierarchy, series => {
     const memCount = series.members.length;
-    return !eligibility.bailIf(
-      memCount < 2 || memCount > BARCHART_VERTICAL_MAX_PERIODS,
-      `Time series '${series.name}' contains a ${memCount} members; limit BARCHART_VERTICAL_MAX_PERIODS = ${BARCHART_VERTICAL_MAX_PERIODS}`,
+    return !(
+      eligibility.bailIf(
+        memCount < 2,
+        `Time series '${series.name}' has ${memCount} member; at least 2 required`,
+      ) ||
+      eligibility.bailIf(
+        memCount > BARCHART_VERTICAL_MAX_PERIODS,
+        `Time series '${series.name}' contains a ${memCount} members; limit BARCHART_VERTICAL_MAX_PERIODS = ${BARCHART_VERTICAL_MAX_PERIODS}`,
+      )
     );
   });
 

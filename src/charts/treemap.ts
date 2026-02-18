@@ -1,7 +1,7 @@
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn} from "../toolbox/validation";
+import {aggregatorIn, isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
@@ -49,10 +49,24 @@ export function generateTreemapConfigs(
     if (valueColumn.parentMeasure) return [];
 
     // Treemaps are valid only with SUM-aggregated measures
-    if (!aggregatorIn(aggregator, ["SUM", "COUNT"])) return [];
+    if (
+      eligibility.bailIf(
+        !isSummableMeasure(measure),
+        `Measure '${measure.name}' is not summable`,
+      )
+    ) {
+      return [];
+    }
 
     // All values must be positive
-    if (dataset.some(row => (row[measure.name] as number) < 0)) return [];
+    if (
+      eligibility.bailIf(
+        range[0] < 0,
+        `Measure '${measure.name}' contains negative values`,
+      )
+    ) {
+      return [];
+    }
 
     const values = {
       measure,
