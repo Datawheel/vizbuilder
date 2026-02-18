@@ -424,7 +424,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     },
     y: values.measure.name,
     yConfig: {
-      scale: "auto",
+      scale: values.maxValue > 0 && values.minValue < 0 ? "linear" : "auto",
       tickFormat: (d: number) => measureFormatter(d, locale),
       title: measureCaption,
     },
