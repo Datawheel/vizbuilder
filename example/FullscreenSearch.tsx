@@ -33,13 +33,16 @@ export function FullscreenSearch(props: {
   const theme = useMantineTheme();
 
   const groupedResults = useMemo(() => {
-    const query = new RegExp(search.trim().replace(" ", ".+"), "i");
+    const query = new RegExp(search.trim().replace(/\s+/g, ".+"), "i");
     // Show all if query is empty, or filter by query
     const filtered = query
       ? list.filter(
           item =>
             query.test(item.name) ||
-            query.test(getAnnotation(item, "table", locale) || item.caption),
+            query.test(getAnnotation(item, "table", locale) || item.caption) ||
+            item.measures.some(
+              measure => query.test(measure.name) || query.test(measure.caption),
+            ),
         )
       : list;
     return groupBy(
