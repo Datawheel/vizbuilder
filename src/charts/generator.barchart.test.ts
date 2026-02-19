@@ -37,7 +37,7 @@ describe("generateCharts - BarChart", () => {
       data,
     });
 
-    const charts = generateCharts([dataset], {chartLimits: {BARCHART_MAX_GROUPS: 20}});
+    const charts = generateCharts([dataset], {chartLimits: {BARCHART_HORI_MAX_GROUPS: 20}});
     const barChartCount = charts.filter(c => c.type === "barchart").length;
 
     // We expect it to be empty if the rule is strict.

@@ -72,6 +72,7 @@ declare module "@datawheel/logiclayer-client" {
       | "Families"
       | "Deaths"
       | "Index";
+    vb_preferred_orientation?: "horizontal" | "vertical";
   }
 
   interface DimensionAnnotations {

@@ -1,6 +1,8 @@
+import {max} from "lodash-es";
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
+import {estimateWordWidth} from "../toolbox/strings";
 import {isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
@@ -19,12 +21,38 @@ export function generateBarchartConfigs(
   datagroup: Datagroup,
   chartLimits: ChartLimits,
 ): BarChart[] {
-  // TODO: criteria for orientation is very subjective;
-  // timeline in vertical should be considered as an exception and prefer lines
-  return [
-    ...generateHoriBartchartConfigs(datagroup, chartLimits),
-    ...generateVertBarchartConfigs(datagroup, chartLimits),
-  ];
+  // Datagroups are separated by measure; we can safely pick orientation if repeated
+  // chart.key is intentionally configured the same for both orientations
+  const horizonals = Object.fromEntries(
+    generateHoriBartchartConfigs(datagroup, chartLimits).map(chart => [chart.key, chart]),
+  );
+  const verticals = Object.fromEntries(
+    generateVertBarchartConfigs(datagroup, chartLimits).map(chart => [chart.key, chart]),
+  );
+
+  return Object.keys({...horizonals, ...verticals}).map(key => {
+    const horiChart = horizonals[key];
+    const vertChart = verticals[key];
+    if (horiChart && vertChart) {
+      // Same measure each time, but ensures typing
+      const preferred = horiChart.values.measure.annotations.vb_preferred_orientation;
+      if (preferred) {
+        return preferred === "vertical" ? vertChart : horiChart;
+      }
+      // Long labels should prefer horizontal barcharts
+      const lastSeries = horiChart.series.at(-1);
+      if (lastSeries) {
+        const {members = lastSeries.members} =
+          lastSeries.captions[lastSeries.level.name] || {};
+        const labelList = Object.values(members).map(str =>
+          estimateWordWidth(String(str)),
+        );
+        return (max(labelList) || NaN) < 12 ? vertChart : horiChart;
+      }
+      // Other criteria can be added here
+    }
+    return horiChart || vertChart;
+  });
 }
 
 /**
@@ -42,7 +70,7 @@ export function generateBarchartConfigs(
 export function generateHoriBartchartConfigs(
   datagroup: Datagroup,
   {
-    BARCHART_MAX_GROUPS,
+    BARCHART_HORI_MAX_GROUPS,
     BARCHART_MAX_STACKED_BARS,
     BARCHART_MAX_GROUPED_BARS,
   }: ChartLimits,
@@ -58,7 +86,8 @@ export function generateHoriBartchartConfigs(
 
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const keyChain = [chartType, dataset.length, measure.name];
+    // second param is "does it contain an interactive non-visible dimension?"
+    const keyChain = [chartType, Boolean(timeline), dataset.length, measure.name];
     const isSummable = isSummableMeasure(measure);
     const values = {
       measure,
@@ -91,8 +120,8 @@ export function generateHoriBartchartConfigs(
 
         if (
           eligibility.bailIf(
-            mainLevel.members.length > BARCHART_MAX_GROUPS,
-            `Unique series '${mainLevel.name}' contains ${mainLevel.members.length} members; limit BARCHART_MAX_GROUPS = ${BARCHART_MAX_GROUPS}`,
+            mainLevel.members.length > BARCHART_HORI_MAX_GROUPS,
+            `Unique series '${mainLevel.name}' contains ${mainLevel.members.length} members; limit BARCHART_HORI_MAX_GROUPS = ${BARCHART_HORI_MAX_GROUPS}`,
           )
         ) {
           return [];
@@ -126,8 +155,8 @@ export function generateHoriBartchartConfigs(
       // Bail if the amount of members in main level is out of limits
       if (
         eligibility.bailIf(
-          mainLevel.members.length > BARCHART_MAX_GROUPS,
-          `Main series '${mainLevel.name}' contains ${mainLevel.members.length} members; limit BARCHART_MAX_GROUPS = ${BARCHART_MAX_GROUPS}`,
+          mainLevel.members.length > BARCHART_HORI_MAX_GROUPS,
+          `Main series '${mainLevel.name}' contains ${mainLevel.members.length} members; limit BARCHART_MAX_GROUPS = ${BARCHART_HORI_MAX_GROUPS}`,
         )
       ) {
         return [];
@@ -186,9 +215,9 @@ export function generateVertBarchartConfigs(
   {
     BARCHART_MAX_GROUPED_BARS,
     BARCHART_MAX_STACKED_BARS,
-    BARCHART_VERTICAL_MAX_GROUPS,
-    BARCHART_VERTICAL_MAX_PERIODS,
-    BARCHART_VERTICAL_TOTAL_BARS,
+    BARCHART_VERT_MAX_GROUPS,
+    BARCHART_VERT_MAX_PERIODS,
+    BARCHART_VERT_TOTAL_BARS,
   }: ChartLimits,
 ): BarChart[] {
   const {dataset} = dg;
@@ -215,15 +244,16 @@ export function generateVertBarchartConfigs(
         `Time series '${series.name}' has ${memCount} member; at least 2 required`,
       ) ||
       eligibility.bailIf(
-        memCount > BARCHART_VERTICAL_MAX_PERIODS,
-        `Time series '${series.name}' contains a ${memCount} members; limit BARCHART_VERTICAL_MAX_PERIODS = ${BARCHART_VERTICAL_MAX_PERIODS}`,
+        memCount > BARCHART_VERT_MAX_PERIODS,
+        `Time series '${series.name}' contains a ${memCount} members; limit BARCHART_VERT_MAX_PERIODS = ${BARCHART_VERT_MAX_PERIODS}`,
       )
     );
   });
 
   return dg.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const keyChain = [chartType, "vertical", dataset.length, measure.name];
+    // second param is "does it contain an interactive non-visible dimension?"
+    const keyChain = [chartType, false, dataset.length, measure.name];
     const isSummable = isSummableMeasure(measure);
     const values = {
       measure,
@@ -252,8 +282,17 @@ export function generateVertBarchartConfigs(
     if (timeline) {
       if (
         eligibility.bailIf(
-          timeline.members.length > BARCHART_VERTICAL_MAX_PERIODS,
-          `Time series '${timeline.name}' contains ${timeline.members.length} members; limit BARCHART_VERTICAL_MAX_PERIODS = ${BARCHART_VERTICAL_MAX_PERIODS}`,
+          timeline.members.length > BARCHART_VERT_MAX_PERIODS,
+          `Time series '${timeline.name}' contains ${timeline.members.length} members; limit BARCHART_VERT_MAX_PERIODS = ${BARCHART_VERT_MAX_PERIODS}`,
+        )
+      ) {
+        return [];
+      }
+
+      if (
+        eligibility.bailIf(
+          allLevels.length > 1 && !isSummable,
+          `Measure '${measure.name}' can't be summed, and there are ${allLevels.length} series, which would be summed`,
         )
       ) {
         return [];
@@ -285,7 +324,7 @@ export function generateVertBarchartConfigs(
         if (
           eligibility.bailIf(
             !isSummable && members.length > BARCHART_MAX_GROUPED_BARS,
-            `Grouped series '${level.name}' contains ${members.length} members and measure '${measure.name}' can't be stacked; limit BARCHART_MAX_GROUPED_BARS = ${BARCHART_MAX_GROUPED_BARS}`,
+            `Grouped series '${level.name}' contains ${members.length} members; limit BARCHART_MAX_GROUPED_BARS = ${BARCHART_MAX_GROUPED_BARS}`,
           )
         ) {
           return [];
@@ -294,8 +333,8 @@ export function generateVertBarchartConfigs(
         const totalBars = timeline.members.length * members.length;
         if (
           eligibility.bailIf(
-            totalBars > BARCHART_VERTICAL_TOTAL_BARS,
-            `Combination of time series '${timeline.name}' and category series '${level.name}' would render ${timeline.members.length} groups of ${members.length} bars, limit BARCHART_VERTICAL_TOTAL_BARS = ${BARCHART_VERTICAL_TOTAL_BARS}`,
+            totalBars > BARCHART_VERT_TOTAL_BARS,
+            `Combination of time series '${timeline.name}' and category series '${level.name}' would render ${timeline.members.length} groups of ${members.length} bars, limit BARCHART_VERT_TOTAL_BARS = ${BARCHART_VERT_TOTAL_BARS}`,
           )
         ) {
           return [];
@@ -327,8 +366,8 @@ export function generateVertBarchartConfigs(
 
       if (
         eligibility.bailIf(
-          mainLevel.members.length > BARCHART_VERTICAL_MAX_GROUPS,
-          `Main series '${mainLevel.name}' has ${mainLevel.members.length} members; limit BARCHART_VERTICAL_MAX_GROUPS = ${BARCHART_VERTICAL_MAX_GROUPS}`,
+          mainLevel.members.length > BARCHART_VERT_MAX_GROUPS,
+          `Main series '${mainLevel.name}' has ${mainLevel.members.length} members; limit BARCHART_VERT_MAX_GROUPS = ${BARCHART_VERT_MAX_GROUPS}`,
         )
       ) {
         return [];
@@ -337,8 +376,8 @@ export function generateVertBarchartConfigs(
       const totalBars = mainLevel.members.length * otherLevel.members.length;
       if (
         eligibility.bailIf(
-          totalBars > BARCHART_VERTICAL_TOTAL_BARS,
-          `Combination of series '${mainLevel.name}' and '${otherLevel.name}' would render ${mainLevel.members.length} groups of ${otherLevel.members.length} bars, limit BARCHART_VERTICAL_TOTAL_BARS = ${BARCHART_VERTICAL_TOTAL_BARS}`,
+          totalBars > BARCHART_VERT_TOTAL_BARS,
+          `Combination of series '${mainLevel.name}' and '${otherLevel.name}' would render ${mainLevel.members.length} groups of ${otherLevel.members.length} bars, limit BARCHART_VERT_TOTAL_BARS = ${BARCHART_VERT_TOTAL_BARS}`,
         )
       ) {
         return [];

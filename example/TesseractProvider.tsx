@@ -4,7 +4,6 @@ import type {
   TesseractSchemaResponse,
 } from "@datawheel/logiclayer-client";
 import {useLocalStorage} from "@mantine/hooks";
-import {fromPairs} from "lodash-es";
 import React, {
   createContext,
   useCallback,
@@ -108,7 +107,11 @@ export function TesseractProvider(props: {
     fetchSchema().then(
       data => {
         setSchema({
-          cubes: fromPairs(data.cubes.map(cube => [cube.name, cube])),
+          cubes: Object.fromEntries(
+            data.cubes
+              .filter(cube => !cube.annotations.hide_in_ui)
+              .map(cube => [cube.name, cube]),
+          ),
           availableLocale: data.locales,
           locale: schema.locale || data.default_locale,
         });
