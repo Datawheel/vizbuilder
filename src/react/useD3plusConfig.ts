@@ -259,15 +259,16 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     config.time = timeLevelName === "Month" ? "Month ISO" : timeLevelName;
   }
 
+  const mainLevelName =
+    mainSeries.level.name === "Month" ? "Month ISO" : mainSeries.level.name;
+  const isAround100 = flatRollup(
+    datagroup.dataset,
+    group => sum(group, item => item[values.measure.name]),
+    item => item[mainLevelName],
+  ).every(category => category[1] > 99.5 && category[1] < 100.5);
+
   if (orientation === "horizontal") {
     const sortKey = mainSeries.name;
-
-    const isAround100 = flatRollup(
-      datagroup.dataset,
-      group => sum(group, item => item[values.measure.name]),
-      item => item[mainSeries.level.name],
-    ).every(category => category[1] > 99.5 && category[1] < 100.5);
-
     assign(config, {
       x: values.measure.name,
       xConfig: {
@@ -285,15 +286,6 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
           : (a, b) => collate.compare(a[sortKey], b[sortKey]),
     });
   } else {
-    const mainLevelName =
-      mainSeries.level.name === "Month" ? "Month ISO" : mainSeries.level.name;
-
-    const isAround100 = flatRollup(
-      datagroup.dataset,
-      group => sum(group, item => item[values.measure.name]),
-      item => item[mainLevelName],
-    ).every(category => category[1] > 99.5 && category[1] < 100.5);
-
     assign(config, {
       x: mainLevelName,
       xConfig: {
@@ -311,7 +303,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       config.time = mainLevelName;
     }
 
-    if (fullMode && config.groupBy) {
+    if (fullMode && isStacked) {
       assign(config, {
         barPadding: 3,
         groupPadding: 10,
@@ -393,6 +385,7 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   const measureCaption = values.measure.caption;
   const measureFormatter = getFormatter(values.measure);
+  const measureUnits = values.measure.annotations.units_of_measurement || "";
 
   const config = d3plusConfigBuilder.common(chart, params);
 
@@ -424,7 +417,10 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     },
     y: values.measure.name,
     yConfig: {
-      scale: values.maxValue > 0 && values.minValue < 0 ? "linear" : "auto",
+      scale:
+        (values.maxValue > 0 && values.minValue < 0) || measureUnits === "Growth"
+          ? "linear"
+          : "auto",
       tickFormat: (d: number) => measureFormatter(d, locale),
       title: measureCaption,
     },
