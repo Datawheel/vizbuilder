@@ -41,6 +41,8 @@ declare module "@datawheel/logiclayer-client" {
   }
 
   interface MeasureAnnotations {
+    /** Signals the resulting rows can be further aggregated, when grouped by a level under the specified hierarchies. */
+    aggregable_across?: string;
     /** Method by which the measure is aggregated */
     aggregation_method?: "COUNT" | "SUM" | "AVERAGE" | "MEDIAN" | "MOE" | "RCA";
     /** Expanded description of a particular Measure */
@@ -72,6 +74,7 @@ declare module "@datawheel/logiclayer-client" {
       | "Families"
       | "Deaths"
       | "Index";
+    /** Expresses a preference to show a specific orientation for the generated charts on vizbuilder.*/
     vb_preferred_orientation?: "horizontal" | "vertical";
   }
 
