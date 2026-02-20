@@ -118,7 +118,7 @@ export function ChartCard(props: {
             {onFocus && focusButton}
           </Group>
           <Box
-            style={{flex: "1 1 auto", height: 10}}
+            style={{flex: "1 1 auto", height: 10, overflow: "hidden"}}
             ref={nodeRef}
             sx={{"& > .viz": {height: "100%"}}}
           >

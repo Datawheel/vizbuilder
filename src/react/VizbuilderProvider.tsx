@@ -19,22 +19,24 @@ type Anycase<T extends string> = Uppercase<T> | Lowercase<T>;
 export type Formatter = (value: number, locale?: string) => string;
 
 export interface VizbuilderContextValue {
+  CardErrorComponent: React.ComponentType<ErrorContentProps>;
   chartLimits: ChartLimits;
   chartTypes: ChartType[];
   datacap: number;
   downloadFormats: ("PNG" | "SVG" | "JPG")[];
-  CardErrorComponent: React.ComponentType<ErrorContentProps>;
-  ViewErrorComponent: React.ComponentType<ErrorContentProps>;
-  NonIdealState: React.ComponentType<{status: "loading" | "empty" | "one-row"}>;
   getFormatter: (key: string | TesseractMeasure) => Formatter;
   getTopojsonConfig: (level: TesseractLevel) => Partial<D3plusConfig>;
+  NonIdealState: React.ComponentType<{status: "loading" | "empty" | "one-row"}>;
+  pagination: boolean;
   postprocessConfig: (
     config: D3plusConfig,
     chart: Chart,
     params: ChartBuilderParams,
   ) => D3plusConfig | false;
   showConfidenceInt: boolean;
+  suggestedWidth: number;
   translate: TranslateFunction;
+  ViewErrorComponent: React.ComponentType<ErrorContentProps>;
 }
 
 const defaults: VizbuilderContextValue = {
@@ -55,8 +57,10 @@ const defaults: VizbuilderContextValue = {
   },
   getTopojsonConfig: () => ({}),
   NonIdealState: NonIdealState,
+  pagination: false,
   postprocessConfig: identity,
   showConfidenceInt: false,
+  suggestedWidth: 500,
   translate: translateFunctionFactory(defaultTranslation),
   ViewErrorComponent: () => null,
 };
@@ -102,14 +106,6 @@ export function VizbuilderProvider(props: {
   downloadFormats?: Anycase<"SVG" | "PNG" | "JPG">[];
 
   /**
-   * Determines if the charts will use associated measures to show confidence
-   * intervals or margins of error.
-   *
-   * @default false
-   */
-  showConfidenceInt?: boolean;
-
-  /**
    * Specifies a component to render instead of the content in case an Error
    * inside a ChartCard can't be recovered.
    */
@@ -135,6 +131,13 @@ export function VizbuilderProvider(props: {
   getFormatter?: (key: string | TesseractMeasure) => Formatter;
 
   /**
+   * Specifies if the grid view should use pagination to limit the amount of charts
+   * being rendered at the same time. This disables the scrolling and calculates
+   * the amount of charts per page based on the suggestedWidth.
+   */
+  pagination?: boolean;
+
+  /**
    * Custom d3plus configuration to apply to all generated charts.
    * Unlike measureConfig and topojsonConfig, this is applied after all other
    * chart configs have been resolved, so is able to overwrite everything.
@@ -144,6 +147,22 @@ export function VizbuilderProvider(props: {
     chart: Chart,
     params: ChartBuilderParams,
   ) => D3plusConfig | false;
+
+  /**
+   * Determines if the charts will use associated measures to show confidence
+   * intervals or margins of error.
+   *
+   * @default false
+   */
+  showConfidenceInt?: boolean;
+
+  /**
+   * Specifies a width the charts should be rendered with on the grid view with
+   * pagination active. The final size will vary ~15%.
+   *
+   * @default 500
+   */
+  suggestedWidth?: number;
 
   /**
    * Custom d3plus configuration to apply when a chart series references a
@@ -184,8 +203,10 @@ export function VizbuilderProvider(props: {
           ? topojsonConfig
           : item => topojsonConfig[item.name],
       NonIdealState: props.NonIdealState || defaults.NonIdealState,
+      pagination: props.pagination || defaults.pagination,
       postprocessConfig: postprocessConfig,
       showConfidenceInt: props.showConfidenceInt || defaults.showConfidenceInt,
+      suggestedWidth: props.suggestedWidth || defaults.suggestedWidth,
       translate: props.translate || defaults.translate,
       ViewErrorComponent: props.ViewErrorComponent || defaults.ViewErrorComponent,
     };
@@ -198,7 +219,9 @@ export function VizbuilderProvider(props: {
     props.datacap,
     props.getFormatter,
     props.NonIdealState,
+    props.pagination,
     props.showConfidenceInt,
+    props.suggestedWidth,
     props.translate,
     props.ViewErrorComponent,
     topojsonConfig,
