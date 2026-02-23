@@ -1,148 +1,147 @@
-type EstimateResult = {
-  targetCellWidth: number;
-  minCellWidth: number;
-  maxCellWidth: number;
-  targetCellHeight: number;
-  cols: number;
+export interface LayoutResult {
+  pageIndex: number;
+  columns: number;
   rows: number;
-  renderedCells: number;
-  emptySlots: number;
+  itemsPerPage: number;
   cellWidth: number;
   cellHeight: number;
-  usedWidth: number;
-  usedHeight: number;
-  widthUtilization: number;
-  heightUtilization: number;
-};
+}
 
-export function estimateFromTargetCellWidth(
-  W: number,
-  H: number,
-  targetWidth: number,
-  options?: {
-    tolerancePercent?: number; // default 15
-    targetRatio?: number; // default 4/3
-    maxCols?: number;
-    preferFillWidth?: boolean; // unused but kept for compatibility
-    nRequested?: number;
-  },
-): EstimateResult {
-  if (W <= 0 || H <= 0 || targetWidth <= 0)
-    throw new Error("W, H y targetWidth deben ser > 0");
+export interface CalcOptions {
+  containerWidth: number;
+  containerHeight: number;
+  targetCellWidth: number;
+  minCellWidth?: number;
+  gap?: number;
+  aspectRatio?: number;
+  widthFlex?: number;
+  totalItems?: number;
+}
 
-  const tol = (options?.tolerancePercent ?? 15) / 100;
-  const R = options?.targetRatio ?? 4 / 3;
-  const minCellWidth = Math.max(1, Math.floor(targetWidth * (1 - tol)));
-  const maxCellWidth = Math.max(minCellWidth, Math.ceil(targetWidth * (1 + tol)));
+export function calculateLayout(options: CalcOptions): LayoutResult[] {
+  const cw = Math.max(1, options.containerWidth);
+  const ch = Math.max(1, options.containerHeight);
+  const tw = Math.max(1, options.targetCellWidth);
+  const gap = Math.max(0, options.gap ?? 0);
+  const ar = Math.max(0.1, options.aspectRatio ?? 1.6);
+  const flex = Math.max(0, options.widthFlex ?? 0.15);
+  const total = Math.max(0, options.totalItems ?? 0);
 
-  const maxColsByMin = Math.floor(W / minCellWidth) || 1;
-  const maxCols = Math.min(options?.maxCols ?? maxColsByMin, maxColsByMin);
+  // Establish our hard minimum limit
+  const absoluteMinW = Math.max(1, options.minCellWidth ?? 0);
 
-  // target height derived from targetWidth (stable reference)
-  const targetCellHeight = Math.max(1, Math.floor(targetWidth / R));
+  // Combine flex minimum with our absolute minimum circuit breaker
+  const minW = Math.max(absoluteMinW, tw * (1 - flex));
+  const maxW = tw * (1 + flex);
 
-  let best: EstimateResult | null = null;
+  // 1. Calculate ideal standard page columns deterministically
+  const exactCols = (cw + gap) / (tw + gap);
+  const cFloor = Math.max(1, Math.floor(exactCols));
+  const cCeil = Math.max(1, Math.ceil(exactCols));
 
-  for (let cols = 1; cols <= maxCols; cols++) {
-    // compute candidate cell width constrained by container
-    const maxCellWForCols = Math.floor(W / cols);
-    if (maxCellWForCols < minCellWidth) continue;
+  const wFloor = (cw - (cFloor - 1) * gap) / cFloor;
+  const wCeil = (cw - (cCeil - 1) * gap) / cCeil;
 
-    // choose cellW inside allowed tolerance and <= maxCellWForCols
-    const cellW = Math.min(maxCellWidth, maxCellWForCols);
-    if (cellW < minCellWidth) continue;
+  let c = cFloor;
+  let cellW = wFloor;
 
-    // Instead of deriving rows from this exact cellH (which may jump),
-    // use targetCellHeight as baseline, then ensure cellH fits and adjust if needed.
-    // Determine rows as how many target heights fit; then ensure actual cellH doesn't exceed H/rows.
-    const baselineRows = Math.max(1, Math.floor(H / targetCellHeight));
-    // clamp rows to at least 1 and to a reasonable max (so we don't pick excessive rows)
-    const rows = Math.max(1, baselineRows);
+  if (cFloor !== cCeil) {
+    const floorValid = wFloor >= minW && wFloor <= maxW;
+    const ceilValid = wCeil >= minW && wCeil <= maxW;
 
-    // Now compute actual cellH allowed by vertical space for these rows
-    const maxCellHForRows = Math.floor(H / rows);
-    // actual cellH must be <= maxCellHForRows and consistent with ratio from cellW
-    const cellH = Math.min(maxCellHForRows, Math.floor(cellW / R));
-    if (cellH <= 0) continue;
-
-    // recompute cellW in case height constraint is tighter (keep within tolerance)
-    const adjustedCellW = Math.min(
-      cellW,
-      Math.floor(Math.min(maxCellWForCols, Math.floor(R * cellH))),
-    );
-    if (adjustedCellW < minCellWidth) continue;
-
-    const finalCellW = adjustedCellW;
-    const finalCellH = cellH;
-
-    const renderedCells = cols * rows;
-    const usedWidth = cols * finalCellW;
-    const usedHeight = rows * finalCellH;
-    const widthUtilization = usedWidth / W;
-    const heightUtilization = usedHeight / H;
-
-    const candidate: EstimateResult = {
-      targetCellWidth: targetWidth,
-      minCellWidth,
-      maxCellWidth,
-      targetCellHeight,
-      cols,
-      rows,
-      renderedCells,
-      emptySlots: options?.nRequested
-        ? Math.max(0, cols * rows - options!.nRequested!)
-        : 0,
-      cellWidth: finalCellW,
-      cellHeight: finalCellH,
-      usedWidth,
-      usedHeight,
-      widthUtilization,
-      heightUtilization,
-    };
-
-    if (!best) {
-      best = candidate;
-      continue;
-    }
-
-    // prefer more renderedCells, then better width utilization, then larger cells
-    if (
-      candidate.renderedCells > best.renderedCells ||
-      (candidate.renderedCells === best.renderedCells &&
-        candidate.widthUtilization > best.widthUtilization) ||
-      (candidate.renderedCells === best.renderedCells &&
-        candidate.widthUtilization === best.widthUtilization &&
-        candidate.cellWidth > best.cellWidth)
-    ) {
-      best = candidate;
+    if (floorValid && !ceilValid) {
+      c = cFloor;
+      cellW = wFloor;
+    } else if (ceilValid && !floorValid) {
+      c = cCeil;
+      cellW = wCeil;
+    } else {
+      // If neither is perfectly valid, apply the strict minimum check
+      if (wCeil < absoluteMinW) {
+        c = cFloor;
+        cellW = wFloor;
+      } else {
+        // Otherwise, safely pick the closest to our target
+        if (Math.abs(wCeil - tw) < Math.abs(wFloor - tw)) {
+          c = cCeil;
+          cellW = wCeil;
+        }
+      }
     }
   }
 
-  // fallback similar to before if nothing found
-  if (!best) {
-    const cols = Math.max(1, Math.floor(W / minCellWidth));
-    const cellW = Math.min(maxCellWidth, Math.floor(W / cols));
-    const cellH = Math.max(1, Math.floor(cellW / R));
-    const rows = Math.max(1, Math.floor(H / cellH));
-    best = {
-      targetCellWidth: targetWidth,
-      minCellWidth,
-      maxCellWidth,
-      targetCellHeight,
-      cols,
-      rows,
-      renderedCells: cols * rows,
-      emptySlots: options?.nRequested
-        ? Math.max(0, cols * rows - options!.nRequested!)
-        : 0,
+  // 2. Calculate standard rows
+  const cellH = cellW / ar;
+  const r = Math.max(1, Math.floor((ch + gap) / (cellH + gap) + 0.001));
+  const itemsPerPage = c * r;
+
+  const results: LayoutResult[] = [];
+
+  if (total === 0) {
+    results.push({
+      pageIndex: 0,
+      columns: c,
+      rows: r,
+      itemsPerPage,
       cellWidth: cellW,
       cellHeight: cellH,
-      usedWidth: cols * cellW,
-      usedHeight: rows * cellH,
-      widthUtilization: (cols * cellW) / W,
-      heightUtilization: (rows * cellH) / H,
-    };
+    });
+    return results;
   }
 
-  return best;
+  // 3. Paginate
+  const totalPages = Math.ceil(total / itemsPerPage);
+
+  for (let p = 0; p < totalPages; p++) {
+    const isLastPage = p === totalPages - 1;
+    const itemsOnThisPage =
+      isLastPage && total % itemsPerPage !== 0 ? total % itemsPerPage : itemsPerPage;
+
+    if (isLastPage && itemsOnThisPage < itemsPerPage) {
+      let bestCols = 1;
+      let bestRows = itemsOnThisPage;
+      let bestScore = Infinity;
+
+      for (let lc = 1; lc <= itemsOnThisPage; lc++) {
+        const lr = Math.ceil(itemsOnThisPage / lc);
+        const emptySlots = lc * lr - itemsOnThisPage;
+
+        const dynamicW = (cw - (lc - 1) * gap) / lc;
+        const dynamicH = (ch - (lr - 1) * gap) / lr;
+        const currentAr = dynamicH > 0 ? dynamicW / dynamicH : 0;
+
+        const arFactor =
+          currentAr > ar ? currentAr / ar : currentAr > 0 ? ar / currentAr : Infinity;
+        const arPenalty = arFactor - 1;
+
+        const score = arPenalty + emptySlots;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestCols = lc;
+          bestRows = lr;
+        }
+      }
+
+      results.push({
+        pageIndex: p,
+        columns: bestCols,
+        rows: bestRows,
+        itemsPerPage: bestCols * bestRows,
+        cellWidth: (cw - (bestCols - 1) * gap) / bestCols,
+        cellHeight: (ch - (bestRows - 1) * gap) / bestRows,
+      });
+    } else {
+      results.push({
+        pageIndex: p,
+        columns: c,
+        rows: r,
+        itemsPerPage,
+        cellWidth: cellW,
+        cellHeight: cellH,
+      });
+    }
+  }
+
+  return results;
 }

@@ -60,7 +60,7 @@ const defaults: VizbuilderContextValue = {
   pagination: false,
   postprocessConfig: identity,
   showConfidenceInt: false,
-  suggestedWidth: 500,
+  suggestedWidth: 380,
   translate: translateFunctionFactory(defaultTranslation),
   ViewErrorComponent: () => null,
 };
@@ -160,7 +160,7 @@ export function VizbuilderProvider(props: {
    * Specifies a width the charts should be rendered with on the grid view with
    * pagination active. The final size will vary ~15%.
    *
-   * @default 500
+   * @default 380
    */
   suggestedWidth?: number;
 

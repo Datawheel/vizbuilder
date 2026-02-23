@@ -118,7 +118,7 @@ function App() {
       })}
     >
       <VizbuilderProvider
-        pagination={false}
+        pagination
         downloadFormats={["svg", "png"]}
         topojsonConfig={topojsonConfig}
         getFormatter={getFormatter}
