@@ -86,8 +86,7 @@ export function generateHoriBartchartConfigs(
 
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    // second param is "does it contain an interactive non-visible dimension?"
-    const keyChain = [chartType, Boolean(timeline), dataset.length, measure.name];
+    const keyChain = [chartType, dataset.length, measure.name];
     const isSummable = isSummableMeasure(measure);
     const values = {
       measure,
@@ -252,8 +251,7 @@ export function generateVertBarchartConfigs(
 
   return dg.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    // second param is "does it contain an interactive non-visible dimension?"
-    const keyChain = [chartType, false, dataset.length, measure.name];
+    const keyChain = [chartType, dataset.length, measure.name];
     const isSummable = isSummableMeasure(measure);
     const values = {
       measure,
@@ -387,7 +385,7 @@ export function generateVertBarchartConfigs(
         key: shortHash(keyChain.concat(mainLevel.name, otherLevel.name).join()),
         type: chartType,
         datagroup: dg,
-        orientation: "vertical" as const,
+        orientation: "vertical",
         values,
         series: [
           buildSeries(mainHierarchy, mainLevel),

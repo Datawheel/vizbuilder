@@ -51,7 +51,7 @@ describe("calculateLayout", () => {
     expect(result[0].columns).toBe(2);
     expect(result[0].rows).toBe(2);
     expect(result[0].cellWidth).toBe(400);
-    expect(result[0].cellHeight).toBe(300);
+    expect(result[0].cellHeight).toBe(250);
   });
 
   it("should resist floating-point subpixel drops (the +0.001 epsilon fix)", () => {

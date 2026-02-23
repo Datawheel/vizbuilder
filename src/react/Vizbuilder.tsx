@@ -95,7 +95,6 @@ export function Vizbuilder(props: {
       .reduce((sum, layout) => sum + layout.itemsPerPage, 0);
     const sliceEnd = paginationEnabled ? sliceStart + layout.itemsPerPage : undefined;
     const chartsToRender = charts.slice(sliceStart, sliceEnd);
-    console.log(layout, sliceStart, sliceEnd);
 
     const breakpoints = paginationEnabled
       ? [{minWidth: 1, cols: layout.columns}]

@@ -1,7 +1,7 @@
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn, isSummableMeasure} from "../toolbox/validation";
+import {isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
@@ -43,7 +43,6 @@ export function generateTreemapConfigs(
 
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
 
     // Discard if measure is associated to a parent measure
     if (valueColumn.parentMeasure) return [];
