@@ -1,10 +1,11 @@
 import {
   AspectRatio,
   Button,
+  createStyles,
   Flex,
   Group,
   Paper,
-  ScrollArea,
+  rem,
   SimpleGrid,
   Stack,
   Switch,
@@ -25,6 +26,30 @@ import {useD3plusConfig} from "./useD3plusConfig";
 import type {VizbuilderProps} from "./Vizbuilder";
 import {useVizbuilderContext} from "./VizbuilderProvider";
 
+const useStyles = createStyles(theme => ({
+  container: {
+    height: "100%",
+    display: "grid",
+    gap: rem(12),
+    gridTemplateRows: "80px 1fr auto",
+
+    [`@media (min-width: ${theme.breakpoints.sm})`]: {
+      gridTemplateRows: "unset",
+      gridTemplateColumns: "120px 1fr 1fr",
+    },
+  },
+  chartList: {
+    height: "100%",
+    overflow: "auto",
+
+    [`@media (max-width: ${theme.breakpoints.sm})`]: {
+      flexDirection: "row",
+    },
+  },
+  infoArea: {},
+  chartArea: {},
+}));
+
 export function Vizdebugger(props: VizbuilderProps) {
   const {
     chartLimits,
@@ -34,6 +59,8 @@ export function Vizdebugger(props: VizbuilderProps) {
     NonIdealState,
     ViewErrorComponent,
   } = useVizbuilderContext();
+
+  const {classes} = useStyles();
 
   const datasets = useMemo(() => castArray(props.datasets), [props.datasets]);
 
@@ -71,34 +98,18 @@ export function Vizdebugger(props: VizbuilderProps) {
 
   return (
     <ErrorBoundary ErrorContent={ViewErrorComponent}>
-      <Flex
-        style={props.style}
-        id={props.id}
-        h="100%"
-        direction="row"
-        align="center"
-        wrap="nowrap"
-        gap="xs"
-      >
-        <ScrollArea h="100%" style={{flex: "0 0 140px"}}>
-          <Stack m={2} spacing="xs">
-            {charts.map((chart, index) => (
-              <Paper
-                key={chart.key}
-                withBorder
-                p="xs"
-                onClick={() => setChartIndex(index)}
-              >
-                <Text size="xs">{chart.key}</Text>
-                <Text>{chart.type}</Text>
-                {chart.type === "barchart" && <Text size="xs">{chart.orientation}</Text>}
-              </Paper>
-            ))}
-          </Stack>
-        </ScrollArea>
-
+      <div className={classes.container} style={{...props.style}}>
+        <Stack className={classes.chartList} spacing="xs">
+          {charts.map((chart, index) => (
+            <Paper key={chart.key} withBorder p="xs" onClick={() => setChartIndex(index)}>
+              <Text size="xs">{chart.key}</Text>
+              <Text truncate>{chart.type}</Text>
+              {chart.type === "barchart" && <Text size="xs">{chart.orientation}</Text>}
+            </Paper>
+          ))}
+        </Stack>
         {chart && <ChartDebugger chart={chart} onRefresh={refreshChartHandler} />}
-      </Flex>
+      </div>
     </ErrorBoundary>
   );
 }

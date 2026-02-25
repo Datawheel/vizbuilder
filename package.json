@@ -48,6 +48,7 @@
     "@datawheel/logiclayer-client": "^0.1.5",
     "@datawheel/use-translation": "^0.2.0",
     "@mantine/core": "^6.0.0",
+    "@mantine/notifications": "^6.0.22",
     "@tabler/icons-react": "^2.22.0",
     "@types/topojson": "^3.0.0",
     "d3plus-common": "^1.2.4",
