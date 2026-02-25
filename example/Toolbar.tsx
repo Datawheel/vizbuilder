@@ -56,10 +56,10 @@ export function Toolbar(props: {
     ) => {
       if (!cube || !currentQuery) return;
 
-      let nextDrilldowns = [...currentQuery.drilldowns];
+      let drilldowns = currentQuery.drilldowns.slice();
 
       if (isActive) {
-        nextDrilldowns = nextDrilldowns.filter(item => item !== levelName);
+        drilldowns = drilldowns.filter(item => item !== levelName);
       } else {
         // Find levels of the same dimension but different hierarchy
         const dimension = cube.dimensions.find(d => d.name === dimensionName);
@@ -69,14 +69,12 @@ export function Toolbar(props: {
             .flatMap(h => h.levels.map(l => l.name));
 
           // Remove levels from other hierarchies of the same dimension
-          nextDrilldowns = nextDrilldowns.filter(
-            dd => !otherHierarchiesLevels.includes(dd),
-          );
+          drilldowns = drilldowns.filter(dd => !otherHierarchiesLevels.includes(dd));
         }
-        nextDrilldowns.push(levelName);
+        drilldowns.push(levelName);
       }
 
-      updateQuery(cube.name, {drilldowns: nextDrilldowns});
+      updateQuery(cube.name, {drilldowns: drilldowns});
     },
     [cube, currentQuery, updateQuery],
   );
@@ -106,47 +104,46 @@ export function Toolbar(props: {
 
           return (
             <React.Fragment key={dimension.name}>
-              {i > 0 && <Divider orientation="vertical" mx={4} my={4} />}
-              <Stack spacing={2} sx={{minWidth: "max-content", justifyContent: "center"}}>
-                <Group spacing={4} noWrap>
-                  {dimension.hierarchies.flatMap(hierarchy =>
-                    hierarchy.levels.map(level => {
-                      const isActive = currentQuery.drilldowns.includes(level.name);
-                      const isDisabled =
-                        selectedHierarchy && selectedHierarchy !== hierarchy;
-                      return (
-                        <Chip
-                          key={level.name}
-                          checked={isActive}
-                          disabled={isDisabled}
-                          color={color}
-                          variant="outline"
-                          size="xs"
-                          onClick={() =>
-                            handleLevelClick(
-                              dimension.name,
-                              hierarchy.name,
-                              level.name,
-                              isActive,
-                            )
-                          }
-                          sx={{
-                            "& .mantine-Chip-label": {
-                              paddingLeft: rem(6),
-                              paddingRight: rem(6),
-                              height: rem(20),
-                              lineHeight: rem(18),
-                              fontSize: rem(12),
-                            },
-                          }}
-                        >
-                          {level.caption || level.name}
-                        </Chip>
-                      );
-                    }),
-                  )}
-                </Group>
-              </Stack>
+              {i > 0 && <Divider orientation="vertical" />}
+              <Group align="center" spacing={4} noWrap>
+                {dimension.hierarchies.flatMap(hierarchy =>
+                  hierarchy.levels.map(level => {
+                    const isActive = currentQuery.drilldowns.includes(level.name);
+                    const isDisabled =
+                      selectedHierarchy && selectedHierarchy !== hierarchy;
+                    return (
+                      <Chip
+                        key={level.name}
+                        checked={isActive}
+                        disabled={isDisabled}
+                        color={color}
+                        variant="outline"
+                        size="xs"
+                        onClick={() =>
+                          handleLevelClick(
+                            dimension.name,
+                            hierarchy.name,
+                            level.name,
+                            isActive,
+                          )
+                        }
+                        sx={{
+                          display: "inline-flex",
+                          "& .mantine-Chip-label": {
+                            paddingLeft: rem(6),
+                            paddingRight: rem(6),
+                            height: rem(20),
+                            lineHeight: rem(18),
+                            fontSize: rem(12),
+                          },
+                        }}
+                      >
+                        {level.caption || level.name}
+                      </Chip>
+                    );
+                  }),
+                )}
+              </Group>
             </React.Fragment>
           );
         })}
