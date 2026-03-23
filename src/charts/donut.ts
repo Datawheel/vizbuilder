@@ -1,7 +1,7 @@
 import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import {isAggregableAcross, isAggregator, isSummableMeasure} from "../toolbox/validation";
+import {isAggregableAcross, isAggregator} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";

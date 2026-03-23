@@ -7,7 +7,6 @@ import {
   Group,
   Paper,
   rem,
-  SimpleGrid,
   Stack,
   Switch,
   Text,

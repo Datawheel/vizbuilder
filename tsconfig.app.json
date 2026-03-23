@@ -25,7 +25,8 @@
     "noUnusedParameters": false,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
   },
-  "include": ["src/**/*", "globals.d.ts"]
+  "include": ["src/**/*", "globals.d.ts"],
+  "exclude": ["**/*.test.tsx"],
 }
