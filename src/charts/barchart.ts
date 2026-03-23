@@ -3,7 +3,12 @@ import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
 import {estimateWordWidth} from "../toolbox/strings";
-import {isSummableMeasure} from "../toolbox/validation";
+import {
+  isAggregableAcross,
+  isAggregator,
+  isSummableMeasure,
+  isUnit,
+} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries, buildSeriesIf} from "./common";
@@ -87,7 +92,6 @@ export function generateHoriBartchartConfigs(
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
     const keyChain = [chartType, dataset.length, measure.name];
-    const isSummable = isSummableMeasure(measure);
     const values = {
       measure,
       minValue: range[0],
@@ -151,6 +155,15 @@ export function generateHoriBartchartConfigs(
         return [];
       }
 
+      if (
+        eligibility.bailIf(
+          !!otherHierarchy.hierarchy.annotations.WIP_vb_measure_members,
+          `Members in the '${otherLevel.name}' level can't be grouped together in a secondary dimension.`,
+        )
+      ) {
+        return [];
+      }
+
       // Bail if the amount of members in main level is out of limits
       if (
         eligibility.bailIf(
@@ -161,10 +174,15 @@ export function generateHoriBartchartConfigs(
         return [];
       }
 
+      const otherIsSummable =
+        !isUnit(measure, ["Ratio", "Index", "Growth"]) &&
+        (isAggregator(measure, ["SUM", "COUNT"]) ||
+          isAggregableAcross(measure, otherHierarchy.hierarchy.name));
+
       // Bail if the amount of members in stacked level is out of limits
       if (
         eligibility.bailIf(
-          isSummable && otherLevel.members.length > BARCHART_MAX_STACKED_BARS,
+          otherIsSummable && otherLevel.members.length > BARCHART_MAX_STACKED_BARS,
           `Stacked series '${otherLevel.name}' contains ${otherLevel.members.length} members; limit BARCHART_MAX_STACKED_BARS = ${BARCHART_MAX_STACKED_BARS}`,
         )
       ) {
@@ -174,7 +192,7 @@ export function generateHoriBartchartConfigs(
       // Bail if the measure is not summable and number of groups exceeds limit
       if (
         eligibility.bailIf(
-          !isSummable && otherLevel.members.length > BARCHART_MAX_GROUPED_BARS,
+          !otherIsSummable && otherLevel.members.length > BARCHART_MAX_GROUPED_BARS,
           `Grouped series '${otherLevel.name}' contains ${otherLevel.members.length} members and measure '${measure.name}' can't be stacked; limit BARCHART_MAX_GROUPED_BARS = ${BARCHART_MAX_GROUPED_BARS}`,
         )
       ) {
@@ -358,6 +376,15 @@ export function generateVertBarchartConfigs(
       if (
         mainHierarchy === otherHierarchy &&
         mainLevel.entity.depth < otherLevel.entity.depth
+      ) {
+        return [];
+      }
+
+      if (
+        eligibility.bailIf(
+          !!otherHierarchy.hierarchy.annotations.WIP_vb_measure_members,
+          `Members in the '${otherLevel.name}' level can't be grouped together in a secondary dimension.`,
+        )
       ) {
         return [];
       }

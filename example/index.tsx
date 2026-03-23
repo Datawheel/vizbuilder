@@ -21,7 +21,7 @@ function mount(container: HTMLElement) {
           <TranslationProvider defaultLocale="en" translations={translations}>
             <FormatterProvider items={formatters}>
               <App />
-              <Notifications />
+              <Notifications autoClose={5000} />
             </FormatterProvider>
           </TranslationProvider>
         </TesseractProvider>

@@ -1,7 +1,7 @@
 import type {TesseractMeasure} from "@datawheel/logiclayer-client";
 import {filterMap} from "../toolbox/array";
 import {shortHash} from "../toolbox/math";
-import {isSummableMeasure} from "../toolbox/validation";
+import {isAggregableAcross, isAggregator, isSummableMeasure} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {ChartEligibility} from "./check";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
@@ -34,7 +34,6 @@ export function generateDonutConfigs(
 
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement || "";
     const keyChain = [chartType, dataset.length, measure.name];
     const values = {
@@ -46,16 +45,6 @@ export function generateDonutConfigs(
     // Work only with the mainline measures
     if (valueColumn.parentMeasure) return [];
 
-    if (
-      eligibility.bailIf(
-        !isSummableMeasure(measure),
-        `Values in measure '${measure.name}' can't be summed (${aggregator} / ${units})`,
-      )
-    ) {
-      return [];
-    }
-
-    // Bail if there are negative values in members
     if (
       eligibility.bailIf(
         values.minValue < 0,
@@ -79,24 +68,37 @@ export function generateDonutConfigs(
       }),
     );
 
-    if (
-      eligibility.bailIf(
-        allLevels.length > 1 && !isSummableMeasure(measure),
-        `Discarding multilevel '${allLevels
-          .map(entry => entry[1].name)
-          .join("-")}', measure '${measure.name}' can't be summed`,
-      )
-    ) {
-      return [];
-    }
+    const nonAggregableLevels = allLevels.filter(
+      item =>
+        ["Percentage", "Rate", "Ratio", "Index", "Growth"].some(token =>
+          units.includes(token),
+        ) ||
+        !(
+          isAggregator(measure, ["SUM", "COUNT"]) ||
+          isAggregableAcross(measure, item[0].hierarchy.name)
+        ),
+    );
 
     return allLevels.flatMap(entry => {
       const [catHierarchy, catLevel] = entry;
 
+      const otherNonAggregableLevels = filterMap(nonAggregableLevels, item => {
+        if (item !== entry) return null;
+        return item[1].name;
+      });
+      if (
+        eligibility.bailIf(
+          otherNonAggregableLevels.length > 0,
+          `Values in measure '${measure.name}' can't be summed at levels ${otherNonAggregableLevels}`,
+        )
+      ) {
+        return [];
+      }
+
       if (
         eligibility.bailIf(
           catLevel.members.length > DONUT_SHAPE_MAX,
-          `Level '${catLevel.entity.name}' has ${catLevel.members.length}, limit DONUT_SHAPE_MAX = ${DONUT_SHAPE_MAX}`,
+          `Level '${catLevel.entity.name}' has ${catLevel.members.length} members, limit DONUT_SHAPE_MAX = ${DONUT_SHAPE_MAX}`,
         )
       ) {
         return [];

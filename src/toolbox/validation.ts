@@ -18,10 +18,9 @@ export function findFirstNumber(string: string, elseValue?: number) {
  * @returns A boolean indicating if the measure is summable.
  */
 export function isSummableMeasure(measure: TesseractMeasure): boolean {
-  const aggregator = measure.annotations.aggregation_method || measure.aggregator;
   const units = measure.annotations.units_of_measurement || "";
   return (
-    aggregatorIn(aggregator, ["SUM", "COUNT"]) &&
+    isAggregator(measure, ["SUM", "COUNT"]) &&
     !["Percentage", "Rate", "Ratio", "Index", "Growth"].some(token =>
       units.includes(token),
     )
@@ -29,16 +28,33 @@ export function isSummableMeasure(measure: TesseractMeasure): boolean {
 }
 
 /**
- * Typeguard to check if an aggregator is part of a certain set.
- * @param aggregator The aggregator to check.
- * @param set The list of aggregators to check against.
- * @returns A boolean indicating if the aggregator is in the set.
+ * Checks if a Tesseract measure can be aggregated across the members of a
+ * TesseractLevel under a specified hierarchy.
+ * @param measure The measure to check.
+ * @param hierarchy The name of the hierarchy, parent to the level that needs to be aggregated.
+ * @returns A boolean indicating if the measure can be aggregated.
  */
-export function aggregatorIn<T extends Uppercase<`${Aggregator}`> | "MOE" | "RCA">(
-  aggregator: Aggregator | string,
-  set: T[],
-): aggregator is T {
-  return isOneOf(aggregator.toUpperCase(), set);
+export function isAggregableAcross(
+  measure: TesseractMeasure,
+  hierarchy: string,
+): boolean {
+  const permission = (measure.annotations.aggregable_across || "").split(",");
+  return permission.includes(hierarchy);
+}
+
+export function isAggregator<
+  T extends Uppercase<`${Aggregator}`> | "PARTIALSUM" | "MOE" | "RCA",
+>(measure: TesseractMeasure, options: T[]): boolean {
+  const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+  return isOneOf(aggregator.toUpperCase(), options);
+}
+
+export function isUnit<T extends string>(
+  measure: TesseractMeasure,
+  options: T[],
+): boolean {
+  const units = measure.annotations.units_of_measurement || "";
+  return options.some(token => units.includes(token));
 }
 
 /**

@@ -1,7 +1,7 @@
 import {filterMap} from "../toolbox/array";
 import {yieldPartialPermutations} from "../toolbox/iterator";
 import {shortHash} from "../toolbox/math";
-import {aggregatorIn} from "../toolbox/validation";
+import {isAggregator} from "../toolbox/validation";
 import type {ChartLimits} from "../types";
 import {type BaseChart, buildDeepestSeries, buildSeries} from "./common";
 import type {Datagroup} from "./datagroup";
@@ -40,11 +40,10 @@ export function generateStackedareaConfigs(
 
   return datagroup.measureColumns.flatMap(valueColumn => {
     const {measure, range} = valueColumn;
-    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const units = measure.annotations.units_of_measurement;
 
     // Stacked Area charts are valid only with SUM-aggregated measures
-    if (!aggregatorIn(aggregator, ["SUM", "COUNT"])) {
+    if (!isAggregator(measure, ["SUM", "COUNT"])) {
       return [];
     }
 

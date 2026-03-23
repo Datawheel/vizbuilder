@@ -127,11 +127,13 @@ export function Vizbuilder(props: {
 
     return (
       <div
+        className="vb_pagination_container"
         style={{
           height: "100%",
           display: "flex",
           flexFlow: "column nowrap",
           gap: rem(16),
+          paddingBottom: "2px",
         }}
       >
         {grid}

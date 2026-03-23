@@ -44,7 +44,14 @@ declare module "@datawheel/logiclayer-client" {
     /** Signals the resulting rows can be further aggregated, when grouped by a level under the specified hierarchies. */
     aggregable_across?: string;
     /** Method by which the measure is aggregated */
-    aggregation_method?: "COUNT" | "SUM" | "AVERAGE" | "MEDIAN" | "MOE" | "RCA";
+    aggregation_method?:
+      | "count"
+      | "sum"
+      | "partialsum"
+      | "average"
+      | "median"
+      | "moe"
+      | "rca";
     /** Expanded description of a particular Measure */
     details?: string;
     /** Specifies the type of calculated error this measure returns */

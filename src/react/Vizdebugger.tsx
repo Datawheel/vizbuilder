@@ -3,6 +3,7 @@ import {
   Button,
   createStyles,
   Flex,
+  Grid,
   Group,
   Paper,
   rem,
@@ -151,20 +152,25 @@ function ChartDebugger(props: {chart: Chart; onRefresh: () => void}) {
 
   return (
     <>
-      <Stack h="100%" style={{flex: "1 1 50%", overflow: "auto"}}>
-        <TitledArea title="columns">
-          <TableInspector data={columnInfo} expandLevel={2} />
-        </TitledArea>
-
-        <SimpleGrid cols={1} breakpoints={[{minWidth: "60rem", cols: 2, spacing: "xs"}]}>
-          <TitledArea title="chart object" withPaper>
-            <ObjectInspector data={chart} expandLevel={1} />
-          </TitledArea>
-          <TitledArea title="d3plus config" withPaper>
-            <ObjectInspector data={chartConfig} expandLevel={1} />
-          </TitledArea>
-        </SimpleGrid>
-      </Stack>
+      <div>
+        <Grid>
+          <Grid.Col>
+            <TitledArea title="columns">
+              <TableInspector data={columnInfo} expandLevel={2} />
+            </TitledArea>
+          </Grid.Col>
+          <Grid.Col md={6}>
+            <TitledArea title="chart object" withPaper>
+              <ObjectInspector data={chart} expandLevel={1} />
+            </TitledArea>
+          </Grid.Col>
+          <Grid.Col md={6}>
+            <TitledArea title="d3plus config" withPaper>
+              <ObjectInspector data={chartConfig} expandLevel={1} />
+            </TitledArea>
+          </Grid.Col>
+        </Grid>
+      </div>
 
       <Stack h="100%" style={{flex: "1 0 50%", overflow: "auto"}}>
         <Flex direction="row" align="center" wrap="nowrap" gap="sm">
